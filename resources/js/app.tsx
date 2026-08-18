@@ -4,9 +4,19 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import LockedAccountLayout from '@/layouts/locked-account-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import StudentLayout from '@/layouts/student-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+const staffPortalPrefixes = [
+    'admin/',
+    'registrar/',
+    'finance/',
+    'hr/',
+    'lecturer/',
+];
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -16,6 +26,12 @@ createInertiaApp({
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
+            case name === 'student/fees/locked':
+                return LockedAccountLayout;
+            case name.startsWith('student/'):
+                return StudentLayout;
+            case staffPortalPrefixes.some((prefix) => name.startsWith(prefix)):
+                return AppLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             default:
@@ -32,9 +48,8 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: '#1B2F5B',
     },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();

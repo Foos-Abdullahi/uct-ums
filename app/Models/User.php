@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,7 +29,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -45,6 +47,24 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'role' => UserRole::class,
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * @return HasOne<Student, $this>
+     */
+    public function student(): HasOne
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    /**
+     * @return HasOne<Staff, $this>
+     */
+    public function staff(): HasOne
+    {
+        return $this->hasOne(Staff::class);
     }
 }
