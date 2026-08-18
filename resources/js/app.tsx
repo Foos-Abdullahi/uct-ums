@@ -11,7 +11,7 @@ import StudentLayout from '@/layouts/student-layout';
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 const staffPortalPrefixes = [
-    'admin/',
+    'Admin/',
     'registrar/',
     'finance/',
     'hr/',
@@ -26,9 +26,9 @@ createInertiaApp({
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
-            case name === 'student/fees/locked':
+            case name === 'Student/fees/locked':
                 return LockedAccountLayout;
-            case name.startsWith('student/'):
+            case name.startsWith('Student/'):
                 return StudentLayout;
             case staffPortalPrefixes.some((prefix) => name.startsWith(prefix)):
                 return AppLayout;

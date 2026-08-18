@@ -7,10 +7,10 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::inertia('dashboard', 'admin/dashboard')->name('dashboard');
-        Route::inertia('users', 'admin/users/index')->name('users.index');
-        Route::inertia('roles', 'admin/roles/index')->name('roles.index');
-        Route::inertia('permissions', 'admin/permissions/index')->name('permissions.index');
-        Route::inertia('audit-log', 'admin/audit-log/index')->name('audit-log.index');
-        Route::inertia('system', 'admin/system/index')->name('system.index');
+        Route::inertia('dashboard', 'Admin/dashboard')->name('dashboard');
+        Route::inertia('users', 'Admin/users/index')->name('users.index');
+        Route::inertia('roles', 'Admin/roles/index')->name('roles.index');
+        Route::inertia('permissions', 'Admin/permissions/index')->name('permissions.index');
+        Route::inertia('audit-log', 'Admin/audit-log/index')->name('audit-log.index');
+        Route::inertia('system', 'Admin/system/index')->name('system.index');
     });
