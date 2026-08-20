@@ -1,19 +1,12 @@
 import { usePage } from '@inertiajs/react';
-import {
-    adminNav,
-    financeNav,
-    hrNav,
-    lecturerNav,
-    registrarNav,
-    studentNav,
-} from '@/config/navigation';
+import { adminNav, lecturerNav, studentNav } from '@/config/navigation';
 import type { NavItem } from '@/types';
 
 const navigationByRole: Record<string, NavItem[]> = {
     super_admin: adminNav,
-    registrar: registrarNav,
-    finance: financeNav,
-    hr: hrNav,
+    registrar: adminNav,
+    finance: adminNav,
+    hr: adminNav,
     lecturer: lecturerNav,
     student: studentNav,
 };
