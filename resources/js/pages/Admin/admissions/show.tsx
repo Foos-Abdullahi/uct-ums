@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,6 @@ import { AdmissionStatusBadge } from './components/admission-status-badge';
 import { ReviewAdmissionModal } from './components/review-admission-modal';
 import { ConvertToStudentModal } from './components/convert-to-student-modal';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { BreadcrumbItem } from '@/types';
 import type { Admission } from '@/types/admission';
 import {
     ArrowLeft,
@@ -29,11 +27,13 @@ interface AdminAdmissionsShowProps {
 }
 
 export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowProps) {
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Admissions', href: '/admin/admissions' },
-        { title: admission.application_no, href: `/admin/admissions/${admission.id}` },
-    ];
+    setLayoutProps({
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/admin/dashboard' },
+            { title: 'Admissions', href: '/admin/admissions' },
+            { title: admission.application_no, href: `/admin/admissions/${admission.id}` },
+        ],
+    });
 
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [convertModalOpen, setConvertModalOpen] = useState(false);
@@ -66,7 +66,7 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title={`Application - ${admission.application_no}`} />
 
             <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -290,11 +290,17 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                     onOpenChange={setDeleteModalOpen}
                     title="Delete Application"
                     description="Are you sure you want to permanently delete this application record?"
-                    itemName={`${fullName} (${admission.application_no})`}
                     loading={deleteProcessing}
                     onConfirm={confirmDelete}
                 />
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AdminAdmissionsShow.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Admissions', href: '/admin/admissions' },
+    ],
+};

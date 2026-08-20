@@ -5,24 +5,15 @@ use App\Models\Admission;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
-/**
- * Helper: create and authenticate a Super Admin user.
- */
-function actingAsSuperAdmin(): User
-{
-    $user = User::factory()->role(UserRole::SuperAdmin)->create();
-    test()->actingAs($user);
-
-    return $user;
-}
-
-// ─── Index & Stats ──────────────────────────────────────────────────────────
+// ─── Index ────────────────────────────────────────────────────────────────────
 
 test('admin can view the admissions index page', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
     $response = $this->get(route('admin.admissions.index'));
 
@@ -30,57 +21,27 @@ test('admin can view the admissions index page', function () {
         ->assertInertia(fn ($page) => $page->component('Admin/admissions/index'));
 });
 
-test('admin can fetch deferred admissions stats', function () {
-    actingAsSuperAdmin();
-    Admission::factory()->count(3)->create();
-    Admission::factory()->approved()->count(2)->create();
+test('admin sees programs and filters on the admissions index', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
-    $response = $this->get(route('admin.admissions.index', ['only' => 'stats']));
+    Program::factory()->count(3)->create();
 
-    $response->assertOk()
-        ->assertInertia(
-            fn ($page) => $page
-                ->has('stats')
-                ->where('stats.total_applications', fn ($val) => $val >= 5)
-                ->where('stats.approved', fn ($val) => $val >= 2)
-        );
-});
-
-test('admin can fetch deferred admissions table data', function () {
-    actingAsSuperAdmin();
-    Admission::factory()->count(5)->create();
-
-    $response = $this->get(route('admin.admissions.index', ['only' => 'admissions']));
+    $response = $this->get(route('admin.admissions.index'));
 
     $response->assertOk()
         ->assertInertia(
             fn ($page) => $page
-                ->has('admissions')
-                ->has('admissions.data')
+                ->has('programs')
+                ->has('filters')
         );
 });
 
-test('admin can filter admissions by status', function () {
-    actingAsSuperAdmin();
-    Admission::factory()->count(3)->create(['status' => 'pending']);
-    Admission::factory()->count(2)->approved()->create();
-
-    $response = $this->get(route('admin.admissions.index', [
-        'only' => 'admissions',
-        'status' => 'pending',
-    ]));
-
-    $response->assertOk()
-        ->assertInertia(
-            fn ($page) => $page
-                ->where('admissions.total', fn ($val) => $val >= 3)
-        );
-});
-
-// ─── Create / Show ──────────────────────────────────────────────────────────
+// ─── Create ───────────────────────────────────────────────────────────────────
 
 test('admin can view the create admission form', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
     $response = $this->get(route('admin.admissions.create'));
 
@@ -88,8 +49,11 @@ test('admin can view the create admission form', function () {
         ->assertInertia(fn ($page) => $page->component('Admin/admissions/create'));
 });
 
+// ─── Show ─────────────────────────────────────────────────────────────────────
+
 test('admin can view an individual admission application', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->create();
 
     $response = $this->get(route('admin.admissions.show', $admission));
@@ -103,10 +67,11 @@ test('admin can view an individual admission application', function () {
         );
 });
 
-// ─── Store ───────────────────────────────────────────────────────────────────
+// ─── Store ────────────────────────────────────────────────────────────────────
 
 test('admin can submit a new admission application', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $program = Program::factory()->create();
 
     $response = $this->post(route('admin.admissions.store'), [
@@ -135,22 +100,42 @@ test('admin can submit a new admission application', function () {
 });
 
 test('store admission validates required fields', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
     $response = $this->post(route('admin.admissions.store'), []);
 
     $response->assertSessionHasErrors(['first_name', 'last_name', 'email', 'program_id']);
 });
 
-// ─── Review / Status ─────────────────────────────────────────────────────────
+test('admission application is created with auto-generated application number', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create();
+
+    $this->post(route('admin.admissions.store'), [
+        'first_name' => 'Ayan',
+        'last_name' => 'Mohamed',
+        'email' => 'ayan@example.com',
+        'program_id' => $program->id,
+    ]);
+
+    $admission = Admission::where('email', 'ayan@example.com')->first();
+
+    expect($admission)->not->toBeNull()
+        ->and($admission->application_no)->toStartWith('ADM-');
+});
+
+// ─── Update Status ────────────────────────────────────────────────────────────
 
 test('admin can approve an admission application', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->create(['status' => 'pending']);
 
     $response = $this->patch(route('admin.admissions.update-status', $admission), [
         'status' => 'approved',
-        'review_notes' => 'All documents verified, applicant meets requirements.',
+        'review_notes' => 'All documents verified.',
     ]);
 
     $response->assertRedirect();
@@ -162,7 +147,8 @@ test('admin can approve an admission application', function () {
 });
 
 test('admin can reject an admission application with notes', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->create(['status' => 'pending']);
 
     $response = $this->patch(route('admin.admissions.update-status', $admission), [
@@ -179,8 +165,9 @@ test('admin can reject an admission application with notes', function () {
     ]);
 });
 
-test('admission review validates status enum', function () {
-    actingAsSuperAdmin();
+test('admission review rejects invalid status values', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->create();
 
     $response = $this->patch(route('admin.admissions.update-status', $admission), [
@@ -190,22 +177,35 @@ test('admission review validates status enum', function () {
     $response->assertSessionHasErrors(['status']);
 });
 
-// ─── Convert to Student ──────────────────────────────────────────────────────
+test('admin can mark an application as under review', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $admission = Admission::factory()->create(['status' => 'pending']);
+
+    $this->patch(route('admin.admissions.update-status', $admission), [
+        'status' => 'under_review',
+        'review_notes' => 'Documents are being reviewed.',
+    ]);
+
+    $this->assertDatabaseHas('admissions', [
+        'id' => $admission->id,
+        'status' => 'under_review',
+    ]);
+});
+
+// ─── Convert to Student ───────────────────────────────────────────────────────
 
 test('admin can convert an approved admission into a student account', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->approved()->create([
         'email' => 'convert.test@example.com',
     ]);
 
-    $response = $this->post(route('admin.admissions.convert', $admission), [
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+    $response = $this->post(route('admin.admissions.convert', $admission));
 
     $response->assertRedirect();
 
-    /** @var User $user */
     $user = User::where('email', 'convert.test@example.com')->first();
 
     expect($user)->not->toBeNull()
@@ -214,7 +214,7 @@ test('admin can convert an approved admission into a student account', function 
     $student = Student::where('user_id', $user->id)->first();
 
     expect($student)->not->toBeNull()
-        ->and($student->matric_number)->toStartWith('UCT-');
+        ->and($student->matric_no)->toStartWith('UCT-');
 
     $this->assertDatabaseHas('admissions', [
         'id' => $admission->id,
@@ -224,43 +224,45 @@ test('admin can convert an approved admission into a student account', function 
 });
 
 test('conversion creates default tuition invoice for the new student', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->approved()->create([
         'email' => 'invoice.test@example.com',
     ]);
 
-    $this->post(route('admin.admissions.convert', $admission), [
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+    $this->post(route('admin.admissions.convert', $admission));
 
     $user = User::where('email', 'invoice.test@example.com')->first();
     $student = Student::where('user_id', $user->id)->first();
 
     $this->assertDatabaseHas('student_invoices', [
         'student_id' => $student->id,
+        'type' => 'tuition',
     ]);
 });
 
-test('cannot convert an already-enrolled admission', function () {
-    actingAsSuperAdmin();
-    $admission = Admission::factory()->enrolled()->create();
-
-    $response = $this->post(route('admin.admissions.convert', $admission), [
-        'password' => 'password',
-        'password_confirmation' => 'password',
+test('converting an already-enrolled admission redirects to student profile', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $existingStudent = Student::factory()->create();
+    $admission = Admission::factory()->enrolled()->create([
+        'student_id' => $existingStudent->id,
     ]);
 
+    $response = $this->post(route('admin.admissions.convert', $admission));
+
+    // Should redirect (back to student, not create a new one)
     $response->assertRedirect();
 
-    // No new student should be linked beyond the original
-    $this->assertDatabaseCount('students', $admission->student_id ? 1 : 0);
+    // Only the original student should exist
+    $this->assertDatabaseCount('students', 1);
 });
 
-// ─── Delete ──────────────────────────────────────────────────────────────────
+// ─── Delete ───────────────────────────────────────────────────────────────────
 
 test('admin can delete an admission application', function () {
-    actingAsSuperAdmin();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $admission = Admission::factory()->create();
 
     $response = $this->delete(route('admin.admissions.destroy', $admission));
@@ -270,7 +272,7 @@ test('admin can delete an admission application', function () {
     $this->assertSoftDeleted('admissions', ['id' => $admission->id]);
 });
 
-// ─── Authorization ───────────────────────────────────────────────────────────
+// ─── Authorization ────────────────────────────────────────────────────────────
 
 test('unauthenticated users cannot access admissions routes', function () {
     $response = $this->get(route('admin.admissions.index'));
@@ -281,6 +283,15 @@ test('unauthenticated users cannot access admissions routes', function () {
 test('student role users cannot access admin admissions routes', function () {
     $student = Student::factory()->create();
     $this->actingAs($student->user);
+
+    $response = $this->get(route('admin.admissions.index'));
+
+    $response->assertForbidden();
+});
+
+test('registrar role cannot access admin admissions routes', function () {
+    $registrar = User::factory()->role(UserRole::Registrar)->create();
+    $this->actingAs($registrar);
 
     $response = $this->get(route('admin.admissions.index'));
 

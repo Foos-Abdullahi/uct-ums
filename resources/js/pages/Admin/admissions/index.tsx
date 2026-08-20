@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -154,7 +153,7 @@ export default function AdminAdmissionsIndex({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Admissions & Applications" />
 
             <div className="p-6 space-y-6">
@@ -282,6 +281,8 @@ export default function AdminAdmissionsIndex({
                     onConfirm={confirmDelete}
                 />
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AdminAdmissionsIndex.layout = { breadcrumbs };

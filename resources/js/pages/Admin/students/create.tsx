@@ -1,6 +1,5 @@
 import React from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,7 +54,7 @@ export default function AdminStudentsCreate({ programs = [] }: AdminStudentsCrea
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Create New Student" />
 
             <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -336,6 +335,8 @@ export default function AdminStudentsCreate({ programs = [] }: AdminStudentsCrea
                     </div>
                 </form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AdminStudentsCreate.layout = { breadcrumbs };

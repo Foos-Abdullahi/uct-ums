@@ -1,6 +1,5 @@
 import React from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Head, Link, useForm, setLayoutProps } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import type { BreadcrumbItem } from '@/types';
 import type { Program, Student } from '@/types/student';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,12 +24,14 @@ export default function AdminStudentsEdit({
     student,
     programs = [],
 }: AdminStudentsEditProps) {
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Students', href: '/admin/students' },
-        { title: student.user?.name ?? student.matric_no, href: `/admin/students/${student.id}` },
-        { title: 'Edit', href: `/admin/students/${student.id}/edit` },
-    ];
+    setLayoutProps({
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/admin/dashboard' },
+            { title: 'Students', href: '/admin/students' },
+            { title: student.user?.name ?? student.matric_no, href: `/admin/students/${student.id}` },
+            { title: 'Edit', href: `/admin/students/${student.id}/edit` },
+        ],
+    });
 
     const { data, setData, put, processing, errors } = useForm({
         name: student.user?.name ?? '',
@@ -60,7 +60,7 @@ export default function AdminStudentsEdit({
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title={`Edit Student - ${student.user?.name}`} />
 
             <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -334,6 +334,13 @@ export default function AdminStudentsEdit({
                     </div>
                 </form>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AdminStudentsEdit.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Students', href: '/admin/students' },
+    ],
+};

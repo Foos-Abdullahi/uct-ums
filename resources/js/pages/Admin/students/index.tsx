@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -195,7 +194,7 @@ export default function AdminStudentsIndex({
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Students Management" />
 
             <div className="p-6 space-y-6">
@@ -316,6 +315,8 @@ export default function AdminStudentsIndex({
                     student={selectedStudentForPassword}
                 />
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AdminStudentsIndex.layout = { breadcrumbs };

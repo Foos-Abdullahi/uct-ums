@@ -162,21 +162,19 @@ class StudentController extends Controller
     /**
      * Display full student profile.
      */
-    public function show(int $id): Response
+    public function show(Student $student): Response
     {
-        $student = Student::with([
+        $student->load([
             'user',
             'program',
             'admission',
             'documents' => fn ($q) => $q->latest(),
             'invoices' => fn ($q) => $q->latest(),
-            'invoices.payments',
             'payments' => fn ($q) => $q->latest(),
-            'payments.invoice',
             'grades' => fn ($q) => $q->orderBy('semester')->orderBy('course_code'),
             'certificates' => fn ($q) => $q->latest(),
             'attendances' => fn ($q) => $q->latest('date')->take(50),
-        ])->findOrFail($id);
+        ]);
 
         $totalInvoiced = (float) $student->invoices->sum('amount');
         $totalPaid = (float) $student->payments->where('status', 'approved')->sum('amount');
@@ -228,9 +226,9 @@ class StudentController extends Controller
     /**
      * Show form to edit a student.
      */
-    public function edit(int $id): Response
+    public function edit(Student $student): Response
     {
-        $student = Student::with(['user', 'program'])->findOrFail($id);
+        $student->load(['user', 'program']);
 
         return Inertia::render('Admin/students/edit', [
             'student' => $student,

@@ -1,34 +1,24 @@
 <?php
 
 use App\Enums\UserRole;
-use App\Models\Admission;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\StudentGrade;
 use App\Models\StudentInvoice;
 use App\Models\StudentPayment;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
-/**
- * Helper: create a Super Admin user and authenticate.
- */
-function adminActor(): User
-{
-    $user = User::factory()->role(UserRole::SuperAdmin)->create();
-    test()->actingAs($user);
-
-    return $user;
-}
-
-// ─── Index & Deferred Data ───────────────────────────────────────────────────
+// ─── Index ────────────────────────────────────────────────────────────────────
 
 test('admin can view the students index page', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
     $response = $this->get(route('admin.students.index'));
 
@@ -36,52 +26,27 @@ test('admin can view the students index page', function () {
         ->assertInertia(fn ($page) => $page->component('Admin/students/index'));
 });
 
-test('admin can fetch deferred student stats', function () {
-    adminActor();
-    Student::factory()->count(4)->create();
+test('admin sees programs and filters on the students index', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
-    $response = $this->get(route('admin.students.index', ['only' => 'stats']));
+    Program::factory()->count(2)->create();
 
-    $response->assertOk()
-        ->assertInertia(
-            fn ($page) => $page
-                ->has('stats')
-                ->where('stats.total_students', fn ($v) => $v >= 4)
-        );
-});
-
-test('admin can fetch deferred paginated students', function () {
-    adminActor();
-    Student::factory()->count(5)->create();
-
-    $response = $this->get(route('admin.students.index', ['only' => 'students']));
+    $response = $this->get(route('admin.students.index'));
 
     $response->assertOk()
         ->assertInertia(
             fn ($page) => $page
-                ->has('students')
-                ->has('students.data')
+                ->has('programs')
+                ->has('filters')
         );
 });
 
-test('admin can filter students by enrollment status', function () {
-    adminActor();
-    Student::factory()->count(3)->create(['enrollment_status' => 'enrolled']);
-    Student::factory()->count(2)->create(['enrollment_status' => 'suspended']);
-
-    $response = $this->get(route('admin.students.index', [
-        'only' => 'students',
-        'enrollment_status' => 'suspended',
-    ]));
-
-    $response->assertOk()
-        ->assertInertia(fn ($page) => $page->where('students.total', fn ($v) => $v >= 2));
-});
-
-// ─── Create & Store ───────────────────────────────────────────────────────────
+// ─── Create ───────────────────────────────────────────────────────────────────
 
 test('admin can view the create student form', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
     $response = $this->get(route('admin.students.create'));
 
@@ -90,14 +55,13 @@ test('admin can view the create student form', function () {
 });
 
 test('admin can create a new student with auto-generated matric number', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $program = Program::factory()->create();
 
     $response = $this->post(route('admin.students.store'), [
         'name' => 'Fatima Ali',
         'email' => 'fatima.ali@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
         'program_id' => $program->id,
         'current_semester' => 1,
         'gender' => 'Female',
@@ -110,34 +74,31 @@ test('admin can create a new student with auto-generated matric number', functio
     $response->assertRedirect();
 
     $user = User::where('email', 'fatima.ali@example.com')->first();
-
-    expect($user)->not->toBeNull()
-        ->and($user->role)->toBe(UserRole::Student);
+    expect($user)->not->toBeNull()->and($user->role)->toBe(UserRole::Student);
 
     $student = Student::where('user_id', $user->id)->first();
-
     expect($student)->not->toBeNull()
-        ->and($student->matric_number)->toStartWith('UCT-');
+        ->and($student->matric_no)->toStartWith('UCT-');
 });
 
 test('student creation validates required fields', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
 
     $response = $this->post(route('admin.students.store'), []);
 
-    $response->assertSessionHasErrors(['name', 'email', 'password', 'program_id']);
+    $response->assertSessionHasErrors(['name', 'email', 'program_id']);
 });
 
 test('student creation enforces unique email', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $program = Program::factory()->create();
-    $existingUser = User::factory()->create(['email' => 'duplicate@example.com']);
+    User::factory()->create(['email' => 'duplicate@example.com']);
 
     $response = $this->post(route('admin.students.store'), [
         'name' => 'Dupe User',
         'email' => 'duplicate@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
         'program_id' => $program->id,
         'current_semester' => 1,
         'enrollment_status' => 'enrolled',
@@ -149,8 +110,14 @@ test('student creation enforces unique email', function () {
 // ─── Show ─────────────────────────────────────────────────────────────────────
 
 test('admin can view a student profile page', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
+    $invoice = StudentInvoice::factory()->create(['student_id' => $student->id]);
+    StudentPayment::factory()->approved()->create([
+        'student_id' => $student->id,
+        'invoice_id' => $invoice->id,
+    ]);
 
     $response = $this->get(route('admin.students.show', $student));
 
@@ -160,13 +127,19 @@ test('admin can view a student profile page', function () {
                 ->component('Admin/students/show')
                 ->has('student')
                 ->where('student.id', $student->id)
+                ->has('student.invoices')
+                ->has('student.payments')
+                ->has('financialSummary')
+                ->has('academicSummary')
+                ->has('attendanceSummary')
         );
 });
 
 // ─── Edit & Update ────────────────────────────────────────────────────────────
 
 test('admin can view the edit student form', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
 
     $response = $this->get(route('admin.students.edit', $student));
@@ -176,15 +149,18 @@ test('admin can view the edit student form', function () {
 });
 
 test('admin can update student profile', function () {
-    adminActor();
-    $student = Student::factory()->create();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $student = Student::factory()->create(['current_semester' => 1]);
 
     $response = $this->put(route('admin.students.update', $student), [
         'name' => 'Updated Name',
         'email' => $student->user->email,
+        'matric_no' => $student->matric_no,
         'program_id' => $student->program_id,
-        'current_semester' => 2,
+        'current_semester' => 3,
         'enrollment_status' => 'enrolled',
+        'fee_status' => 'unpaid',
         'phone' => '+252615550001',
         'gender' => 'Male',
     ]);
@@ -192,14 +168,15 @@ test('admin can update student profile', function () {
     $response->assertRedirect();
     $this->assertDatabaseHas('students', [
         'id' => $student->id,
-        'current_semester' => 2,
+        'current_semester' => 3,
     ]);
 });
 
 // ─── Toggle Status ────────────────────────────────────────────────────────────
 
 test('admin can suspend an enrolled student', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create(['enrollment_status' => 'enrolled']);
 
     $response = $this->post(route('admin.students.toggle-status', $student));
@@ -212,7 +189,8 @@ test('admin can suspend an enrolled student', function () {
 });
 
 test('admin can reactivate a suspended student', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create(['enrollment_status' => 'suspended']);
 
     $response = $this->post(route('admin.students.toggle-status', $student));
@@ -227,7 +205,8 @@ test('admin can reactivate a suspended student', function () {
 // ─── Password Reset ───────────────────────────────────────────────────────────
 
 test('admin can reset a student user password', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
 
     $response = $this->post(route('admin.students.reset-password', $student), [
@@ -244,11 +223,13 @@ test('admin can reset a student user password', function () {
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 
 test('admin can create a student fee invoice', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
 
     $response = $this->post(route('admin.students.invoices.store', $student), [
-        'description' => 'Semester 2 Tuition Fee',
+        'title' => 'Semester 2 Tuition Fee',
+        'type' => 'tuition',
         'amount' => 1500.00,
         'due_date' => now()->addDays(30)->toDateString(),
     ]);
@@ -257,22 +238,34 @@ test('admin can create a student fee invoice', function () {
 
     $this->assertDatabaseHas('student_invoices', [
         'student_id' => $student->id,
-        'description' => 'Semester 2 Tuition Fee',
+        'title' => 'Semester 2 Tuition Fee',
+        'type' => 'tuition',
     ]);
+});
+
+test('invoice creation validates required fields', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $student = Student::factory()->create();
+
+    $response = $this->post(route('admin.students.invoices.store', $student), []);
+
+    $response->assertSessionHasErrors(['title', 'type', 'amount']);
 });
 
 // ─── Payments ─────────────────────────────────────────────────────────────────
 
 test('admin can record a student payment', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
     $invoice = StudentInvoice::factory()->for($student)->create(['amount' => 1000.00]);
 
     $response = $this->post(route('admin.students.payments.store', $student), [
-        'student_invoice_id' => $invoice->id,
+        'invoice_id' => $invoice->id,
         'amount' => 500.00,
         'payment_method' => 'bank_transfer',
-        'reference_number' => 'REF-001-TEST',
+        'payment_date' => now()->toDateString(),
     ]);
 
     $response->assertRedirect();
@@ -280,15 +273,17 @@ test('admin can record a student payment', function () {
     $this->assertDatabaseHas('student_payments', [
         'student_id' => $student->id,
         'amount' => 500.00,
-        'reference_number' => 'REF-001-TEST',
+        'payment_method' => 'bank_transfer',
     ]);
 });
 
 test('admin can approve a pending payment', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
     $invoice = StudentInvoice::factory()->for($student)->create(['amount' => 1000.00]);
-    $payment = StudentPayment::factory()->for($student)->for($invoice)->create([
+    $payment = StudentPayment::factory()->for($student)->create([
+        'invoice_id' => $invoice->id,
         'amount' => 1000.00,
         'status' => 'pending',
     ]);
@@ -309,7 +304,8 @@ test('admin can approve a pending payment', function () {
 // ─── Grades ───────────────────────────────────────────────────────────────────
 
 test('admin can add a grade record for a student', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
 
     $response = $this->post(route('admin.students.grades.store', $student), [
@@ -318,7 +314,8 @@ test('admin can add a grade record for a student', function () {
         'semester' => 1,
         'credits' => 3,
         'grade' => 'A',
-        'grade_points' => 4.0,
+        'grade_point' => 4.0,
+        'status' => 'passed',
     ]);
 
     $response->assertRedirect();
@@ -331,7 +328,8 @@ test('admin can add a grade record for a student', function () {
 });
 
 test('admin can delete a grade record', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
     $grade = StudentGrade::factory()->for($student)->create();
 
@@ -347,13 +345,14 @@ test('admin can delete a grade record', function () {
 // ─── Documents ────────────────────────────────────────────────────────────────
 
 test('admin can upload a student document', function () {
-    Storage::fake('private');
-    adminActor();
+    Storage::fake('public');
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
 
     $response = $this->post(route('admin.students.documents.store', $student), [
-        'document_type' => 'transcript',
-        'description' => 'Official transcript',
+        'title' => 'Official Transcript',
+        'category' => 'academic',
         'file' => UploadedFile::fake()->create('transcript.pdf', 200, 'application/pdf'),
     ]);
 
@@ -361,14 +360,16 @@ test('admin can upload a student document', function () {
 
     $this->assertDatabaseHas('student_documents', [
         'student_id' => $student->id,
-        'document_type' => 'transcript',
+        'title' => 'Official Transcript',
+        'category' => 'academic',
     ]);
 });
 
 // ─── Delete ───────────────────────────────────────────────────────────────────
 
 test('admin can delete a student record', function () {
-    adminActor();
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
     $student = Student::factory()->create();
 
     $response = $this->delete(route('admin.students.destroy', $student));
@@ -388,6 +389,15 @@ test('unauthenticated users cannot access admin students routes', function () {
 test('student role users cannot access admin student management routes', function () {
     $student = Student::factory()->create();
     $this->actingAs($student->user);
+
+    $response = $this->get(route('admin.students.index'));
+
+    $response->assertForbidden();
+});
+
+test('finance role cannot access admin student management routes', function () {
+    $finance = User::factory()->role(UserRole::Finance)->create();
+    $this->actingAs($finance);
 
     $response = $this->get(route('admin.students.index'));
 

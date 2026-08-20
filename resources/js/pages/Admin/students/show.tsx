@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,6 @@ import { UploadDocumentModal } from './components/upload-document-modal';
 import { GenerateCertificateModal } from './components/generate-certificate-modal';
 import { AddGradeModal } from './components/add-grade-modal';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { BreadcrumbItem } from '@/types';
 import type { Student, StudentDocument, StudentGrade } from '@/types/student';
 import {
     ArrowLeft,
@@ -93,13 +91,6 @@ export default function AdminStudentsShow({
     academicSummary,
     attendanceSummary,
 }: AdminStudentsShowProps) {
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Students', href: '/admin/students' },
-        { title: student.user?.name ?? student.matric_no, href: `/admin/students/${student.id}` },
-    ];
-
-    // Modals state
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [feeModalOpen, setFeeModalOpen] = useState(false);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -113,6 +104,15 @@ export default function AdminStudentsShow({
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
     const name = student.user?.name ?? 'Unknown Student';
+
+    setLayoutProps({
+        breadcrumbs: [
+            { title: 'Dashboard', href: '/admin/dashboard' },
+            { title: 'Students', href: '/admin/students' },
+            { title: name, href: `/admin/students/${student.id}` },
+        ],
+    });
+
     const initials = name
         .split(' ')
         .map((n) => n[0])
@@ -193,7 +193,7 @@ export default function AdminStudentsShow({
     });
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title={`Student - ${name}`} />
 
             <div className="p-6 space-y-6">
@@ -1125,11 +1125,17 @@ export default function AdminStudentsShow({
                     open={deleteDocId !== null}
                     onOpenChange={(open) => !open && setDeleteDocId(null)}
                     title="Delete Document"
-                    description="Are you sure you want to delete this document file?"
                     loading={deleteProcessing}
                     onConfirm={confirmDeleteDocument}
                 />
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+AdminStudentsShow.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Students', href: '/admin/students' },
+    ],
+};

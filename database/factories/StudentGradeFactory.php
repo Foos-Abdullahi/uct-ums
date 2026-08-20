@@ -27,7 +27,8 @@ class StudentGradeFactory extends Factory
             'semester' => fake()->numberBetween(1, 8),
             'credits' => fake()->randomElement([2, 3, 4]),
             'grade' => $grade,
-            'grade_points' => $gradePoints[$grade],
+            'grade_point' => $gradePoints[$grade],
+            'status' => 'passed',
         ];
     }
 }
