@@ -86,7 +86,13 @@ export const adminNav: NavItem[] = [
         title: 'Settings',
         icon: Settings,
         items: [
-            { title: 'Users', href: '/admin/settings/users', icon: Users },
+            
+            {
+                title: 'General Settings',
+                href: '/admin/settings/system',
+                icon: Settings,
+            },
+            { title: 'User Management', href: '/admin/settings/users', icon: Users },
             {
                 title: 'Roles & Permissions',
                 href: '/admin/settings/roles',
@@ -96,21 +102,6 @@ export const adminNav: NavItem[] = [
                 title: 'Audit Log',
                 href: '/admin/settings/audit-log',
                 icon: ScrollText,
-            },
-            {
-                title: 'University',
-                href: '/admin/settings/university',
-                icon: Building2,
-            },
-            {
-                title: 'Academic',
-                href: '/admin/settings/academic',
-                icon: BookOpen,
-            },
-            {
-                title: 'System',
-                href: '/admin/settings/system',
-                icon: Settings,
             },
         ],
     },
