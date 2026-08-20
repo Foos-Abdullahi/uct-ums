@@ -29,21 +29,6 @@ export const adminNav: NavItem[] = [
         ],
     },
     {
-        title: 'Academic',
-        icon: BookOpen,
-        items: [
-            { title: 'Programs', href: '/admin/programs', icon: BookOpen },
-            { title: 'Courses', href: '/admin/courses', icon: BookOpen },
-            { title: 'Semesters', href: '/admin/semesters', icon: Calendar },
-            { title: 'Enrollments', href: '/admin/enrollments', icon: Users },
-            {
-                title: 'Transcripts',
-                href: '/admin/transcripts',
-                icon: ScrollText,
-            },
-        ],
-    },
-    {
         title: 'Lecturers',
         icon: GraduationCap,
         items: [
@@ -59,6 +44,25 @@ export const adminNav: NavItem[] = [
             },
         ],
     },
+
+
+    
+    {
+        title: 'Academic',
+        icon: BookOpen,
+        items: [
+            { title: 'Programs', href: '/admin/programs', icon: BookOpen },
+            { title: 'Courses', href: '/admin/courses', icon: BookOpen },
+            { title: 'Semesters', href: '/admin/semesters', icon: Calendar },
+            { title: 'Enrollments', href: '/admin/enrollments', icon: Users },
+            {
+                title: 'Transcripts',
+                href: '/admin/transcripts',
+                icon: ScrollText,
+            },
+        ],
+    },
+
     {
         title: 'Finance',
         icon: Wallet,

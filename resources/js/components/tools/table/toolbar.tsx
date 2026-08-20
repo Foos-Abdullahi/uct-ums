@@ -318,7 +318,7 @@ export function DataTableToolbar<TData>({
                                 ) => {
                                     handleSearch(event.target.value);
                                 }}
-                                className="h-9 rounded-sm bg-white pr-8 pl-8 text-lg text-foreground placeholder:text-xs"
+                                className="h-9 rounded-sm  pr-8 pl-8 text-lg text-foreground placeholder:text-xs"
                             />
                             {searchInput && (
                                 <button
