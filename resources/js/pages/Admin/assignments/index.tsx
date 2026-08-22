@@ -51,9 +51,6 @@ export default function AdminAssignmentsIndex({
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
-    const [formModalOpen, setFormModalOpen] = useState(false);
-    const [editingAssignment, setEditingAssignment] = useState<CourseAssignment | null>(null);
-
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
             ...filters,
@@ -96,21 +93,10 @@ export default function AdminAssignmentsIndex({
         });
     };
 
-    const handleEdit = (assignment: CourseAssignment) => {
-        setEditingAssignment(assignment);
-        setFormModalOpen(true);
-    };
-
-    const handleCreate = () => {
-        setEditingAssignment(null);
-        setFormModalOpen(true);
-    };
-
- 
-
+    // Columns now use router.visit for edit and delete via callbacks
     const columns = getAssignmentColumns({
         onDelete: handleDelete,
-        onEdit: handleEdit,
+        // Edit is handled by the column's internal router.visit, so we don't need a local callback.
     });
 
     const serverFilters: DataTableServerFilter[] = [
@@ -194,9 +180,12 @@ export default function AdminAssignmentsIndex({
                         </p>
                     </div>
 
-                    <Button size="sm" onClick={handleCreate}>
-                        <Plus className="h-4 w-4 mr-1.5" />
-                        New Assignment
+                    {/* Use Link for full-page creation */}
+                    <Button size="sm" asChild>
+                        <Link href="/admin/assignments/create">
+                            <Plus className="h-4 w-4 mr-1.5" />
+                            New Assignment
+                        </Link>
                     </Button>
                 </div>
 
