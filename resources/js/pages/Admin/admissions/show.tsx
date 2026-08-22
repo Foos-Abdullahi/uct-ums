@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { Head, Link, router, setLayoutProps } from '@inertiajs/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Head, Link, router } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AdmissionStatusBadge } from './components/admission-status-badge';
 import { ReviewAdmissionModal } from './components/review-admission-modal';
 import { ConvertToStudentModal } from './components/convert-to-student-modal';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import type { BreadcrumbItem } from '@/types';
 import type { Admission } from '@/types/admission';
 import {
     ArrowLeft,
     CheckSquare,
     UserCheck,
-    Trash2,
-    BookOpen,
-    User,
-    Calendar,
-    FileText,
     ExternalLink,
+    Trash2,
+    User,
+    BookOpen,
     ClipboardCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,15 +26,9 @@ interface AdminAdmissionsShowProps {
     admission: Admission;
 }
 
-export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowProps) {
-    setLayoutProps({
-        breadcrumbs: [
-            { title: 'Dashboard', href: '/admin/dashboard' },
-            { title: 'Admissions', href: '/admin/admissions' },
-            { title: admission.application_no, href: `/admin/admissions/${admission.id}` },
-        ],
-    });
-
+export default function AdminAdmissionsShow({
+    admission,
+}: AdminAdmissionsShowProps) {
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [convertModalOpen, setConvertModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -69,16 +63,9 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
         <>
             <Head title={`Application - ${admission.application_no}`} />
 
-            <div className="p-6 max-w-5xl mx-auto space-y-6">
+            <div className="p-6 space-y-6">
                 {/* Header Back & Actions */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <Button variant="ghost" size="sm" asChild className="w-fit gap-1 text-muted-foreground hover:text-foreground">
-                        <Link href="/admin/admissions">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Admissions
-                        </Link>
-                    </Button>
-
                     <div className="flex flex-wrap items-center gap-2">
                         {!isEnrolled && (
                             <Button
@@ -122,10 +109,14 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                     </div>
                 </div>
 
-                {/* Main Profile Header Banner */}
-                <Card className="overflow-hidden border-border/40 bg-card rounded-sm shadow-xs">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                {/* Main Profile Header Banner — UctPanelCard */}
+                <UctPanelCard
+                    type="default"
+                    className="overflow-hidden"
+                    contentClassName="pt-0"
+                    headerClassName="border-b-0 pb-0"
+                    title={
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
                             <div className="flex items-start md:items-center gap-4">
                                 <Avatar className="h-16 w-16 border-2 border-primary/20 shrink-0">
                                     <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">
@@ -135,16 +126,16 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
 
                                 <div className="space-y-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h1 className="text-xl font-bold text-foreground tracking-tight">
+                                        <span className="text-xl font-bold text-foreground tracking-tight">
                                             {fullName}
-                                        </h1>
+                                        </span>
                                         <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded bg-muted text-foreground border border-border/60">
                                             {admission.application_no}
                                         </span>
                                         <AdmissionStatusBadge status={admission.status} />
                                     </div>
 
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-normal">
                                         <span>{admission.email}</span>
                                         {admission.phone && <span>• {admission.phone}</span>}
                                         <span>• Applied: {String(admission.application_date).split('T')[0]}</span>
@@ -152,7 +143,7 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md">
+                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md shrink-0">
                                 <div className="text-left md:text-right">
                                     <p className="text-[10px] uppercase font-semibold text-muted-foreground">Target Program</p>
                                     <p className="text-xs font-bold text-foreground max-w-[200px] truncate">
@@ -162,20 +153,18 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    }
+                />
 
                 {/* Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Applicant Information */}
-                    <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <User className="h-4 w-4 text-primary" />
-                                Applicant Information
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="divide-y divide-border/30 text-xs">
+                    <UctPanelCard
+                        title="Applicant Personal Details"
+                        icon={User}
+                        type="default"
+                    >
+                        <div className="divide-y divide-border/30 text-xs">
                             <div className="flex justify-between py-2">
                                 <span className="text-muted-foreground">Full Name</span>
                                 <span className="font-medium text-foreground">{fullName}</span>
@@ -202,19 +191,17 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                                 <span className="text-muted-foreground">Address</span>
                                 <span className="font-medium text-foreground text-right">{admission.address || '—'}</span>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </UctPanelCard>
 
                     {/* Academic Background & Decision */}
                     <div className="space-y-6">
-                        <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <BookOpen className="h-4 w-4 text-primary" />
-                                    Academic Qualification & Program
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="divide-y divide-border/30 text-xs">
+                        <UctPanelCard
+                            title="Academic Qualification & Program"
+                            icon={BookOpen}
+                            type="default"
+                        >
+                            <div className="divide-y divide-border/30 text-xs">
                                 <div className="flex justify-between py-2">
                                     <span className="text-muted-foreground">Chosen Program</span>
                                     <span className="font-medium text-foreground">{admission.program?.name ?? '—'}</span>
@@ -233,42 +220,29 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                                         {admission.previous_gpa ? Number(admission.previous_gpa).toFixed(2) : '—'} / 4.00
                                     </span>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </UctPanelCard>
 
                         {/* Review Evaluation Card */}
-                        <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <ClipboardCheck className="h-4 w-4 text-primary" />
-                                    Review Decision & Notes
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-xs">
+                        <UctPanelCard
+                            title="Review Decision & Evaluation Notes"
+                            icon={ClipboardCheck}
+                            type={admission.status === 'rejected' ? 'delete' : admission.status === 'approved' ? 'success' : 'default'}
+                        >
+                            <div className="space-y-3 text-xs">
                                 <div className="flex items-center justify-between">
                                     <span className="text-muted-foreground">Application Status</span>
                                     <AdmissionStatusBadge status={admission.status} />
                                 </div>
-                                <div className="p-3 bg-muted/30 rounded border border-border/40">
-                                    <p className="text-[11px] font-medium text-muted-foreground uppercase mb-1">
-                                        Evaluation Notes
-                                    </p>
-                                    <p className="text-foreground leading-relaxed">
-                                        {admission.review_notes || 'No review notes entered yet.'}
+
+                                <div className="space-y-1.5 pt-2 border-t border-border/40">
+                                    <span className="text-muted-foreground font-medium">Evaluation Notes:</span>
+                                    <p className="p-3 rounded bg-muted/50 border border-border/40 text-foreground italic leading-relaxed">
+                                        {admission.review_notes || admission.notes || 'No review notes provided yet.'}
                                     </p>
                                 </div>
-                                {admission.notes && (
-                                    <div className="p-3 bg-muted/20 rounded border border-border/30">
-                                        <p className="text-[11px] font-medium text-muted-foreground uppercase mb-1">
-                                            Applicant Statement
-                                        </p>
-                                        <p className="text-foreground italic">
-                                            "{admission.notes}"
-                                        </p>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </UctPanelCard>
                     </div>
                 </div>
 
@@ -290,6 +264,7 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
                     onOpenChange={setDeleteModalOpen}
                     title="Delete Application"
                     description="Are you sure you want to permanently delete this application record?"
+                    itemName={`${fullName} (${admission.application_no})`}
                     loading={deleteProcessing}
                     onConfirm={confirmDelete}
                 />
@@ -298,9 +273,12 @@ export default function AdminAdmissionsShow({ admission }: AdminAdmissionsShowPr
     );
 }
 
-AdminAdmissionsShow.layout = {
-    breadcrumbs: [
+AdminAdmissionsShow.layout = (page: any) => {
+    const admission = page?.props?.admission;
+    const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/admin/dashboard' },
         { title: 'Admissions', href: '/admin/admissions' },
-    ],
+        { title: admission?.application_no ?? 'Application', href: `/admin/admissions/${admission?.id ?? ''}` },
+    ];
+    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
 };

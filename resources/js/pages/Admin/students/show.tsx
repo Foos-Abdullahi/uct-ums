@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import { StudentStatusBadge } from './components/student-status-badge';
 import { StudentFeeBadge } from './components/student-fee-badge';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { ResetPasswordModal } from './components/reset-password-modal';
 import { ManageFeeModal } from './components/manage-fee-modal';
 import { RecordPaymentModal } from './components/record-payment-modal';
@@ -199,13 +200,6 @@ export default function AdminStudentsShow({
             <div className="p-6 space-y-6">
                 {/* Back Button & Actions */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <Button variant="ghost" size="sm" asChild className="w-fit gap-1 text-muted-foreground hover:text-foreground">
-                        <Link href="/admin/students">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Students
-                        </Link>
-                    </Button>
-
                     <div className="flex flex-wrap items-center gap-2">
                         <Button
                             variant={isSuspended ? 'outline' : 'destructive'}
@@ -243,10 +237,14 @@ export default function AdminStudentsShow({
                     </div>
                 </div>
 
-                {/* Profile Header Banner */}
-                <Card className="overflow-hidden border-border/40 bg-card rounded-sm shadow-xs">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                {/* Profile Header Banner — UctPanelCard */}
+                <UctPanelCard
+                    type="default"
+                    className="overflow-hidden"
+                    contentClassName="pt-0"
+                    headerClassName="border-b-0 pb-0"
+                    title={
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
                             <div className="flex items-start md:items-center gap-4">
                                 <Avatar className="h-16 w-16 border-2 border-primary/20 shrink-0">
                                     <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">
@@ -256,17 +254,14 @@ export default function AdminStudentsShow({
 
                                 <div className="space-y-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h1 className="text-xl font-bold text-foreground tracking-tight">
-                                            {name}
-                                        </h1>
+                                        <span className="text-xl font-bold text-foreground tracking-tight">{name}</span>
                                         <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded bg-muted text-foreground border border-border/60">
                                             {student.matric_no}
                                         </span>
                                         <StudentStatusBadge status={student.enrollment_status} />
                                         <StudentFeeBadge status={student.fee_status} />
                                     </div>
-
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-normal">
                                         <span>{student.user?.email}</span>
                                         {student.phone && <span>• {student.phone}</span>}
                                         <span>• {student.program?.name ?? 'No Program Assigned'}</span>
@@ -275,8 +270,8 @@ export default function AdminStudentsShow({
                                 </div>
                             </div>
 
-                            {/* Quick Stats Pill */}
-                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md self-stretch md:self-auto justify-between md:justify-end">
+                            {/* Quick Stats */}
+                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md self-stretch md:self-auto justify-between md:justify-end shrink-0">
                                 <div className="text-center px-2">
                                     <p className="text-[10px] uppercase font-semibold text-muted-foreground">CGPA</p>
                                     <p className="text-base font-bold text-foreground">
@@ -299,8 +294,8 @@ export default function AdminStudentsShow({
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    }
+                />
 
                 {/* 8 Tab Navigation Panels */}
                 <Tabs defaultValue="overview" className="space-y-4">
@@ -329,16 +324,15 @@ export default function AdminStudentsShow({
 
                     {/* Tab 1: Overview */}
                     <TabsContent value="overview" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Personal Information Card */}
-                            <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                        <User className="h-4 w-4 text-primary" />
-                                        Personal Information
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="divide-y divide-border/30 text-xs">
+                            <UctPanelCard
+                                title="Personal Information"
+                                description="Contact details, matriculation ID, and identity."
+                                icon={User}
+                                type="default"
+                            >
+                                <div className="divide-y divide-border/30 text-xs">
                                     <div className="flex justify-between py-2">
                                         <span className="text-muted-foreground">Full Name</span>
                                         <span className="font-medium text-foreground">{name}</span>
@@ -371,19 +365,18 @@ export default function AdminStudentsShow({
                                         <span className="text-muted-foreground">Enrollment Date</span>
                                         <span className="font-medium text-foreground">{student.enrollment_date ? String(student.enrollment_date).split('T')[0] : '—'}</span>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </UctPanelCard>
 
                             {/* Academic & Financial Summaries */}
-                            <div className="space-y-4">
-                                <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                            <BookOpen className="h-4 w-4 text-primary" />
-                                            Academic Program Summary
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="divide-y divide-border/30 text-xs">
+                            <div className="space-y-6">
+                                <UctPanelCard
+                                    title="Academic Program Summary"
+                                    description="Degree program, semester level, and GPA."
+                                    icon={BookOpen}
+                                    type="default"
+                                >
+                                    <div className="divide-y divide-border/30 text-xs">
                                         <div className="flex justify-between py-2">
                                             <span className="text-muted-foreground">Degree Program</span>
                                             <span className="font-medium text-foreground">{student.program?.name ?? '—'}</span>
@@ -404,17 +397,16 @@ export default function AdminStudentsShow({
                                             <span className="text-muted-foreground">Credits Completed</span>
                                             <span className="font-medium text-foreground">{academicSummary.completed_credits} Credits</span>
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </UctPanelCard>
 
-                                <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                            <CreditCard className="h-4 w-4 text-emerald-600" />
-                                            Financial Balance Summary
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="divide-y divide-border/30 text-xs">
+                                <UctPanelCard
+                                    title="Financial Balance Summary"
+                                    description="Tuition fees, payments, and balance standing."
+                                    icon={CreditCard}
+                                    type={financialSummary.total_outstanding > 0 ? "warning" : "success"}
+                                >
+                                    <div className="divide-y divide-border/30 text-xs">
                                         <div className="flex justify-between py-2">
                                             <span className="text-muted-foreground">Total Invoiced Fees</span>
                                             <span className="font-medium text-foreground">${financialSummary.total_invoiced.toFixed(2)}</span>
@@ -431,8 +423,8 @@ export default function AdminStudentsShow({
                                             <span className="text-muted-foreground">Fee Clearance Status</span>
                                             <StudentFeeBadge status={student.fee_status} />
                                         </div>
-                                    </CardContent>
-                                </Card>
+                                    </div>
+                                </UctPanelCard>
                             </div>
                         </div>
                     </TabsContent>
@@ -1008,17 +1000,13 @@ export default function AdminStudentsShow({
 
                     {/* Tab 8: Account */}
                     <TabsContent value="account" className="space-y-4">
-                        <Card className="rounded-sm border-border/40 bg-card shadow-xs">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <Shield className="h-4 w-4 text-primary" />
-                                    User Authentication & Account Management
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Manage credentials and security controls for this student account.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-xs">
+                        <UctPanelCard
+                            title="User Authentication & Account Security"
+                            description="Manage login credentials and security controls for this student account."
+                            icon={Shield}
+                            type="default"
+                        >
+                            <div className="space-y-4 text-xs">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="p-3 bg-muted/30 rounded border border-border/40 space-y-2">
                                         <p className="text-muted-foreground">Login Email</p>
@@ -1066,8 +1054,8 @@ export default function AdminStudentsShow({
                                         )}
                                     </Button>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </UctPanelCard>
                     </TabsContent>
                 </Tabs>
 
