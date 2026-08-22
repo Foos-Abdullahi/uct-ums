@@ -2,6 +2,8 @@
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdmissionController;
+use App\Http\Controllers\Admin\AssignmentController;
+use App\Http\Controllers\Admin\LecturerController;
 use App\Http\Controllers\Admin\StudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +45,36 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
             Route::patch('/{admission}/status', [AdmissionController::class, 'updateStatus'])->name('update-status');
             Route::post('/{admission}/convert', [AdmissionController::class, 'convertToStudent'])->name('convert');
             Route::delete('/{admission}', [AdmissionController::class, 'destroy'])->name('destroy');
+        });
+
+        // Lecturers Management
+        Route::prefix('lecturers')->name('lecturers.')->group(function () {
+            Route::get('/', [LecturerController::class, 'index'])->name('index');
+            Route::get('/create', [LecturerController::class, 'create'])->name('create');
+            Route::post('/', [LecturerController::class, 'store'])->name('store');
+            Route::get('/{lecturer}', [LecturerController::class, 'show'])->name('show');
+            Route::get('/{lecturer}/edit', [LecturerController::class, 'edit'])->name('edit');
+            Route::put('/{lecturer}', [LecturerController::class, 'update'])->name('update');
+            Route::delete('/{lecturer}', [LecturerController::class, 'destroy'])->name('destroy');
+
+            // Lecturer profile actions
+            Route::post('/{lecturer}/toggle-status', [LecturerController::class, 'toggleStatus'])->name('toggle-status');
+            Route::post('/{lecturer}/reset-password', [LecturerController::class, 'resetPassword'])->name('reset-password');
+            Route::post('/{lecturer}/assign-course', [LecturerController::class, 'assignCourse'])->name('assign-course');
+        });
+
+        // Teaching & Course Assignments Management
+        Route::prefix('assignments')->name('assignments.')->group(function () {
+            Route::get('/', [AssignmentController::class, 'index'])->name('index');
+            Route::get('/create', [AssignmentController::class, 'create'])->name('create');
+            Route::post('/', [AssignmentController::class, 'store'])->name('store');
+            Route::get('/{assignment}', [AssignmentController::class, 'show'])->name('show');
+            Route::get('/{assignment}/edit', [AssignmentController::class, 'edit'])->name('edit');
+            Route::put('/{assignment}', [AssignmentController::class, 'update'])->name('update');
+            Route::delete('/{assignment}', [AssignmentController::class, 'destroy'])->name('destroy');
+
+            // Assignment actions
+            Route::patch('/{assignment}/status', [AssignmentController::class, 'updateStatus'])->name('status');
         });
 
         Route::inertia('users', 'Admin/users/index')->name('users.index');

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\StaffFactory;
+use Database\Factories\LecturerFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,25 +10,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Staff extends Model
+class Lecturer extends Model
 {
-    /** @use HasFactory<StaffFactory> */
+    /** @use HasFactory<LecturerFactory> */
     use HasFactory, SoftDeletes;
-
-    /**
-     * @var string
-     */
-    protected $table = 'staff';
 
     /**
      * @var list<string>
      */
     protected $fillable = [
         'user_id',
-        'staff_no',
+        'lecturer_no',
         'department',
         'faculty',
-        'position',
+        'designation',
         'qualification',
         'specialization',
         'phone',
@@ -66,13 +61,13 @@ class Staff extends Model
      */
     public function courseAssignments(): HasMany
     {
-        return $this->hasMany(CourseAssignment::class, 'staff_id');
+        return $this->hasMany(CourseAssignment::class, 'lecturer_id');
     }
 
     /**
-     * Scope a query to search by name, email, staff_no, or specialization.
+     * Scope a query to search by name, email, lecturer_no, or specialization.
      *
-     * @param  Builder<Staff>  $query
+     * @param  Builder<Lecturer>  $query
      */
     public function scopeSearch(Builder $query, ?string $search): void
     {
@@ -81,12 +76,12 @@ class Staff extends Model
         }
 
         $query->where(function (Builder $q) use ($search) {
-            $q->where('staff_no', 'like', "%{$search}%")
+            $q->where('lecturer_no', 'like', "%{$search}%")
                 ->orWhere('department', 'like', "%{$search}%")
                 ->orWhere('faculty', 'like', "%{$search}%")
                 ->orWhere('specialization', 'like', "%{$search}%")
                 ->orWhere('qualification', 'like', "%{$search}%")
-                ->orWhere('position', 'like', "%{$search}%")
+                ->orWhere('designation', 'like', "%{$search}%")
                 ->orWhereHas('user', function (Builder $userQuery) use ($search) {
                     $userQuery->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%");
@@ -97,7 +92,7 @@ class Staff extends Model
     /**
      * Scope a query to filter by department.
      *
-     * @param  Builder<Staff>  $query
+     * @param  Builder<Lecturer>  $query
      */
     public function scopeFilterDepartment(Builder $query, ?string $department): void
     {
@@ -109,7 +104,7 @@ class Staff extends Model
     /**
      * Scope a query to filter by faculty.
      *
-     * @param  Builder<Staff>  $query
+     * @param  Builder<Lecturer>  $query
      */
     public function scopeFilterFaculty(Builder $query, ?string $faculty): void
     {
@@ -121,7 +116,7 @@ class Staff extends Model
     /**
      * Scope a query to filter by employment status.
      *
-     * @param  Builder<Staff>  $query
+     * @param  Builder<Lecturer>  $query
      */
     public function scopeFilterEmploymentStatus(Builder $query, ?string $status): void
     {
@@ -133,7 +128,7 @@ class Staff extends Model
     /**
      * Scope a query to filter by contract type.
      *
-     * @param  Builder<Staff>  $query
+     * @param  Builder<Lecturer>  $query
      */
     public function scopeFilterContractType(Builder $query, ?string $contractType): void
     {
