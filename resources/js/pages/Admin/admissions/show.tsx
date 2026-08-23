@@ -64,94 +64,75 @@ export default function AdminAdmissionsShow({
             <Head title={`Application - ${admission.application_no}`} />
 
             <div className="p-6 space-y-6">
-                {/* Header Back & Actions */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {!isEnrolled && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setReviewModalOpen(true)}
-                            >
-                                <CheckSquare className="h-3.5 w-3.5 mr-1.5" />
-                                Review Status
-                            </Button>
-                        )}
-
-                        {!isEnrolled && admission.status === 'approved' && (
-                            <Button
-                                size="sm"
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
-                                onClick={() => setConvertModalOpen(true)}
-                            >
-                                <UserCheck className="h-3.5 w-3.5 mr-1.5" />
-                                Convert to Student
-                            </Button>
-                        )}
-
-                        {isEnrolled && admission.student_id && (
-                            <Button size="sm" asChild>
-                                <Link href={`/admin/students/${admission.student_id}`}>
-                                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                                    View Student Profile
-                                </Link>
-                            </Button>
-                        )}
-
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                            onClick={() => setDeleteModalOpen(true)}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
-
                 {/* Main Profile Header Banner — UctPanelCard */}
                 <UctPanelCard
                     type="default"
                     className="overflow-hidden"
-                    contentClassName="pt-0"
-                    headerClassName="border-b-0 pb-0"
                     title={
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
-                            <div className="flex items-start md:items-center gap-4">
-                                <Avatar className="h-16 w-16 border-2 border-primary/20 shrink-0">
-                                    <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">
-                                        {initials}
-                                    </AvatarFallback>
-                                </Avatar>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                            <Avatar className="h-14 w-14 border-2 border-primary/20 shrink-0">
+                                <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
+                                    {initials}
+                                </AvatarFallback>
+                            </Avatar>
 
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xl font-bold text-foreground tracking-tight">
-                                            {fullName}
-                                        </span>
-                                        <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded bg-muted text-foreground border border-border/60">
-                                            {admission.application_no}
-                                        </span>
-                                        <AdmissionStatusBadge status={admission.status} />
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-normal">
-                                        <span>{admission.email}</span>
-                                        {admission.phone && <span>• {admission.phone}</span>}
-                                        <span>• Applied: {String(admission.application_date).split('T')[0]}</span>
-                                    </div>
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-lg font-bold text-foreground tracking-tight">
+                                        {fullName}
+                                    </span>
+                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-muted text-foreground border border-border/60">
+                                        {admission.application_no}
+                                    </span>
+                                    <AdmissionStatusBadge status={admission.status} />
                                 </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {admission.email} {admission.phone ? `• ${admission.phone}` : ''}
+                                </p>
                             </div>
+                        </div>
+                    }
+                    actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            {!isEnrolled && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setReviewModalOpen(true)}
+                                >
+                                    <CheckSquare className="h-3.5 w-3.5 mr-1.5" />
+                                    Review Status
+                                </Button>
+                            )}
 
-                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md shrink-0">
-                                <div className="text-left md:text-right">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Target Program</p>
-                                    <p className="text-xs font-bold text-foreground max-w-[200px] truncate">
-                                        {admission.program?.name ?? 'Unassigned'}
-                                    </p>
-                                    <p className="text-[11px] text-muted-foreground">{admission.entry_semester || 'Semester 1'}</p>
-                                </div>
-                            </div>
+                            {!isEnrolled && admission.status === 'approved' && (
+                                <Button
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-xs"
+                                    onClick={() => setConvertModalOpen(true)}
+                                >
+                                    <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                                    Convert to Student
+                                </Button>
+                            )}
+
+                            {isEnrolled && admission.student_id && (
+                                <Button size="sm" asChild>
+                                    <Link href={`/admin/students/${admission.student_id}`}>
+                                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                                        View Student Profile
+                                    </Link>
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setDeleteModalOpen(true)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                Delete
+                            </Button>
                         </div>
                     }
                 />
@@ -159,7 +140,7 @@ export default function AdminAdmissionsShow({
                 {/* Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Applicant Information */}
-                    <UctPanelCard
+                    <UctPanelCard className='h-fit'
                         title="Applicant Personal Details"
                         icon={User}
                         type="default"

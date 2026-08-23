@@ -91,84 +91,49 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
             <Head title={`Assignment - ${courseCode} / ${lecturerName}`} />
 
             <div className="p-6 space-y-6">
-                {/* Back & Actions */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button size="sm" asChild>
-                            <Link href={`/admin/assignments/${assignment.id}/edit`}>
-                                <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                                Edit Assignment
-                            </Link>
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => setDeleteModalOpen(true)}
-                        >
-                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                            Delete
-                        </Button>
-                    </div>
-                </div>
-
                 {/* Header Banner */}
                 <UctPanelCard
                     type="default"
                     className="overflow-hidden"
-                    contentClassName="pt-0"
-                    headerClassName="border-b-0 pb-0"
                     title={
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
-                            <div className="flex items-start md:items-center gap-4">
-                                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                    <BookOpen className="h-8 w-8" />
-                                </div>
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xl font-bold text-foreground tracking-tight">
-                                            {courseCode}
-                                        </span>
-                                        <span className="text-sm font-medium text-muted-foreground">
-                                            {courseName}
-                                        </span>
-                                        <AssignmentStatusBadge status={assignment.status} />
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                        <span>Lecturer: {lecturerName}</span>
-                                        <span>• {assignment.academic_year}</span>
-                                        <span>• {assignment.semester}</span>
-                                        <span>• {assignment.section}</span>
-                                        <span>• <AssignmentRoleBadge role={assignment.role} /></span>
-                                    </div>
-                                </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 border border-primary/20">
+                                <BookOpen className="h-7 w-7" />
                             </div>
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-lg font-bold text-foreground tracking-tight">
+                                        {courseCode}
+                                    </span>
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {courseName}
+                                    </span>
+                                    <AssignmentStatusBadge status={assignment.status} />
+                                    <AssignmentRoleBadge role={assignment.role} />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Lecturer: <strong className="text-foreground font-semibold">{lecturerName}</strong> • {assignment.academic_year} ({assignment.semester})
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button size="sm" asChild>
+                                <Link href={`/admin/assignments/${assignment.id}/edit`}>
+                                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                                    Edit Assignment
+                                </Link>
+                            </Button>
 
-                            {/* Quick Stats */}
-                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md self-stretch md:self-auto justify-between md:justify-end shrink-0">
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Hours</p>
-                                    <p className="text-base font-bold text-foreground">{assignment.workload_hours}</p>
-                                </div>
-                                <div className="h-8 w-px bg-border/60" />
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Room</p>
-                                    <p className="text-base font-bold text-foreground truncate max-w-[100px]">
-                                        {assignment.room || '—'}
-                                    </p>
-                                </div>
-                                {assignment.schedule_day && assignment.schedule_time && (
-                                    <>
-                                        <div className="h-8 w-px bg-border/60" />
-                                        <div className="text-center px-2">
-                                            <p className="text-[10px] uppercase font-semibold text-muted-foreground">Schedule</p>
-                                            <p className="text-base font-bold text-foreground text-xs">
-                                                {assignment.schedule_day} {assignment.schedule_time}
-                                            </p>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setDeleteModalOpen(true)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                Delete
+                            </Button>
                         </div>
                     }
                 />

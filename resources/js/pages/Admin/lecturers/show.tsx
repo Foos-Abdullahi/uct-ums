@@ -34,6 +34,7 @@ import {
     MapPin,
     FileText,
     GraduationCap,
+    Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
@@ -92,100 +93,76 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
             <Head title={`Lecturer - ${name}`} />
 
             <div className="p-6 space-y-6">
-                {/* Back Button & Actions */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                            variant={isInactive ? 'outline' : 'destructive'}
-                            size="sm"
-                            onClick={handleToggleStatus}
-                        >
-                            {isInactive ? (
-                                <>
-                                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
-                                    Activate Account
-                                </>
-                            ) : (
-                                <>
-                                    <Ban className="h-3.5 w-3.5 mr-1.5" />
-                                    Deactivate Account
-                                </>
-                            )}
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPasswordModalOpen(true)}
-                        >
-                            <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                            Reset Password
-                        </Button>
-
-                        <Button size="sm" asChild>
-                            <Link href={`/admin/lecturers/${lecturer.id}/edit`}>
-                                <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                                Edit Lecturer
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-
                 {/* Profile Header Banner */}
                 <UctPanelCard
                     type="default"
                     className="overflow-hidden"
-                    contentClassName="pt-0"
-                    headerClassName="border-b-0 pb-0"
                     title={
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
-                            <div className="flex items-start md:items-center gap-4">
-                                <Avatar className="h-16 w-16 border-2 border-primary/20 shrink-0">
-                                    <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">
-                                        {initials}
-                                    </AvatarFallback>
-                                </Avatar>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                            <Avatar className="h-14 w-14 border-2 border-primary/20 shrink-0">
+                                <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
+                                    {initials}
+                                </AvatarFallback>
+                            </Avatar>
 
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xl font-bold text-foreground tracking-tight">{name}</span>
-                                        <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded bg-muted text-foreground border border-border/60">
-                                            {lecturer.lecturer_no}
-                                        </span>
-                                        <LecturerStatusBadge status={lecturer.employment_status} />
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                        <span>{lecturer.user?.email}</span>
-                                        {lecturer.phone && <span>• {lecturer.phone}</span>}
-                                        <span>• {lecturer.department}</span>
-                                        <span>• {lecturer.designation}</span>
-                                    </div>
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-lg font-bold text-foreground tracking-tight">{name}</span>
+                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-muted text-foreground border border-border/60">
+                                        {lecturer.lecturer_no}
+                                    </span>
+                                    <LecturerStatusBadge status={lecturer.employment_status} />
                                 </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {lecturer.designation ? `${lecturer.designation} • ` : ''}{lecturer.department}
+                                </p>
                             </div>
+                        </div>
+                    }
+                    actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                variant={isInactive ? 'outline' : 'secondary'}
+                                size="sm"
+                                onClick={handleToggleStatus}
+                            >
+                                {isInactive ? (
+                                    <>
+                                        <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                                        Activate
+                                    </>
+                                ) : (
+                                    <>
+                                        <Ban className="h-3.5 w-3.5 mr-1.5" />
+                                        Deactivate
+                                    </>
+                                )}
+                            </Button>
 
-                            {/* Quick Stats */}
-                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md self-stretch md:self-auto justify-between md:justify-end shrink-0">
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Contract</p>
-                                    <p className="text-base font-bold text-foreground capitalize">
-                                        {lecturer.contract_type?.replace('_', ' ') || '—'}
-                                    </p>
-                                </div>
-                                <div className="h-8 w-px bg-border/60" />
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Hire Date</p>
-                                    <p className="text-base font-bold text-foreground">
-                                        {lecturer.hire_date ? String(lecturer.hire_date).split('T')[0] : '—'}
-                                    </p>
-                                </div>
-                                <div className="h-8 w-px bg-border/60" />
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Office</p>
-                                    <p className="text-base font-bold text-foreground truncate max-w-[100px]">
-                                        {lecturer.office_location || '—'}
-                                    </p>
-                                </div>
-                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPasswordModalOpen(true)}
+                            >
+                                <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                                Password
+                            </Button>
+
+                            <Button size="sm" asChild>
+                                <Link href={`/admin/lecturers/${lecturer.id}/edit`}>
+                                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                                    Edit Lecturer
+                                </Link>
+                            </Button>
+
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setDeleteModalOpen(true)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                Delete
+                            </Button>
                         </div>
                     }
                 />

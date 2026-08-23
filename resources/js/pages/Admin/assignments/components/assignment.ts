@@ -21,6 +21,7 @@ export interface CourseAssignment {
         id: number;
         user: { name: string; email: string };
         lecturer_no: string;
+        department?: string;
     };
     course?: {
         id: number;

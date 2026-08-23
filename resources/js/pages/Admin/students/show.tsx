@@ -198,101 +198,68 @@ export default function AdminStudentsShow({
             <Head title={`Student - ${name}`} />
 
             <div className="p-6 space-y-6">
-                {/* Back Button & Actions */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button
-                            variant={isSuspended ? 'outline' : 'destructive'}
-                            size="sm"
-                            onClick={handleToggleStatus}
-                        >
-                            {isSuspended ? (
-                                <>
-                                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
-                                    Activate Account
-                                </>
-                            ) : (
-                                <>
-                                    <Ban className="h-3.5 w-3.5 mr-1.5" />
-                                    Suspend Account
-                                </>
-                            )}
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPasswordModalOpen(true)}
-                        >
-                            <KeyRound className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                            Reset Password
-                        </Button>
-
-                        <Button size="sm" asChild>
-                            <Link href={`/admin/students/${student.id}/edit`}>
-                                <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                                Edit Student
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
-
                 {/* Profile Header Banner — UctPanelCard */}
                 <UctPanelCard
                     type="default"
                     className="overflow-hidden"
-                    contentClassName="pt-0"
-                    headerClassName="border-b-0 pb-0"
                     title={
-                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full">
-                            <div className="flex items-start md:items-center gap-4">
-                                <Avatar className="h-16 w-16 border-2 border-primary/20 shrink-0">
-                                    <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">
-                                        {initials}
-                                    </AvatarFallback>
-                                </Avatar>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                            <Avatar className="h-14 w-14 border-2 border-primary/20 shrink-0">
+                                <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
+                                    {initials}
+                                </AvatarFallback>
+                            </Avatar>
 
-                                <div className="space-y-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xl font-bold text-foreground tracking-tight">{name}</span>
-                                        <span className="font-mono text-xs font-semibold px-2.5 py-0.5 rounded bg-muted text-foreground border border-border/60">
-                                            {student.matric_no}
-                                        </span>
-                                        <StudentStatusBadge status={student.enrollment_status} />
-                                        <StudentFeeBadge status={student.fee_status} />
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-normal">
-                                        <span>{student.user?.email}</span>
-                                        {student.phone && <span>• {student.phone}</span>}
-                                        <span>• {student.program?.name ?? 'No Program Assigned'}</span>
-                                        <span>• Semester {student.current_semester ?? 1}</span>
-                                    </div>
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-lg font-bold text-foreground tracking-tight">{name}</span>
+                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-muted text-foreground border border-border/60">
+                                        {student.matric_no}
+                                    </span>
+                                    <StudentStatusBadge status={student.enrollment_status} />
+                                    <StudentFeeBadge status={student.fee_status} />
                                 </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {student.program?.name ?? 'No Program Assigned'} • Semester {student.current_semester ?? 1}
+                                </p>
                             </div>
+                        </div>
+                    }
+                    actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                variant={isSuspended ? 'outline' : 'secondary'}
+                                size="sm"
+                                onClick={handleToggleStatus}
+                            >
+                                {isSuspended ? (
+                                    <>
+                                        <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                                        Activate
+                                    </>
+                                ) : (
+                                    <>
+                                        <Ban className="h-3.5 w-3.5 mr-1.5" />
+                                        Suspend
+                                    </>
+                                )}
+                            </Button>
 
-                            {/* Quick Stats */}
-                            <div className="flex items-center gap-3 bg-muted/40 border border-border/40 p-3 rounded-md self-stretch md:self-auto justify-between md:justify-end shrink-0">
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">CGPA</p>
-                                    <p className="text-base font-bold text-foreground">
-                                        {student.gpa ? Number(student.gpa).toFixed(2) : '0.00'}
-                                    </p>
-                                </div>
-                                <div className="h-8 w-px bg-border/60" />
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Credits</p>
-                                    <p className="text-base font-bold text-foreground">
-                                        {academicSummary.completed_credits} / {academicSummary.total_credits}
-                                    </p>
-                                </div>
-                                <div className="h-8 w-px bg-border/60" />
-                                <div className="text-center px-2">
-                                    <p className="text-[10px] uppercase font-semibold text-muted-foreground">Outstanding</p>
-                                    <p className="text-base font-bold text-destructive">
-                                        ${financialSummary.total_outstanding.toFixed(2)}
-                                    </p>
-                                </div>
-                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPasswordModalOpen(true)}
+                            >
+                                <KeyRound className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                                Password
+                            </Button>
+
+                            <Button size="sm" asChild>
+                                <Link href={`/admin/students/${student.id}/edit`}>
+                                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                                    Edit Student
+                                </Link>
+                            </Button>
                         </div>
                     }
                 />
@@ -326,7 +293,7 @@ export default function AdminStudentsShow({
                     <TabsContent value="overview" className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Personal Information Card */}
-                            <UctPanelCard
+                            <UctPanelCard className='h-fit'
                                 title="Personal Information"
                                 description="Contact details, matriculation ID, and identity."
                                 icon={User}
