@@ -94,13 +94,6 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                 {/* Back & Actions */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/assignments">
-                                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-                                Back to List
-                            </Link>
-                        </Button>
-
                         <Button size="sm" asChild>
                             <Link href={`/admin/assignments/${assignment.id}/edit`}>
                                 <Edit3 className="h-3.5 w-3.5 mr-1.5" />

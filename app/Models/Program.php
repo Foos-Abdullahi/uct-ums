@@ -37,4 +37,12 @@ class Program extends Model
     {
         return $this->hasMany(Admission::class);
     }
+
+    /**
+     * @return HasMany<Course, $this>
+     */
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Course::class);
+    }
 }

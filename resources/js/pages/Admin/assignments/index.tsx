@@ -93,10 +93,9 @@ export default function AdminAssignmentsIndex({
         });
     };
 
-    // Columns now use router.visit for edit and delete via callbacks
     const columns = getAssignmentColumns({
         onDelete: handleDelete,
-        // Edit is handled by the column's internal router.visit, so we don't need a local callback.
+        onEdit: (assignment) => router.visit(`/admin/assignments/${assignment.id}/edit`),
     });
 
     const serverFilters: DataTableServerFilter[] = [

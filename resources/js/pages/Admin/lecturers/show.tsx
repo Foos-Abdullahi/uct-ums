@@ -95,13 +95,6 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                 {/* Back Button & Actions */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/lecturers">
-                                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-                                Back to List
-                            </Link>
-                        </Button>
-
                         <Button
                             variant={isInactive ? 'outline' : 'destructive'}
                             size="sm"

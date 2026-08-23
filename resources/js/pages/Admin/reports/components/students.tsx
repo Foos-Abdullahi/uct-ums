@@ -44,23 +44,27 @@ export default function StudentsReport({ stats, students }) {
                 </div>
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                        <MetricCard title="Total Students" value={stats.total} icon={Users} color="primary" />
-                        <MetricCard title="Active" value={stats.active} icon={UserCheck} color="success" />
-                        <MetricCard title="Pending" value={stats.pending} icon={Clock} color="warning" />
-                        <MetricCard title="Suspended" value={stats.suspended} icon={UserX} color="destructive" />
-                        <MetricCard title="Graduated" value={stats.graduated} icon={GraduationCap} color="info" />
-                    </div>
+                    {stats && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                            <MetricCard title="Total Students" value={stats.total} icon={Users} color="primary" />
+                            <MetricCard title="Active" value={stats.active} icon={UserCheck} color="success" />
+                            <MetricCard title="Pending" value={stats.pending} icon={Clock} color="warning" />
+                            <MetricCard title="Suspended" value={stats.suspended} icon={UserX} color="destructive" />
+                            <MetricCard title="Graduated" value={stats.graduated} icon={GraduationCap} color="info" />
+                        </div>
+                    )}
                 </Deferred>
 
                 <Deferred data="students" fallback={<div>Loading table...</div>}>
-                    <DataTable
-                        title="Student List"
-                        columns={columns}
-                        data={students.data}
-                        pagination={students.pagination}
-                        // serverFilters...
-                    />
+                    {students && (
+                        <DataTable
+                            title="Student List"
+                            columns={columns}
+                            data={students.data}
+                            pagination={students.pagination}
+                            // serverFilters...
+                        />
+                    )}
                 </Deferred>
             </div>
         </>

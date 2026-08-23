@@ -3,7 +3,9 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AssignmentController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LecturerController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\StudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,7 +13,7 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::inertia('dashboard', 'Admin/dashboard')->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Students Management
         Route::prefix('students')->name('students.')->group(function () {
@@ -75,6 +77,17 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
 
             // Assignment actions
             Route::patch('/{assignment}/status', [AssignmentController::class, 'updateStatus'])->name('status');
+        });
+
+        // Reports
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/overview', [ReportController::class, 'overview'])->name('overview');
+            Route::get('/students', [ReportController::class, 'students'])->name('students');
+            Route::get('/academic', [ReportController::class, 'academic'])->name('academic');
+            Route::get('/attendance', [ReportController::class, 'attendance'])->name('attendance');
+            Route::get('/finance', [ReportController::class, 'finance'])->name('finance');
+            Route::get('/graduation', [ReportController::class, 'graduation'])->name('graduation');
         });
 
         Route::inertia('users', 'Admin/users/index')->name('users.index');

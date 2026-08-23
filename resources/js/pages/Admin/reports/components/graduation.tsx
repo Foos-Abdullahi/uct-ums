@@ -33,16 +33,20 @@ export default function GraduationReport({ stats, graduates }) {
                 </div>
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                        <MetricCard title="Total Graduated" value={stats.total} icon={GraduationCap} color="primary" />
-                        <MetricCard title="This Year" value={stats.this_year} icon={Calendar} color="success" />
-                        <MetricCard title="Certificates Issued" value={stats.certificates} icon={Award} color="info" />
-                        <MetricCard title="Alumni" value={stats.alumni} icon={Users} color="primary" />
-                    </div>
+                    {stats && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                            <MetricCard title="Total Graduated" value={stats.total} icon={GraduationCap} color="primary" />
+                            <MetricCard title="This Year" value={stats.this_year} icon={Calendar} color="success" />
+                            <MetricCard title="Certificates Issued" value={stats.certificates} icon={Award} color="info" />
+                            <MetricCard title="Alumni" value={stats.alumni} icon={Users} color="primary" />
+                        </div>
+                    )}
                 </Deferred>
 
                 <Deferred data="graduates" fallback={<div>Loading...</div>}>
-                    <DataTable title="Graduates List" columns={columns} data={graduates.data} pagination={graduates.pagination} />
+                    {graduates && (
+                        <DataTable title="Graduates List" columns={columns} data={graduates.data} pagination={graduates.pagination} />
+                    )}
                 </Deferred>
             </div>
         </>

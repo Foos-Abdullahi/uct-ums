@@ -33,16 +33,20 @@ export default function AcademicReport({ stats, coursePerformance }) {
                 </div>
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                        <MetricCard title="Total Courses" value={stats.total_courses} icon={BookOpen} color="primary" />
-                        <MetricCard title="Avg GPA" value={stats.avg_gpa} icon={Award} color="info" />
-                        <MetricCard title="Pass Rate" value={`${stats.pass_rate}%`} icon={CheckCircle2} color="success" />
-                        <MetricCard title="Fail Rate" value={`${stats.fail_rate}%`} icon={XCircle} color="destructive" />
-                    </div>
+                    {stats && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                            <MetricCard title="Total Courses" value={stats.total_courses} icon={BookOpen} color="primary" />
+                            <MetricCard title="Avg GPA" value={stats.avg_gpa} icon={Award} color="info" />
+                            <MetricCard title="Pass Rate" value={`${stats.pass_rate}%`} icon={CheckCircle2} color="success" />
+                            <MetricCard title="Fail Rate" value={`${stats.fail_rate}%`} icon={XCircle} color="destructive" />
+                        </div>
+                    )}
                 </Deferred>
 
                 <Deferred data="coursePerformance" fallback={<div>Loading...</div>}>
-                    <DataTable title="Course Performance" columns={columns} data={coursePerformance.data} pagination={coursePerformance.pagination} />
+                    {coursePerformance && (
+                        <DataTable title="Course Performance" columns={columns} data={coursePerformance.data} pagination={coursePerformance.pagination} />
+                    )}
                 </Deferred>
             </div>
         </>

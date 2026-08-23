@@ -34,16 +34,20 @@ export default function AttendanceReport({ stats, attendanceRecords }) {
                 </div>
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                        <MetricCard title="Total Classes" value={stats.total_classes} icon={Calendar} color="primary" />
-                        <MetricCard title="Present" value={stats.present} icon={CheckCircle2} color="success" />
-                        <MetricCard title="Absent" value={stats.absent} icon={XCircle} color="destructive" />
-                        <MetricCard title="Overall Rate" value={`${stats.rate}%`} icon={Clock} color="info" />
-                    </div>
+                    {stats && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                            <MetricCard title="Total Classes" value={stats.total_classes} icon={Calendar} color="primary" />
+                            <MetricCard title="Present" value={stats.present} icon={CheckCircle2} color="success" />
+                            <MetricCard title="Absent" value={stats.absent} icon={XCircle} color="destructive" />
+                            <MetricCard title="Overall Rate" value={`${stats.rate}%`} icon={Clock} color="info" />
+                        </div>
+                    )}
                 </Deferred>
 
                 <Deferred data="attendanceRecords" fallback={<div>Loading...</div>}>
-                    <DataTable title="Attendance Records" columns={columns} data={attendanceRecords.data} pagination={attendanceRecords.pagination} />
+                    {attendanceRecords && (
+                        <DataTable title="Attendance Records" columns={columns} data={attendanceRecords.data} pagination={attendanceRecords.pagination} />
+                    )}
                 </Deferred>
             </div>
         </>

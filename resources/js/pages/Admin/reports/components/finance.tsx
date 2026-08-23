@@ -34,16 +34,20 @@ export default function FinanceReport({ stats, transactions }) {
                 </div>
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                        <MetricCard title="Total Revenue" value={`$${stats.total_revenue}`} icon={DollarSign} color="primary" />
-                        <MetricCard title="Paid" value={`$${stats.paid}`} icon={CreditCard} color="success" />
-                        <MetricCard title="Outstanding" value={`$${stats.outstanding}`} icon={AlertCircle} color="destructive" />
-                        <MetricCard title="Overdue" value={`$${stats.overdue}`} icon={Receipt} color="warning" />
-                    </div>
+                    {stats && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                            <MetricCard title="Total Revenue" value={`$${stats.total_revenue}`} icon={DollarSign} color="primary" />
+                            <MetricCard title="Paid" value={`$${stats.paid}`} icon={CreditCard} color="success" />
+                            <MetricCard title="Outstanding" value={`$${stats.outstanding}`} icon={AlertCircle} color="destructive" />
+                            <MetricCard title="Overdue" value={`$${stats.overdue}`} icon={Receipt} color="warning" />
+                        </div>
+                    )}
                 </Deferred>
 
                 <Deferred data="transactions" fallback={<div>Loading...</div>}>
-                    <DataTable title="Transaction History" columns={columns} data={transactions.data} pagination={transactions.pagination} searchTitle={''} />
+                    {transactions && (
+                        <DataTable title="Transaction History" columns={columns} data={transactions.data} pagination={transactions.pagination} searchTitle={''} />
+                    )}
                 </Deferred>
             </div>
         </>

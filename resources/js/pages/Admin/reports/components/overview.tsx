@@ -27,8 +27,8 @@ interface OverviewStats {
 }
 
 interface OverviewReportProps {
-    stats: OverviewStats;
-    recentActivities: Array<{ id: number; description: string; date: string }>;
+    stats?: OverviewStats;
+    recentActivities?: Array<{ id: number; description: string; date: string }>;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -71,55 +71,59 @@ export default function OverviewReport({ stats, recentActivities }: OverviewRepo
 
                 {/* Summary Metrics */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                        <MetricCard
-                            title="Students"
-                            value={stats.total_students}
-                            icon={Users}
-                            color="primary"
-                        />
-                        <MetricCard
-                            title="Lecturers"
-                            value={stats.total_lecturers}
-                            icon={GraduationCap}
-                            color="info"
-                        />
-                        <MetricCard
-                            title="Courses"
-                            value={stats.total_courses}
-                            icon={BookOpen}
-                            color="success"
-                        />
-                        <MetricCard
-                            title="Revenue"
-                            value={`$${stats.total_revenue.toLocaleString()}`}
-                            icon={DollarSign}
-                            color="warning"
-                        />
-                        <MetricCard
-                            title="Assignments"
-                            value={stats.total_assignments}
-                            icon={BarChart3}
-                            color="info"
-                        />
-                    </div>
+                    {stats && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                            <MetricCard
+                                title="Students"
+                                value={stats.total_students}
+                                icon={Users}
+                                color="primary"
+                            />
+                            <MetricCard
+                                title="Lecturers"
+                                value={stats.total_lecturers}
+                                icon={GraduationCap}
+                                color="info"
+                            />
+                            <MetricCard
+                                title="Courses"
+                                value={stats.total_courses}
+                                icon={BookOpen}
+                                color="success"
+                            />
+                            <MetricCard
+                                title="Revenue"
+                                value={`$${(stats.total_revenue ?? 0).toLocaleString()}`}
+                                icon={DollarSign}
+                                color="warning"
+                            />
+                            <MetricCard
+                                title="Assignments"
+                                value={stats.total_assignments}
+                                icon={BarChart3}
+                                color="info"
+                            />
+                        </div>
+                    )}
                 </Deferred>
 
                 {/* Recent Activity Table */}
                 <Deferred data="recentActivities" fallback={<div>Loading...</div>}>
-                    <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-in-out">
-                        <DataTable
-                            title="Recent Activity"
-                            columns={columns}
-                            data={recentActivities}
-                            pagination={{
-                                current_page: 1,
-                                last_page: 1,
-                                per_page: 10,
-                                total: recentActivities.length,
-                            }}
-                        />
-                    </div>
+                    {recentActivities && (
+                        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-in-out">
+                            <DataTable
+                                title="Recent Activity"
+                                columns={columns}
+                                data={recentActivities}
+                                pagination={{
+                                    current_page: 1,
+                                    last_page: 1,
+                                    per_page: 10,
+                                    total: recentActivities.length,
+                                }}
+                            />
+                        </div>
+                    )}
                 </Deferred>
             </div>
         </>
