@@ -3,10 +3,15 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AssignmentController;
+use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EnrollmentController;
 use App\Http\Controllers\Admin\LecturerController;
+use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SemesterController;
 use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admin\TranscriptController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
@@ -77,6 +82,18 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
 
             // Assignment actions
             Route::patch('/{assignment}/status', [AssignmentController::class, 'updateStatus'])->name('status');
+        });
+
+        // Academic Programs Management
+        Route::prefix('programs')->name('programs.')->group(function () {
+            Route::get('/', [ProgramController::class, 'index'])->name('index');
+            Route::get('/create', [ProgramController::class, 'create'])->name('create');
+            Route::post('/', [ProgramController::class, 'store'])->name('store');
+            Route::get('/{program}', [ProgramController::class, 'show'])->name('show');
+            Route::get('/{program}/edit', [ProgramController::class, 'edit'])->name('edit');
+            Route::put('/{program}', [ProgramController::class, 'update'])->name('update');
+            Route::delete('/{program}', [ProgramController::class, 'destroy'])->name('destroy');
+            Route::post('/{program}/toggle-status', [ProgramController::class, 'toggleStatus'])->name('toggle-status');
         });
 
         // Reports
