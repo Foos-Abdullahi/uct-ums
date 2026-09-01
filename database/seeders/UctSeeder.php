@@ -19,15 +19,45 @@ class UctSeeder extends Seeder
     public function run(): void
     {
         $programs = [
-            'Bachelor of Science in Software Engineering',
-            'Bachelor of Science in Networking and Cyber Security',
-            'Bachelor of Science in Animation and Visual Effects',
+            [
+                'name' => 'Bachelor of Science in Software Engineering',
+                'code' => 'SE',
+                'degree_level' => 'bachelor',
+                'duration_semesters' => 8,
+                'total_credits' => 130,
+                'department' => 'Software Engineering',
+                'faculty' => 'Faculty of Computing & Information Technology',
+                'status' => 'active',
+                'description' => 'Comprehensive undergraduate degree in software engineering, distributed systems, and enterprise architecture.',
+            ],
+            [
+                'name' => 'Bachelor of Science in Networking and Cyber Security',
+                'code' => 'NCS',
+                'degree_level' => 'bachelor',
+                'duration_semesters' => 8,
+                'total_credits' => 128,
+                'department' => 'Network & Security',
+                'faculty' => 'Faculty of Computing & Information Technology',
+                'status' => 'active',
+                'description' => 'Focuses on network administration, infrastructure defense, routing protocols, and cyber security principles.',
+            ],
+            [
+                'name' => 'Bachelor of Science in Animation and Visual Effects',
+                'code' => 'AVE',
+                'degree_level' => 'bachelor',
+                'duration_semesters' => 8,
+                'total_credits' => 120,
+                'department' => 'Digital Arts & Media',
+                'faculty' => 'Faculty of Arts & Design',
+                'status' => 'active',
+                'description' => 'Specialized program covering 2D/3D animation, visual effects, character design, and game asset production.',
+            ],
         ];
 
-        foreach ($programs as $name) {
-            Program::query()->firstOrCreate(
-                ['name' => $name],
-                ['degree_level' => 'bachelor', 'duration_semesters' => 8],
+        foreach ($programs as $prog) {
+            Program::query()->updateOrCreate(
+                ['name' => $prog['name']],
+                $prog,
             );
         }
 
@@ -85,9 +115,9 @@ class UctSeeder extends Seeder
         );
 
         Student::query()->firstOrCreate(
-            ['user_id' => $studentUser->id],
+            ['matric_no' => 'UCT2026001'],
             [
-                'matric_no' => 'UCT2026001',
+                'user_id' => $studentUser->id,
                 'program_id' => $softwareEngineering?->id,
                 'fee_status' => FeeStatus::Unpaid,
                 'enrollment_date' => now()->toDateString(),
@@ -106,9 +136,9 @@ class UctSeeder extends Seeder
         );
 
         Student::query()->firstOrCreate(
-            ['user_id' => $paidStudentUser->id],
+            ['matric_no' => 'UCT2026002'],
             [
-                'matric_no' => 'UCT2026002',
+                'user_id' => $paidStudentUser->id,
                 'program_id' => $softwareEngineering?->id,
                 'fee_status' => FeeStatus::Paid,
                 'enrollment_date' => now()->toDateString(),
