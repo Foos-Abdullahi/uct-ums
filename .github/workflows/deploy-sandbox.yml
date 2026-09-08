@@ -1,0 +1,294 @@
+name: Deploy Sandbox
+
+on:
+  push:
+    branches:
+      - sandbox
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-sandbox
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: sandbox
+          fetch-depth: 1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@9e72090525849c5e62e594468b5b1d9c3b705132 # v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies and build assets
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+          npm ci
+          npm run build
+
+      - name: Stage and package application
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DEPLOY_DIR="$RUNNER_TEMP/deploy"
+          mkdir -p "$DEPLOY_DIR/ums" "$DEPLOY_DIR/public_html/_deploy"
+
+          tar -cf "$RUNNER_TEMP/base.tar" -C "$GITHUB_WORKSPACE" \
+            --exclude=.git --exclude=node_modules .
+          tar -xf "$RUNNER_TEMP/base.tar" -C "$DEPLOY_DIR/ums"
+
+          rm -rf "$DEPLOY_DIR/ums/storage/logs"/*
+          rm -rf "$DEPLOY_DIR/ums/storage/framework/cache/data"/*
+          rm -rf "$DEPLOY_DIR/ums/storage/framework/sessions"/*
+          rm -rf "$DEPLOY_DIR/ums/storage/framework/views"/*
+
+          APP_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
+
+          sed -e 's|^APP_NAME=.*|APP_NAME="UCT Online"|' \
+            -e 's|^APP_ENV=.*|APP_ENV=production|' \
+            -e 's|^APP_DEBUG=.*|APP_DEBUG=false|' \
+            -e "s|^APP_URL=.*|APP_URL=${APP_URL}|" \
+            -e "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" \
+            -e 's|^DB_CONNECTION=.*|DB_CONNECTION=mysql|' \
+            -e 's|^# DB_HOST=.*|DB_HOST=localhost|' \
+            -e 's|^# DB_PORT=.*|DB_PORT=3306|' \
+            -e "s|^# DB_DATABASE=.*|DB_DATABASE=${DB_NAME}|" \
+            -e "s|^# DB_USERNAME=.*|DB_USERNAME=${DB_USER}|" \
+            -e "s|^# DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" \
+            -e 's|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=sync|' \
+            -e 's|^CACHE_STORE=.*|CACHE_STORE=file|' \
+            -e 's|^MAIL_MAILER=.*|MAIL_MAILER=log|' \
+            -e 's|^LOG_LEVEL=.*|LOG_LEVEL=error|' \
+            "$GITHUB_WORKSPACE/.env.example" > "$DEPLOY_DIR/ums/.env"
+
+          cp -r "$DEPLOY_DIR/ums/public/." "$DEPLOY_DIR/public_html/"
+          rm -f "$DEPLOY_DIR/public_html/index.php" "$DEPLOY_DIR/public_html/.htaccess"
+
+          cat > "$DEPLOY_DIR/public_html/index.php" <<'EOF'
+          <?php
+
+          // Front controller for the UCT Online Management System (sandbox).
+          // Boots the Laravel application stored outside the web root.
+
+          require __DIR__.'/../ums/public/index.php';
+          EOF
+
+          cat > "$DEPLOY_DIR/public_html/.htaccess" <<'EOF'
+          # Use PHP 8.4 for this application (Laravel 13 requires PHP >= 8.4.1).
+          AddHandler application/x-httpd-php84 .php
+
+          <IfModule mod_rewrite.c>
+              <IfModule mod_negotiation.c>
+                  Options -MultiViews -Indexes
+              </IfModule>
+
+              RewriteEngine On
+
+              RewriteCond %{HTTP:Authorization} .
+              RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+              RewriteCond %{HTTP:x-xsrf-token} .
+              RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+              RewriteCond %{REQUEST_FILENAME} !-d
+              RewriteCond %{REQUEST_URI} (.+)/$
+              RewriteRule ^ %1 [L,R=301]
+
+              RewriteCond %{REQUEST_FILENAME} !-d
+              RewriteCond %{REQUEST_FILENAME} !-f
+              RewriteRule ^ index.php [L]
+          </IfModule>
+          EOF
+
+          cat > "$DEPLOY_DIR/public_html/_deploy/ums_extract.php" <<'PHP'
+          <?php
+
+          use PharData;
+
+          $token = '__DEPLOY_TOKEN__';
+
+          if (($_GET['token'] ?? '') !== $token) {
+              http_response_code(403);
+              exit('forbidden');
+          }
+
+          $home = '/home/localuct';
+          $archive = $home.'/ums_deploy.tar.gz';
+          $target = $home.'/ums';
+
+          if (!file_exists($archive)) {
+              exit('ERR archive not found');
+          }
+
+          function rrmdir(string $dir): void
+          {
+              if (!is_dir($dir)) {
+                  return;
+              }
+
+              $items = scandir($dir);
+
+              foreach ($items as $item) {
+                  if ($item === '.' || $item === '..') {
+                      continue;
+                  }
+
+                  $path = $dir.'/'.$item;
+
+                  is_dir($path) ? rrmdir($path) : @unlink($path);
+              }
+
+              @rmdir($dir);
+          }
+
+          rrmdir($target);
+
+          $public = $home.'/public_html';
+          foreach (scandir($public) ?: [] as $item) {
+              if ($item === '.' || $item === '..' || $item === '_deploy') {
+                  continue;
+              }
+
+              $path = $public.'/'.$item;
+
+              is_dir($path) ? rrmdir($path) : @unlink($path);
+          }
+
+          try {
+              $phar = new PharData($archive);
+              $phar->extractTo($home, null, true);
+          } catch (Throwable $e) {
+              http_response_code(500);
+              exit('ERR extract: '.$e->getMessage());
+          }
+
+          if (!is_dir($target) || !is_file($target.'/artisan')) {
+              http_response_code(500);
+              exit('ERR extraction incomplete');
+          }
+
+          echo 'OK extracted';
+          PHP
+
+          sed -i "s|__DEPLOY_TOKEN__|${DEPLOY_TOKEN}|g" "$DEPLOY_DIR/public_html/_deploy/ums_extract.php"
+
+          cat > "$DEPLOY_DIR/public_html/_deploy/ums_run.php" <<'PHP'
+          <?php
+
+          use Illuminate\Contracts\Console\Kernel;
+
+          $token = '__DEPLOY_TOKEN__';
+
+          if (($_GET['token'] ?? '') !== $token) {
+              http_response_code(403);
+              exit('forbidden');
+          }
+
+          $base = '/home/localuct/ums';
+
+          if (! is_file($base.'/artisan') || ! is_file($base.'/vendor/autoload.php')) {
+              http_response_code(500);
+              exit('ERR application not deployed, run extractor first');
+          }
+
+          chdir($base);
+
+          require $base.'/vendor/autoload.php';
+
+          $app = require_once $base.'/bootstrap/app.php';
+
+          $console = $app->make(Kernel::class);
+
+          $commands = ['config:clear', 'migrate --force', 'config:cache', 'view:cache'];
+
+          foreach ($commands as $command) {
+              echo ">>> {$command}\n\n";
+
+              try {
+                  $status = $console->call($command);
+                  $output = $console->output();
+                  echo $output;
+
+                  if ($status !== 0) {
+                      echo "\n[FAILED status={$status}]\n";
+                      http_response_code(500);
+                      exit;
+                  }
+              } catch (Throwable $e) {
+                  echo 'ERR '.$e->getMessage()."\n".$e->getTraceAsString();
+                  http_response_code(500);
+                  exit;
+              }
+
+              echo "[ok]\n\n";
+          }
+
+          echo 'DONE';
+          PHP
+
+          sed -i "s|__DEPLOY_TOKEN__|${DEPLOY_TOKEN}|g" "$DEPLOY_DIR/public_html/_deploy/ums_run.php"
+
+          tar -czf "$DEPLOY_DIR/deploy.tar.gz" -C "$DEPLOY_DIR" ums public_html
+
+      - name: Deploy over FTP and run migrations
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          APP_URL: ${{ secrets.APP_URL }}
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DEPLOY_DIR="$RUNNER_TEMP/deploy"
+          FTP_URL="ftp://${FTP_HOST}"
+
+          ftp_upload() {
+            curl -sf -o /dev/null --ftp-create-dirs -u "${FTP_USER}:${FTP_PASSWORD}" -T "$1" "$FTP_URL/$2"
+          }
+
+          ftp_delete() {
+            curl -sf -o /dev/null -u "${FTP_USER}:${FTP_PASSWORD}" --ftp-method nocwd "$FTP_URL/" -Q "$1"
+          }
+
+          ftp_upload "$DEPLOY_DIR/public_html/_deploy/ums_extract.php" "public_html/_deploy/ums_extract.php"
+          ftp_upload "$DEPLOY_DIR/public_html/_deploy/ums_run.php" "public_html/_deploy/ums_run.php"
+          ftp_upload "$DEPLOY_DIR/public_html/.htaccess" "public_html/.htaccess"
+          ftp_upload "$DEPLOY_DIR/deploy.tar.gz" "ums_deploy.tar.gz"
+
+          EXTRACT="$(curl -sf "http://${FTP_HOST}/_deploy/ums_extract.php?token=${DEPLOY_TOKEN}" -m 600)"
+          curl -sf "http://${FTP_HOST}/_deploy/ums_run.php?token=${DEPLOY_TOKEN}" -m 900
+
+          ftp_delete "DELE public_html/_deploy/ums_extract.php" || true
+          ftp_delete "DELE public_html/_deploy/ums_run.php" || true
+          ftp_delete "DELE public_html/_deploy/error_log" || true
+          ftp_delete "RMD public_html/_deploy" || true
+          ftp_delete "DELE ums_deploy.tar.gz" || true
+
+          curl -sf -o /dev/null -m 30 "$APP_URL/"
+          echo "Deploy complete: $APP_URL"
