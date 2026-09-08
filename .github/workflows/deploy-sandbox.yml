@@ -54,6 +54,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          APP_URL="${APP_URL:-https://local.uct.so}"
+
           DEPLOY_DIR="$RUNNER_TEMP/deploy"
           mkdir -p "$DEPLOY_DIR/ums" "$DEPLOY_DIR/public_html/_deploy"
 
@@ -107,6 +109,11 @@ jobs:
               </IfModule>
 
               RewriteEngine On
+
+              # Redirect all requests to HTTPS
+              RewriteCond %{HTTPS} off
+              RewriteCond %{HTTP:X-Forwarded-Proto} !https
+              RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
               RewriteCond %{HTTP:Authorization} .
               RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -223,7 +230,7 @@ jobs:
 
           $console = $app->make(Kernel::class);
 
-          $commands = ['config:clear', 'migrate --force', 'config:cache', 'view:cache'];
+          $commands = ['config:clear', 'migrate --force', 'db:seed --class=AdminSeeder --force', 'config:cache', 'view:cache'];
 
           foreach ($commands as $command) {
               echo ">>> {$command}\n\n";
@@ -281,8 +288,8 @@ jobs:
           ftp_upload "$DEPLOY_DIR/public_html/.htaccess" "public_html/.htaccess"
           ftp_upload "$DEPLOY_DIR/deploy.tar.gz" "ums_deploy.tar.gz"
 
-          EXTRACT="$(curl -sf "http://${FTP_HOST}/_deploy/ums_extract.php?token=${DEPLOY_TOKEN}" -m 600)"
-          curl -sf "http://${FTP_HOST}/_deploy/ums_run.php?token=${DEPLOY_TOKEN}" -m 900
+          EXTRACT="$(curl -sfL "https://${FTP_HOST}/_deploy/ums_extract.php?token=${DEPLOY_TOKEN}" -m 600)"
+          curl -sfL "https://${FTP_HOST}/_deploy/ums_run.php?token=${DEPLOY_TOKEN}" -m 900
 
           ftp_delete "DELE public_html/_deploy/ums_extract.php" || true
           ftp_delete "DELE public_html/_deploy/ums_run.php" || true

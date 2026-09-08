@@ -13,7 +13,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not $FtpHost) { $FtpHost = 'local.uct.so' }
-if (-not $AppUrl) { $AppUrl = 'http://local.uct.so' }
+if (-not $AppUrl) { $AppUrl = 'https://local.uct.so' }
 if (-not $DbName) { $DbName = 'localuct_ums' }
 if (-not $DbUser) { $DbUser = 'localuct_ums' }
 
@@ -124,6 +124,11 @@ AddHandler application/x-httpd-php84 .php
     </IfModule>
 
     RewriteEngine On
+
+    # Redirect all requests to HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -238,7 +243,7 @@ require `$base.'/vendor/autoload.php';
 
 `$console = `$app->make(Kernel::class);
 
-`$commands = ['config:clear', 'migrate --force', 'config:cache', 'view:cache'];
+`$commands = ['config:clear', 'migrate --force', 'db:seed --class=AdminSeeder --force', 'config:cache', 'view:cache'];
 
 foreach (`$commands as `$command) {
     echo ">>> {`$command}\n\n";
@@ -311,11 +316,11 @@ Invoke-FtpUpload (Join-Path $web '_deploy\ums_run.php') 'public_html/_deploy/ums
 Invoke-FtpUpload (Join-Path $web '.htaccess') 'public_html/.htaccess'
 Invoke-FtpUpload $workGz 'ums_deploy.tar.gz'
 
-$extractOut = curl.exe -s "http://$FtpHost/_deploy/ums_extract.php?token=$DeployToken" -m 600
+$extractOut = curl.exe -sL "https://$FtpHost/_deploy/ums_extract.php?token=$DeployToken" -m 600
 if ($extractOut -notmatch 'OK extracted') { throw "Extraction failed: $extractOut" }
 Write-Host 'Extracted OK.'
 
-$runOut = curl.exe -s "http://$FtpHost/_deploy/ums_run.php?token=$DeployToken" -m 900
+$runOut = curl.exe -sL "https://$FtpHost/_deploy/ums_run.php?token=$DeployToken" -m 900
 if ($runOut -notmatch 'DONE') { throw "Artisan runner failed: $runOut" }
 Write-Host $runOut
 
