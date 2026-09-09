@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\FeeStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Imports\StudentImport;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\StudentCertificate;
@@ -13,6 +14,7 @@ use App\Models\StudentGrade;
 use App\Models\StudentInvoice;
 use App\Models\StudentPayment;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +23,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel as ExcelFacade;
+use Throwable;
 
 class StudentController extends Controller
 {
@@ -157,6 +161,29 @@ class StudentController extends Controller
 
         return redirect()->route('admin.students.show', $student->id)
             ->with('success', "Student {$student->matric_no} created successfully.");
+    }
+
+    /**
+     * Import students from an Excel (.xlsx) spreadsheet.
+     */
+    public function import(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
+        ]);
+
+        try {
+            $rows = ExcelFacade::toCollection(new StudentImport, $validated['file'])->first() ?? collect();
+            $result = (new StudentImport)->processRows($rows);
+        } catch (Throwable $e) {
+            return response()->json([
+                'imported' => 0,
+                'failed' => 0,
+                'errors' => ['Could not read the file: '.$e->getMessage()],
+            ], 422);
+        }
+
+        return response()->json($result);
     }
 
     /**

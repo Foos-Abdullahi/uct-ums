@@ -1,16 +1,4 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { StudentsTableSkeleton } from './components/students-table-skeleton';
-import { getStudentColumns } from './components/student-columns';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import { ResetPasswordModal } from './components/reset-password-modal';
-import type { BreadcrumbItem } from '@/types';
-import type { PaginatedData, Program, Student } from '@/types/student';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import {
     Users,
     CheckCircle2,
@@ -19,8 +7,22 @@ import {
     GraduationCap,
     Plus,
     UserPlus,
+    FileSpreadsheet,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
+import type { PaginatedData, Program, Student } from '@/types/student';
+import { ImportStudentsDialog } from './components/import-students-dialog';
+import { ResetPasswordModal } from './components/reset-password-modal';
+import { getStudentColumns } from './components/student-columns';
+import { StudentsTableSkeleton } from './components/students-table-skeleton';
 
 interface StudentStats {
     total_students: number;
@@ -56,12 +58,15 @@ export default function AdminStudentsIndex({
     programs = [],
     filters,
 }: AdminStudentsIndexProps) {
-    const [selectedStudentForDelete, setSelectedStudentForDelete] = useState<Student | null>(null);
+    const [selectedStudentForDelete, setSelectedStudentForDelete] =
+        useState<Student | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
-    const [selectedStudentForPassword, setSelectedStudentForPassword] = useState<Student | null>(null);
+    const [selectedStudentForPassword, setSelectedStudentForPassword] =
+        useState<Student | null>(null);
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
@@ -89,12 +94,17 @@ export default function AdminStudentsIndex({
     };
 
     const confirmDelete = () => {
-        if (!selectedStudentForDelete) return;
+        if (!selectedStudentForDelete) {
+            return;
+        }
+
         setDeleteProcessing(true);
 
         router.delete(`/admin/students/${selectedStudentForDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Student ${selectedStudentForDelete.matric_no} deleted successfully.`);
+                toast.success(
+                    `Student ${selectedStudentForDelete.matric_no} deleted successfully.`,
+                );
                 setDeleteModalOpen(false);
                 setSelectedStudentForDelete(null);
                 setDeleteProcessing(false);
@@ -118,11 +128,15 @@ export default function AdminStudentsIndex({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    const next = student.enrollment_status === 'suspended' ? 'activated' : 'suspended';
+                    const next =
+                        student.enrollment_status === 'suspended'
+                            ? 'activated'
+                            : 'suspended';
                     toast.success(`Student account ${next}.`);
                 },
-                onError: () => toast.error('Failed to update student account status.'),
-            }
+                onError: () =>
+                    toast.error('Failed to update student account status.'),
+            },
         );
     };
 
@@ -197,28 +211,37 @@ export default function AdminStudentsIndex({
         <>
             <Head title="Students Management" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Students Management
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Manage and monitor all enrolled student records, academic performance, and fee status.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Manage and monitor all enrolled student records,
+                            academic performance, and fee status.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setImportDialogOpen(true)}
+                        >
+                            <FileSpreadsheet className="mr-1.5 h-4 w-4" />
+                            Import Students
+                        </Button>
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/admissions">
-                                <UserPlus className="h-4 w-4 mr-1.5" />
+                                <UserPlus className="mr-1.5 h-4 w-4" />
                                 Admissions
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/students/create">
-                                <Plus className="h-4 w-4 mr-1.5" />
+                                <Plus className="mr-1.5 h-4 w-4" />
                                 Create Student
                             </Link>
                         </Button>
@@ -228,7 +251,7 @@ export default function AdminStudentsIndex({
                 {/* Summary Metric Cards with Entrance Animation */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Students"
                                 value={stats.total_students}
@@ -266,7 +289,7 @@ export default function AdminStudentsIndex({
                 {/* Main Students DataTable with Entrance Animation */}
                 <Deferred data="students" fallback={<StudentsTableSkeleton />}>
                     {students && (
-                        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-in-out">
+                        <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
                                 title="Students List"
                                 searchTitle="Search by name, email, matric no, phone..."
@@ -278,16 +301,36 @@ export default function AdminStudentsIndex({
                                     per_page: students.per_page,
                                     total: students.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/students', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/students',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/students/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/students/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}
@@ -313,6 +356,15 @@ export default function AdminStudentsIndex({
                     open={passwordModalOpen}
                     onOpenChange={setPasswordModalOpen}
                     student={selectedStudentForPassword}
+                />
+
+                {/* Import Students Dialog */}
+                <ImportStudentsDialog
+                    open={importDialogOpen}
+                    onOpenChange={setImportDialogOpen}
+                    onImported={() => {
+                        router.reload({ only: ['students', 'stats'] });
+                    }}
                 />
             </div>
         </>

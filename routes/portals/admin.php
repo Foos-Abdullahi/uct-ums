@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
             Route::get('/', [StudentController::class, 'index'])->name('index');
             Route::get('/create', [StudentController::class, 'create'])->name('create');
             Route::post('/', [StudentController::class, 'store'])->name('store');
+            Route::post('/import', [StudentController::class, 'import'])->name('import');
             Route::get('/{student}', [StudentController::class, 'show'])->name('show');
             Route::get('/{student}/edit', [StudentController::class, 'edit'])->name('edit');
             Route::put('/{student}', [StudentController::class, 'update'])->name('update');

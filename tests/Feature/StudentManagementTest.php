@@ -11,8 +11,134 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 uses(RefreshDatabase::class);
+
+/**
+ * Build an in-memory .xlsx file matching the student import template columns.
+ */
+function makeStudentImportFile(array $rows): UploadedFile
+{
+    $spreadsheet = new Spreadsheet;
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $headers = [
+        'Name', 'Email', 'Password', 'Matric No', 'Program', 'Current Semester',
+        'Phone', 'Gender', 'Date of Birth', 'Address', 'Fee Status',
+        'Enrollment Status', 'Enrollment Date', 'GPA', 'Graduation Date',
+    ];
+    $sheet->fromArray($headers, null, 'A1');
+
+    foreach ($rows as $index => $row) {
+        $sheet->fromArray($row, null, 'A'.($index + 2));
+    }
+
+    $writer = new Xlsx($spreadsheet);
+    ob_start();
+    $writer->save('php://output');
+    $content = ob_get_clean();
+
+    return UploadedFile::fake()->createWithContent('students.xlsx', $content);
+}
+
+// ─── Import ───────────────────────────────────────────────────────────────────
+
+test('admin can import students from an excel file', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create(['name' => 'Bachelor of Science in Software Engineering']);
+
+    $rows = [
+        ['Kwame Mensah', 'kwame.mensah@example.com', 'password123', 'UCT-2026-00001', $program->name, '1', '+233241234567', 'Male', '2002-05-15', 'Accra, Ghana', 'unpaid', 'enrolled', '2026-09-01', '', ''],
+        ['Ama Owusu', 'ama.owusu@example.com', '', '', $program->name, '3', '', 'Female', '', '', '', '', '', '3.40', ''],
+    ];
+
+    $response = $this->post(route('admin.students.import'), ['file' => makeStudentImportFile($rows)]);
+
+    $response->assertOk()
+        ->assertJson(['imported' => 2, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'kwame.mensah@example.com',
+        'role' => UserRole::Student->value,
+    ]);
+    $this->assertDatabaseHas('users', ['email' => 'ama.owusu@example.com']);
+    $this->assertDatabaseHas('students', [
+        'matric_no' => 'UCT-2026-00001',
+        'program_id' => $program->id,
+        'current_semester' => 1,
+        'gender' => 'Male',
+        'enrollment_status' => 'enrolled',
+    ]);
+    $this->assertDatabaseHas('students', [
+        'matric_no' => 'UCT-2026-00002',
+        'current_semester' => 3,
+        'gpa' => 3.40,
+        'enrollment_status' => 'enrolled',
+    ]);
+});
+
+test('import generates a matric number automatically when omitted', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create();
+
+    $rows = [['John Doe', 'john.doe@example.com', '', '', $program->name, '', '', '', '', '', '', '', '', '', '']];
+
+    $response = $this->post(route('admin.students.import'), ['file' => makeStudentImportFile($rows)]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => 'UCT-'.date('Y').'-00001',
+    ]);
+});
+
+test('import reports failed rows with their errors', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create(['name' => 'Bachelor of Science in Software Engineering']);
+    User::factory()->create(['email' => 'duplicate@example.com']);
+
+    $rows = [
+        ['', 'missing-name@example.com', '', '', $program->name, '', '', '', '', '', '', '', '', '', ''],
+        ['No Program', 'no-program@example.com', '', '', 'Unknown Program', '', '', '', '', '', '', '', '', '', ''],
+        ['Dupe User', 'duplicate@example.com', '', '', $program->name, '', '', '', '', '', '', '', '', '', ''],
+        ['Valid Student', 'valid.student@example.com', '', '', $program->name, '', '', '', '', '', '', '', '', '', ''],
+    ];
+
+    $response = $this->post(route('admin.students.import'), ['file' => makeStudentImportFile($rows)]);
+
+    $response->assertOk()
+        ->assertJson(['imported' => 1, 'failed' => 3])
+        ->assertJsonCount(3, 'errors');
+
+    $this->assertDatabaseHas('users', ['email' => 'valid.student@example.com']);
+    $this->assertDatabaseMissing('users', ['email' => 'no-program@example.com']);
+    $this->assertDatabaseMissing('users', ['email' => 'missing-name@example.com']);
+});
+
+test('import requires an xlsx file', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => UploadedFile::fake()->create('students.csv', 100),
+    ]);
+
+    $response->assertSessionHasErrors('file');
+});
+
+test('student role users cannot import students', function () {
+    $student = Student::factory()->create();
+    $this->actingAs($student->user);
+
+    $response = $this->post(route('admin.students.import'), []);
+
+    $response->assertForbidden();
+});
 
 // ─── Index ────────────────────────────────────────────────────────────────────
 
