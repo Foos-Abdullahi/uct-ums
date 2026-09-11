@@ -79,6 +79,11 @@ export const adminNav: NavItem[] = [
                 href: '/admin/finance/invoices',
                 icon: FileText,
             },
+            {
+                title: 'Expenses',
+                href: '/admin/expenses',
+                icon: Receipt,
+            },
         ],
     },
     { title: 'Reports', href: '/admin/reports', icon: BarChart3 },
@@ -105,6 +110,21 @@ export const adminNav: NavItem[] = [
             },
         ],
     },
+];
+
+export const financeNav: NavItem[] = [
+    { title: 'Dashboard', href: '/finance/dashboard', icon: LayoutGrid },
+    {
+        title: 'Expenses',
+        icon: Wallet,
+        items: [
+            { title: 'All Expenses', href: '/finance/expenses', icon: Receipt },
+            { title: 'Approvals', href: '/finance/approvals', icon: Shield },
+        ],
+    },
+    { title: 'Invoices', href: '/finance/invoices', icon: FileText },
+    { title: 'Payments', href: '/finance/payments', icon: CreditCard },
+    { title: 'Reports', href: '/finance/reports', icon: BarChart3 },
 ];
 
 export const lecturerNav: NavItem[] = [

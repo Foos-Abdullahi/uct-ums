@@ -401,6 +401,39 @@ test('admin can record a student payment', function () {
         'amount' => 500.00,
         'payment_method' => 'bank_transfer',
     ]);
+
+    $invoice->refresh();
+
+    expect((float) $invoice->paid_amount)->toBe(500.00)
+        ->and($invoice->status)->toBe('partial');
+});
+
+test('a pending payment is not applied to the invoice until approved', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $student = Student::factory()->create();
+    $invoice = StudentInvoice::factory()->for($student)->create(['amount' => 1000.00]);
+
+    $response = $this->post(route('admin.students.payments.store', $student), [
+        'invoice_id' => $invoice->id,
+        'amount' => 400.00,
+        'payment_method' => 'bank_transfer',
+        'payment_date' => now()->toDateString(),
+        'status' => 'pending',
+    ]);
+
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('student_payments', [
+        'student_id' => $student->id,
+        'amount' => 400.00,
+        'status' => 'pending',
+    ]);
+
+    $invoice->refresh();
+
+    expect((float) $invoice->paid_amount)->toBe(0.0)
+        ->and($invoice->status)->toBe('unpaid');
 });
 
 test('admin can approve a pending payment', function () {

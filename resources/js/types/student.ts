@@ -56,6 +56,7 @@ export interface StudentInvoice {
     paid_amount: number | string;
     due_date?: string | null;
     status: 'paid' | 'unpaid' | 'partial' | 'overdue';
+    items_count?: number;
     created_at: string;
     payments?: StudentPayment[];
 }

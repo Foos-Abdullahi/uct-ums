@@ -31,6 +31,9 @@ import {
     Trash2,
     Eye,
     Save,
+    Percent,
+    Tag,
+    ListChecks,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -41,10 +44,14 @@ export interface InvoiceItem {
     title: string;
     type: string;
     amount: number;
+    tax_amount: number;
+    discount_amount: number;
     paid_amount: number;
     due_date: string | null;
     status: string;
+    issue_date: string | null;
     created_at: string;
+    items_count?: number;
     student?: {
         id: number;
         matric_no: string;
@@ -105,9 +112,14 @@ export default function AdminFinanceInvoices({
     const { data, setData, post, processing, reset, errors } = useForm({
         student_id: '',
         title: 'Tuition Fee - Semester 1',
+        description: '',
         type: 'tuition',
         amount: '450.00',
+        tax_amount: '0',
+        discount_amount: '0',
         due_date: '',
+        issue_date: '',
+        items: [] as Array<{ description: string; quantity: string; unit_price: string; amount: string }>,
     });
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
@@ -131,12 +143,47 @@ export default function AdminFinanceInvoices({
 
     const handleCreateInvoice = (e: React.FormEvent) => {
         e.preventDefault();
+        // Compute amount from line items if they exist
+        const computedAmount = data.items.length > 0
+            ? data.items.reduce((sum, it) => sum + Number(it.amount || 0), 0).toFixed(2)
+            : data.amount;
+        setData('amount', computedAmount);
         post('/admin/finance/invoices', {
             onSuccess: () => {
                 setCreateModalOpen(false);
                 reset();
             },
         });
+    };
+
+    const addItem = () => {
+        setData('items', [
+            ...data.items,
+            { description: '', quantity: '1', unit_price: '0', amount: '0' },
+        ]);
+    };
+
+    const removeItem = (index: number) => {
+        setData('items', data.items.filter((_, i) => i !== index));
+    };
+
+    const updateItemField = (index: number, field: string, value: string) => {
+        const items = data.items.map((item, i) => {
+            if (i !== index) return item;
+            const updated = { ...item, [field]: value };
+            if (field === 'quantity' || field === 'unit_price') {
+                const qty = Number(updated.quantity || 0);
+                const price = Number(updated.unit_price || 0);
+                updated.amount = Number((qty * price).toFixed(2)).toString();
+            }
+            return updated;
+        });
+        setData('items', items);
+
+        if (items.length > 0) {
+            const computed = items.reduce((sum, it) => sum + Number(it.amount || 0), 0);
+            setData('amount', String(Number(computed.toFixed(2))));
+        }
     };
 
     const confirmDelete = () => {
@@ -261,6 +308,16 @@ export default function AdminFinanceInvoices({
             },
         },
         {
+            id: 'items_count',
+            header: 'Items',
+            cell: ({ row }) => (
+                <Badge variant="outline" className="text-[10px] font-mono">
+                    <ListChecks className="h-3 w-3 mr-1" />
+                    {row.original.items_count ?? '—'}
+                </Badge>
+            ),
+        },
+        {
             id: 'actions',
             header: () => <span className="sr-only">Actions</span>,
             cell: ({ row }) => (
@@ -271,9 +328,9 @@ export default function AdminFinanceInvoices({
                         className="h-7 px-2 text-xs"
                         asChild
                     >
-                        <Link href={`/admin/students/${row.original.student_id}?tab=finance`}>
+                        <Link href={`/admin/finance/invoices/${row.original.id}`}>
                             <Eye className="h-3.5 w-3.5 mr-1" />
-                            Ledger
+                            View
                         </Link>
                     </Button>
                     <Button
@@ -506,17 +563,117 @@ export default function AdminFinanceInvoices({
                                 </div>
                             </div>
 
-                            <div className="space-y-1.5">
-                                <Label htmlFor="due_date" className="text-xs font-semibold">
-                                    Due Date
-                                </Label>
-                                <Input
-                                    id="due_date"
-                                    type="date"
-                                    value={data.due_date}
-                                    onChange={(e) => setData('due_date', e.target.value)}
-                                    className="text-xs"
-                                />
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="tax_amount" className="text-xs font-semibold">
+                                        <Percent className="h-3 w-3 mr-1 inline" /> Tax ($)
+                                    </Label>
+                                    <Input
+                                        id="tax_amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="0"
+                                        value={data.tax_amount}
+                                        onChange={(e) => setData('tax_amount', e.target.value)}
+                                        className="text-xs"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="discount_amount" className="text-xs font-semibold">
+                                        <Tag className="h-3 w-3 mr-1 inline" /> Discount ($)
+                                    </Label>
+                                    <Input
+                                        id="discount_amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        placeholder="0"
+                                        value={data.discount_amount}
+                                        onChange={(e) => setData('discount_amount', e.target.value)}
+                                        className="text-xs"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="due_date" className="text-xs font-semibold">
+                                        Due Date
+                                    </Label>
+                                    <Input
+                                        id="due_date"
+                                        type="date"
+                                        value={data.due_date}
+                                        onChange={(e) => setData('due_date', e.target.value)}
+                                        className="text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Line Items Section */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs font-semibold text-muted-foreground">
+                                        <ListChecks className="h-3.5 w-3.5 mr-1 inline" />
+                                        Line Items
+                                    </Label>
+                                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={addItem}>
+                                        <Plus className="h-3 w-3 mr-1" />
+                                        Add Item
+                                    </Button>
+                                </div>
+                                {data.items.length === 0 && (
+                                    <p className="text-[11px] text-muted-foreground italic py-2">
+                                        Add line items to itemize the invoice charges.
+                                    </p>
+                                )}
+                                {data.items.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 items-center">
+                                        <Input
+                                            placeholder="Description"
+                                            value={item.description}
+                                            onChange={(e) => updateItemField(index, 'description', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        <Input
+                                            placeholder="Qty"
+                                            type="number"
+                                            min="1"
+                                            value={item.quantity}
+                                            onChange={(e) => updateItemField(index, 'quantity', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        <Input
+                                            placeholder="Unit $"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={item.unit_price}
+                                            onChange={(e) => updateItemField(index, 'unit_price', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        <Input
+                                            placeholder="Total"
+                                            type="number"
+                                            step="0.01"
+                                            value={item.amount}
+                                            onChange={(e) => updateItemField(index, 'amount', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 px-1 text-destructive hover:text-destructive"
+                                            onClick={() => removeItem(index)}
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                {data.items.length > 0 && (
+                                    <p className="text-[11px] text-muted-foreground text-right pt-1 border-t border-border/30">
+                                        Computed amount: ${data.items.reduce((sum, it) => sum + Number(it.amount || 0), 0).toFixed(2)}
+                                    </p>
+                                )}
                             </div>
 
                             <DialogFooter className="pt-2">

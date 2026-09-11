@@ -28,7 +28,9 @@ import { UploadDocumentModal } from './components/upload-document-modal';
 import { GenerateCertificateModal } from './components/generate-certificate-modal';
 import { AddGradeModal } from './components/add-grade-modal';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { Student, StudentDocument, StudentGrade } from '@/types/student';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { ColumnDef } from '@tanstack/react-table';
+import type { Student, StudentDocument, StudentGrade, StudentInvoice, StudentPayment } from '@/types/student';
 import {
     ArrowLeft,
     Edit3,
@@ -52,6 +54,8 @@ import {
     Receipt,
     GraduationCap,
     ExternalLink,
+    Eye,
+    Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -98,6 +102,16 @@ export default function AdminStudentsShow({
     const [documentModalOpen, setDocumentModalOpen] = useState(false);
     const [certificateModalOpen, setCertificateModalOpen] = useState(false);
     const [gradeModalOpen, setGradeModalOpen] = useState(false);
+    const [paymentBusy, setPaymentBusy] = useState<number | null>(null);
+
+    const tabFromUrl = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+    const validTabs = ['overview', 'academic', 'finance', 'attendance', 'documents', 'transcript', 'certificates', 'account'];
+    const [activeTab, setActiveTab] = useState(() =>
+        tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'overview'
+    );
+
+    const formatCurrency = (val: number | string) =>
+        `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     // Delete item state
     const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
@@ -138,13 +152,24 @@ export default function AdminStudentsShow({
     };
 
     const handlePaymentStatusChange = (paymentId: number, status: 'approved' | 'rejected') => {
+        if (paymentBusy !== null) {
+            return;
+        }
+
+        setPaymentBusy(paymentId);
         router.patch(
             `/admin/students/${student.id}/payments/${paymentId}/status`,
             { status },
             {
                 preserveScroll: true,
-                onSuccess: () => toast.success(`Payment marked as ${status}.`),
-                onError: () => toast.error('Failed to update payment status.'),
+                onSuccess: () => {
+                    setPaymentBusy(null);
+                    toast.success(`Payment ${status === 'approved' ? 'approved' : 'rejected'}.`);
+                },
+                onError: () => {
+                    setPaymentBusy(null);
+                    toast.error('Failed to update payment status.');
+                },
             }
         );
     };
@@ -192,6 +217,217 @@ export default function AdminStudentsShow({
         }
         gradesBySemester[sem].push(grade);
     });
+
+    const isOverdueInvoice = (inv: StudentInvoice) =>
+        inv.due_date &&
+        String(inv.due_date).split('T')[0] < new Date().toISOString().split('T')[0] &&
+        inv.status !== 'paid';
+
+    const invoiceColumns: ColumnDef<StudentInvoice>[] = [
+        {
+            accessorKey: 'invoice_no',
+            header: 'Invoice No',
+            cell: ({ row }) => (
+                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                    {row.original.invoice_no}
+                </Badge>
+            ),
+        },
+        {
+            accessorKey: 'title',
+            header: 'Fee Description',
+            cell: ({ row }) => (
+                <div className="max-w-[220px]">
+                    <p className="font-medium text-foreground truncate text-xs">{row.original.title}</p>
+                    <Badge variant="secondary" className="capitalize text-[10px] mt-0.5">
+                        {row.original.type}
+                    </Badge>
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'amount',
+            header: 'Amount',
+            cell: ({ row }) => (
+                <span className="text-xs font-semibold text-foreground">{formatCurrency(row.original.amount)}</span>
+            ),
+        },
+        {
+            accessorKey: 'paid_amount',
+            header: 'Paid',
+            cell: ({ row }) => (
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(row.original.paid_amount)}
+                </span>
+            ),
+        },
+        {
+            id: 'balance',
+            header: 'Balance Due',
+            cell: ({ row }) => {
+                const balance = Math.max(0, Number(row.original.amount) - Number(row.original.paid_amount));
+
+                return (
+                    <span className={`text-xs font-bold ${balance > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {balance > 0 ? formatCurrency(balance) : '$0.00'}
+                    </span>
+                );
+            },
+        },
+        {
+            accessorKey: 'due_date',
+            header: 'Due Date',
+            cell: ({ row }) => {
+                const overdue = isOverdueInvoice(row.original);
+
+                return (
+                    <span className={`text-xs ${overdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                        {row.original.due_date ? String(row.original.due_date).split('T')[0] : '—'}
+                        {overdue && ' (Overdue)'}
+                    </span>
+                );
+            },
+        },
+        {
+            accessorKey: 'status',
+            header: 'Status',
+            cell: ({ row }) => <StudentFeeBadge status={row.original.status} />,
+        },
+        {
+            id: 'actions',
+            header: () => <span className="sr-only">Actions</span>,
+            cell: ({ row }) => (
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            router.visit(`/admin/finance/invoices/${row.original.id}`);
+                        }}
+                    >
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                        View
+                    </Button>
+                </div>
+            ),
+        },
+    ];
+
+    const renderPaymentStatusBadge = (status: string) => {
+        if (status === 'approved') {
+            return (
+                <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Check className="h-3 w-3 mr-1" />
+                    Approved
+                </Badge>
+            );
+        }
+
+        if (status === 'rejected') {
+            return (
+                <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive">
+                    <X className="h-3 w-3 mr-1" />
+                    Rejected
+                </Badge>
+            );
+        }
+
+        return (
+            <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Clock className="h-3 w-3 mr-1" />
+                Pending
+            </Badge>
+        );
+    };
+
+    const paymentColumns: ColumnDef<StudentPayment>[] = [
+        {
+            accessorKey: 'transaction_no',
+            header: 'Transaction No',
+            cell: ({ row }) => (
+                <span className="font-mono text-xs font-semibold uppercase text-foreground">{row.original.transaction_no}</span>
+            ),
+        },
+        {
+            accessorKey: 'amount',
+            header: 'Amount',
+            cell: ({ row }) => (
+                <span className="text-xs font-bold text-foreground">{formatCurrency(row.original.amount)}</span>
+            ),
+        },
+        {
+            accessorKey: 'payment_method',
+            header: 'Method',
+            cell: ({ row }) => (
+                <span className="text-xs capitalize text-muted-foreground">{row.original.payment_method.replace('_', ' ')}</span>
+            ),
+        },
+        {
+            accessorKey: 'payment_date',
+            header: 'Date',
+            cell: ({ row }) => (
+                <span className="text-xs text-muted-foreground">{String(row.original.payment_date).split('T')[0]}</span>
+            ),
+        },
+        {
+            accessorKey: 'notes',
+            header: 'Notes',
+            cell: ({ row }) => (
+                <span className="text-xs text-muted-foreground max-w-[180px] truncate block">{row.original.notes || '—'}</span>
+            ),
+        },
+        {
+            accessorKey: 'status',
+            header: 'Status',
+            cell: ({ row }) => renderPaymentStatusBadge(row.original.status),
+        },
+        {
+            id: 'approval',
+            header: () => <span className="text-right">Approval</span>,
+            cell: ({ row }) => {
+                const busy = paymentBusy === row.original.id;
+
+                return (
+                    <div className="flex items-center justify-end gap-1">
+                        {row.original.status === 'pending' ? (
+                            <>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs text-emerald-600 hover:text-emerald-700"
+                                    disabled={busy}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePaymentStatusChange(row.original.id, 'approved');
+                                    }}
+                                >
+                                    {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                                    Approve
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs text-destructive hover:text-destructive"
+                                    disabled={busy}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePaymentStatusChange(row.original.id, 'rejected');
+                                    }}
+                                >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Reject
+                                </Button>
+                            </>
+                        ) : (
+                            <span className="text-[11px] text-muted-foreground">Processed</span>
+                        )}
+                    </div>
+                );
+            },
+        },
+    ];
 
     return (
         <>
@@ -265,7 +501,7 @@ export default function AdminStudentsShow({
                 />
 
                 {/* 8 Tab Navigation Panels */}
-                <Tabs defaultValue="overview" className="space-y-4">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                     <TabsList className="bg-muted/60 p-1 rounded-sm border border-border/40 flex-wrap h-auto">
                         <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
                         <TabsTrigger value="academic" className="text-xs">Academic</TabsTrigger>
@@ -526,56 +762,15 @@ export default function AdminStudentsShow({
                                 </Button>
                             </div>
 
-                            <Card className="rounded-sm border-border/40 bg-card shadow-xs overflow-hidden">
-                                <Table>
-                                    <TableHeader className="bg-muted/40">
-                                        <TableRow>
-                                            <TableHead className="text-xs font-semibold">Invoice No</TableHead>
-                                            <TableHead className="text-xs font-semibold">Title</TableHead>
-                                            <TableHead className="text-xs font-semibold">Type</TableHead>
-                                            <TableHead className="text-xs font-semibold">Amount</TableHead>
-                                            <TableHead className="text-xs font-semibold">Paid</TableHead>
-                                            <TableHead className="text-xs font-semibold">Due Date</TableHead>
-                                            <TableHead className="text-xs font-semibold">Status</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {(student.invoices && student.invoices.length > 0) ? (
-                                            student.invoices.map((inv) => (
-                                                <TableRow key={inv.id}>
-                                                    <TableCell className="font-mono text-xs font-semibold">
-                                                        {inv.invoice_no}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs font-medium text-foreground">
-                                                        {inv.title}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs capitalize text-muted-foreground">
-                                                        {inv.type}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs font-bold text-foreground">
-                                                        ${Number(inv.amount).toFixed(2)}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs font-medium text-emerald-600">
-                                                        ${Number(inv.paid_amount).toFixed(2)}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">
-                                                        {inv.due_date ? String(inv.due_date).split('T')[0] : '—'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <StudentFeeBadge status={inv.status} />
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={7} className="h-20 text-center text-xs text-muted-foreground">
-                                                    No invoices issued for this student yet.
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </Card>
+                            <div className="border border-border/60 rounded-md bg-card p-4">
+                                <DataTable
+                                    title="Fee Invoices"
+                                    searchTitle="Search by invoice no, title, type..."
+                                    columns={invoiceColumns}
+                                    data={student.invoices ?? []}
+                                    onRowClick={(row) => router.visit(`/admin/finance/invoices/${row.original.id}`)}
+                                />
+                            </div>
                         </div>
 
                         {/* Payments Section */}
@@ -591,90 +786,14 @@ export default function AdminStudentsShow({
                                 </Button>
                             </div>
 
-                            <Card className="rounded-sm border-border/40 bg-card shadow-xs overflow-hidden">
-                                <Table>
-                                    <TableHeader className="bg-muted/40">
-                                        <TableRow>
-                                            <TableHead className="text-xs font-semibold">Transaction No</TableHead>
-                                            <TableHead className="text-xs font-semibold">Amount</TableHead>
-                                            <TableHead className="text-xs font-semibold">Method</TableHead>
-                                            <TableHead className="text-xs font-semibold">Date</TableHead>
-                                            <TableHead className="text-xs font-semibold">Notes</TableHead>
-                                            <TableHead className="text-xs font-semibold">Status</TableHead>
-                                            <TableHead className="text-xs font-semibold text-right">Approval</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {(student.payments && student.payments.length > 0) ? (
-                                            student.payments.map((pmt) => (
-                                                <TableRow key={pmt.id}>
-                                                    <TableCell className="font-mono text-xs font-semibold">
-                                                        {pmt.transaction_no}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs font-bold text-foreground">
-                                                        ${Number(pmt.amount).toFixed(2)}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs capitalize text-muted-foreground">
-                                                        {pmt.payment_method.replace('_', ' ')}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">
-                                                        {String(pmt.payment_date).split('T')[0]}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground max-w-[180px] truncate">
-                                                        {pmt.notes || '—'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={
-                                                                pmt.status === 'approved'
-                                                                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600'
-                                                                    : pmt.status === 'rejected'
-                                                                    ? 'border-destructive/30 bg-destructive/10 text-destructive'
-                                                                    : 'border-amber-500/30 bg-amber-500/10 text-amber-600'
-                                                            }
-                                                        >
-                                                            {pmt.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        {pmt.status === 'pending' ? (
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="h-7 text-xs text-emerald-600 hover:text-emerald-700"
-                                                                    onClick={() => handlePaymentStatusChange(pmt.id, 'approved')}
-                                                                >
-                                                                    <Check className="h-3 w-3 mr-1" />
-                                                                    Approve
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="h-7 text-xs text-destructive hover:text-destructive"
-                                                                    onClick={() => handlePaymentStatusChange(pmt.id, 'rejected')}
-                                                                >
-                                                                    <X className="h-3 w-3 mr-1" />
-                                                                    Reject
-                                                                </Button>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-[11px] text-muted-foreground">Processed</span>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={7} className="h-20 text-center text-xs text-muted-foreground">
-                                                    No payments recorded for this student yet.
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </Card>
+                            <div className="border border-border/60 rounded-md bg-card p-4">
+                                <DataTable
+                                    title="Payment Transactions"
+                                    searchTitle="Search by transaction no, method, status..."
+                                    columns={paymentColumns}
+                                    data={student.payments ?? []}
+                                />
+                            </div>
                         </div>
                     </TabsContent>
 

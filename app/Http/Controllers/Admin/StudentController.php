@@ -196,7 +196,7 @@ class StudentController extends Controller
             'program',
             'admission',
             'documents' => fn ($q) => $q->latest(),
-            'invoices' => fn ($q) => $q->latest(),
+            'invoices' => fn ($q) => $q->withCount('items')->latest(),
             'payments' => fn ($q) => $q->latest(),
             'grades' => fn ($q) => $q->orderBy('semester')->orderBy('course_code'),
             'certificates' => fn ($q) => $q->latest(),
@@ -206,7 +206,11 @@ class StudentController extends Controller
         $totalInvoiced = (float) $student->invoices->sum('amount');
         $totalPaid = (float) $student->payments->where('status', 'approved')->sum('amount');
         $totalOutstanding = max(0, $totalInvoiced - $totalPaid);
-        $overdueCount = $student->invoices->where('status', 'overdue')->count();
+        $overdueCount = $student->invoices
+            ->filter(fn ($invoice) => $invoice->status !== 'paid'
+                && $invoice->due_date
+                && $invoice->due_date->lt(now()))
+            ->count();
 
         $grades = $student->grades;
         $totalCredits = (int) $grades->sum('credits');
@@ -415,6 +419,7 @@ class StudentController extends Controller
             'amount' => ['required', 'numeric', 'min:1'],
             'payment_method' => ['required', 'string', 'in:bank_transfer,cash,card,online,cheque'],
             'payment_date' => ['required', 'date'],
+            'status' => ['nullable', 'string', 'in:pending,approved'],
             'notes' => ['nullable', 'string', 'max:500'],
             'receipt' => ['nullable', 'file', 'max:5120'], // 5MB max
         ]);
@@ -424,9 +429,11 @@ class StudentController extends Controller
             $receiptPath = $request->file('receipt')->store('receipts', 'public');
         }
 
+        $status = $validated['status'] ?? 'approved';
+
         $transactionNo = 'TXN-'.strtoupper(Str::random(8));
 
-        DB::transaction(function () use ($student, $validated, $transactionNo, $receiptPath) {
+        DB::transaction(function () use ($student, $validated, $transactionNo, $receiptPath, $status) {
             $payment = StudentPayment::create([
                 'student_id' => $student->id,
                 'invoice_id' => $validated['invoice_id'] ?? null,
@@ -435,11 +442,11 @@ class StudentController extends Controller
                 'payment_method' => $validated['payment_method'],
                 'payment_date' => $validated['payment_date'],
                 'receipt_path' => $receiptPath,
-                'status' => 'approved',
+                'status' => $status,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            if (! empty($validated['invoice_id'])) {
+            if (! empty($validated['invoice_id']) && $status === 'approved') {
                 $invoice = StudentInvoice::find($validated['invoice_id']);
                 if ($invoice) {
                     $newPaidAmount = (float) $invoice->paid_amount + (float) $validated['amount'];
@@ -450,7 +457,9 @@ class StudentController extends Controller
                 }
             }
 
-            $student->recalculateFinancials();
+            if ($status === 'approved') {
+                $student->recalculateFinancials();
+            }
         });
 
         return back()->with('success', 'Payment recorded successfully.');

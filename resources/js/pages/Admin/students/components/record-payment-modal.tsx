@@ -18,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { CreditCard, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { StudentInvoice } from '@/types/student';
@@ -40,6 +41,7 @@ export function RecordPaymentModal({
         amount: '',
         payment_method: 'bank_transfer',
         payment_date: new Date().toISOString().split('T')[0],
+        status: 'approved',
         notes: '',
         receipt: null as File | null,
     });
@@ -60,7 +62,7 @@ export function RecordPaymentModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[480px]">
+            <DialogContent className="sm:max-w-[520px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader className="gap-2">
                         <div className="flex items-center gap-3">
@@ -87,8 +89,10 @@ export function RecordPaymentModal({
                                     onValueChange={(val) => {
                                         setData('invoice_id', val === 'none' ? '' : val);
                                         const selected = invoices.find((inv) => String(inv.id) === val);
+
                                         if (selected && !data.amount) {
                                             const remaining = Math.max(0, Number(selected.amount) - Number(selected.paid_amount));
+
                                             if (remaining > 0) {
                                                 setData((d) => ({ ...d, invoice_id: val, amount: String(remaining) }));
                                             }
@@ -155,12 +159,11 @@ export function RecordPaymentModal({
                         <div className="grid grid-cols-2 gap-3">
                             <div className="grid gap-2">
                                 <Label htmlFor="payment_date">Payment Date</Label>
-                                <Input
+                                <DatePicker
                                     id="payment_date"
-                                    type="date"
                                     value={data.payment_date}
-                                    onChange={(e) => setData('payment_date', e.target.value)}
-                                    required
+                                    onChange={(val) => setData('payment_date', val)}
+                                    maxDate={new Date()}
                                 />
                                 {errors.payment_date && (
                                     <p className="text-xs text-destructive">{errors.payment_date}</p>
@@ -168,17 +171,36 @@ export function RecordPaymentModal({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="receipt">Receipt File (Optional)</Label>
-                                <Input
-                                    id="receipt"
-                                    type="file"
-                                    className="cursor-pointer text-xs"
-                                    onChange={(e) => setData('receipt', e.target.files?.[0] ?? null)}
-                                />
-                                {errors.receipt && (
-                                    <p className="text-xs text-destructive">{errors.receipt}</p>
+                                <Label htmlFor="status">Payment Status</Label>
+                                <Select
+                                    value={data.status}
+                                    onValueChange={(val: any) => setData('status', val)}
+                                >
+                                    <SelectTrigger id="status">
+                                        <SelectValue placeholder="Select status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="approved">Approved - Apply to Balance</SelectItem>
+                                        <SelectItem value="pending">Pending - Await Verification</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.status && (
+                                    <p className="text-xs text-destructive">{errors.status}</p>
                                 )}
                             </div>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="receipt">Receipt File (Optional)</Label>
+                            <Input
+                                id="receipt"
+                                type="file"
+                                className="cursor-pointer text-xs"
+                                onChange={(e) => setData('receipt', e.target.files?.[0] ?? null)}
+                            />
+                            {errors.receipt && (
+                                <p className="text-xs text-destructive">{errors.receipt}</p>
+                            )}
                         </div>
 
                         <div className="grid gap-2">

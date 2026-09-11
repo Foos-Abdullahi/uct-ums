@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Expense;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\StudentInvoice;
+use App\Models\StudentInvoiceItem;
 use App\Models\StudentPayment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,6 +50,21 @@ class FinanceController extends Controller
             ),
             'invoices_by_type' => Inertia::defer(fn () => StudentInvoice::select('type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
                 ->groupBy('type')
+                ->get()
+            ),
+            'expense_stats' => Inertia::defer(fn () => [
+                'total_spent' => (float) Expense::whereIn('status', ['approved', 'paid'])->sum('amount'),
+                'pending_approval' => (int) Expense::where('status', 'pending_approval')->count(),
+                'total_expenses' => (int) Expense::count(),
+            ]),
+            'expenses_by_type' => Inertia::defer(fn () => Expense::whereIn('status', ['approved', 'paid'])
+                ->select('expense_type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+                ->groupBy('expense_type')
+                ->get()
+            ),
+            'recent_expenses' => Inertia::defer(fn () => Expense::with(['creator'])
+                ->latest('expense_date')
+                ->take(6)
                 ->get()
             ),
         ]);
@@ -241,6 +258,7 @@ class FinanceController extends Controller
 
         $query = StudentInvoice::query()
             ->with(['student.user', 'student.program'])
+            ->withCount('items')
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('invoice_no', 'like', "%{$search}%")
@@ -297,19 +315,48 @@ class FinanceController extends Controller
         $validated = $request->validate([
             'student_id' => ['required', 'exists:students,id'],
             'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
             'type' => ['required', 'string', 'in:tuition,admission,examination,library,laboratory,graduation,hostel,other'],
             'amount' => ['required', 'numeric', 'min:1'],
+            'tax_amount' => ['nullable', 'numeric', 'min:0'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'due_date' => ['nullable', 'date'],
+            'issue_date' => ['nullable', 'date'],
+            'items' => ['nullable', 'array', 'max:50'],
+            'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.amount' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $invoiceNo = 'INV-'.date('Y').'-'.str_pad((string) (StudentInvoice::count() + 1), 5, '0', STR_PAD_LEFT);
+        $invoiceNo = $this->nextInvoiceNo();
 
         $invoice = StudentInvoice::create([
-            ...$validated,
+            'student_id' => $validated['student_id'],
             'invoice_no' => $invoiceNo,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'],
+            'amount' => $validated['amount'],
+            'tax_amount' => $validated['tax_amount'] ?? 0.00,
+            'discount_amount' => $validated['discount_amount'] ?? 0.00,
             'paid_amount' => 0.00,
+            'due_date' => $validated['due_date'] ?? null,
+            'issue_date' => $validated['issue_date'] ?? now()->toDateString(),
             'status' => 'unpaid',
         ]);
+
+        // Create line items if provided
+        if (! empty($validated['items'])) {
+            $items = collect($validated['items'])->map(fn ($item) => [
+                'description' => $item['description'],
+                'quantity' => $item['quantity'],
+                'unit_price' => $item['unit_price'],
+                'amount' => $item['amount'],
+            ])->all();
+
+            $invoice->items()->createMany($items);
+        }
 
         // Update student fee status to unpaid or partial
         $student = Student::find($validated['student_id']);
@@ -318,6 +365,95 @@ class FinanceController extends Controller
         }
 
         return back()->with('success', "Invoice {$invoiceNo} for \${$invoice->amount} issued successfully.");
+    }
+
+    /**
+     * Display a single invoice with line items, tax, discount, and payment history.
+     */
+    public function invoiceDetails(StudentInvoice $invoice): Response
+    {
+        $invoice->load(['student.user', 'student.program', 'items', 'payments']);
+
+        return Inertia::render('Admin/finance/invoice-details', [
+            'invoice' => $invoice,
+            'invoice_types' => ['tuition', 'admission', 'examination', 'library', 'laboratory', 'graduation', 'hostel', 'other'],
+        ]);
+    }
+
+    /**
+     * Update an invoice's details, line items, tax, and discount.
+     */
+    public function updateInvoice(Request $request, StudentInvoice $invoice): RedirectResponse
+    {
+        if ($invoice->paid_amount > 0) {
+            return back()->with('error', 'Cannot modify an invoice that has collected payments.');
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'type' => ['required', 'string', 'in:tuition,admission,examination,library,laboratory,graduation,hostel,other'],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'tax_amount' => ['nullable', 'numeric', 'min:0'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'due_date' => ['nullable', 'date'],
+            'issue_date' => ['nullable', 'date'],
+            'status' => ['required', 'string', 'in:unpaid,partial,paid'],
+            'items' => ['nullable', 'array', 'max:50'],
+            'items.*.id' => ['nullable', 'exists:student_invoice_items,id'],
+            'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            'items.*.amount' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $invoice->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'],
+            'amount' => $validated['amount'],
+            'tax_amount' => $validated['tax_amount'] ?? 0.00,
+            'discount_amount' => $validated['discount_amount'] ?? 0.00,
+            'due_date' => $validated['due_date'] ?? null,
+            'issue_date' => $validated['issue_date'] ?? $invoice->issue_date?->toDateString(),
+            'status' => $validated['status'],
+        ]);
+
+        // Sync line items: update existing, delete missing, create new
+        if (array_key_exists('items', $validated)) {
+            $existingIds = collect($validated['items'])->pluck('id')->filter();
+            $invoice->items()->whereNotIn('id', $existingIds)->delete();
+
+            foreach ($validated['items'] as $item) {
+                if (! empty($item['id'])) {
+                    StudentInvoiceItem::where('id', $item['id'])
+                        ->where('invoice_id', $invoice->id)
+                        ->update([
+                            'description' => $item['description'],
+                            'quantity' => $item['quantity'],
+                            'unit_price' => $item['unit_price'],
+                            'amount' => $item['amount'],
+                        ]);
+                } else {
+                    $invoice->items()->create([
+                        'description' => $item['description'],
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'amount' => $item['amount'],
+                    ]);
+                }
+            }
+        }
+
+        return back()->with('success', "Invoice {$invoice->invoice_no} updated successfully.");
+    }
+
+    /**
+     * Generate the next sequential invoice number.
+     */
+    private function nextInvoiceNo(): string
+    {
+        return 'INV-'.date('Y').'-'.str_pad((string) (StudentInvoice::count() + 1), 5, '0', STR_PAD_LEFT);
     }
 
     /**

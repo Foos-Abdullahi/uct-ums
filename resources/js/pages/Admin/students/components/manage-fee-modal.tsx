@@ -18,6 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Receipt, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -122,11 +123,11 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
 
                         <div className="grid gap-2">
                             <Label htmlFor="due_date">Due Date</Label>
-                            <Input
+                            <DatePicker
                                 id="due_date"
-                                type="date"
                                 value={data.due_date}
-                                onChange={(e) => setData('due_date', e.target.value)}
+                                onChange={(val) => setData('due_date', val)}
+                                minDate={new Date()}
                             />
                             {errors.due_date && (
                                 <p className="text-xs text-destructive">{errors.due_date}</p>

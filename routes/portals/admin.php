@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AssignmentController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnrollmentController;
+use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LecturerController;
 use App\Http\Controllers\Admin\ProgramController;
@@ -134,8 +135,23 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
             Route::post('/payments', [FinanceController::class, 'storePayment'])->name('payments.store');
             Route::patch('/payments/{payment}/status', [FinanceController::class, 'updatePaymentStatus'])->name('payments.status');
             Route::get('/invoices', [FinanceController::class, 'invoices'])->name('invoices');
+            Route::get('/invoices/{invoice}', [FinanceController::class, 'invoiceDetails'])->name('invoices.show');
             Route::post('/invoices', [FinanceController::class, 'storeInvoice'])->name('invoices.store');
+            Route::put('/invoices/{invoice}', [FinanceController::class, 'updateInvoice'])->name('invoices.update');
             Route::delete('/invoices/{invoice}', [FinanceController::class, 'destroyInvoice'])->name('invoices.destroy');
+        });
+
+        // Expense Management
+        Route::prefix('expenses')->name('expenses.')->group(function () {
+            Route::get('/', [ExpenseController::class, 'index'])->name('index');
+            Route::post('/', [ExpenseController::class, 'store'])->name('store');
+            Route::get('/{expense}', [ExpenseController::class, 'show'])->name('show');
+            Route::put('/{expense}', [ExpenseController::class, 'update'])->name('update');
+            Route::delete('/{expense}', [ExpenseController::class, 'destroy'])->name('destroy');
+            Route::patch('/{expense}/status', [ExpenseController::class, 'updateStatus'])->name('status');
+            Route::post('/{expense}/mark-paid', [ExpenseController::class, 'markPaid'])->name('mark-paid');
+            Route::post('/{expense}/approve', [ExpenseController::class, 'approve'])->name('approve');
+            Route::post('/{expense}/reject', [ExpenseController::class, 'reject'])->name('reject');
         });
 
         // Reports

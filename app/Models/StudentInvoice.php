@@ -18,11 +18,17 @@ class StudentInvoice extends Model
         'student_id',
         'invoice_no',
         'title',
+        'description',
         'type',
         'amount',
+        'tax_amount',
+        'discount_amount',
         'paid_amount',
         'due_date',
+        'issue_date',
         'status',
+        'approved_by',
+        'approved_at',
     ];
 
     /**
@@ -32,8 +38,12 @@ class StudentInvoice extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'due_date' => 'date',
+            'issue_date' => 'date',
+            'approved_at' => 'datetime',
         ];
     }
 
@@ -51,5 +61,28 @@ class StudentInvoice extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(StudentPayment::class, 'invoice_id');
+    }
+
+    /**
+     * @return HasMany<StudentInvoiceItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(StudentInvoiceItem::class, 'invoice_id');
+    }
+
+    public function subtotal(): float
+    {
+        return (float) $this->items()->sum('amount');
+    }
+
+    public function total(): float
+    {
+        return (float) $this->amount;
+    }
+
+    public function balance(): float
+    {
+        return max(0, (float) $this->amount - (float) $this->paid_amount);
     }
 }
