@@ -295,9 +295,16 @@ try {
 } finally {
     Pop-Location
 }
-$py = "import gzip, shutil; src = r'$workTar'; dst = src + '.gz'; with open(src,'rb') as fi, gzip.open(dst,'wb',compresslevel=6) as fo: shutil.copyfileobj(fi, fo, 1024*1024)"
-python -c $py
-if ($LASTEXITCODE -ne 0) { throw 'gzip failed' }
+$source = [IO.File]::OpenRead($workTar)
+$destination = [IO.File]::Create($workGz)
+try {
+    $gzip = [IO.Compression.GzipStream]::new($destination, [IO.Compression.CompressionLevel]::Optimal)
+    $source.CopyTo($gzip)
+    $gzip.Dispose()
+} finally {
+    $source.Dispose()
+    $destination.Dispose()
+}
 
 $ftpUrl = "ftp://$FtpHost"
 
