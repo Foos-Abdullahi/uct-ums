@@ -243,7 +243,7 @@ require `$base.'/vendor/autoload.php';
 
 `$console = `$app->make(Kernel::class);
 
-`$commands = ['config:clear', 'migrate --force', 'db:seed --class=AdminSeeder --force', 'config:cache', 'view:cache'];
+`$commands = ['config:clear', 'migrate --force', 'db:seed --class=AdminSeeder --force', 'db:seed --class=RolePermissionSeeder --force', 'db:seed --class=ChartOfAccountsSeeder --force', 'config:cache', 'view:cache'];
 
 foreach (`$commands as `$command) {
     echo ">>> {`$command}\n\n";
