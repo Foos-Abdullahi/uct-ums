@@ -32,6 +32,7 @@ class Expense extends Model
         'title',
         'description',
         'expense_type',
+        'account_id',
         'amount',
         'expense_date',
         'vendor',
@@ -51,9 +52,17 @@ class Expense extends Model
     {
         return [
             'amount' => 'decimal:2',
-            'expense_date' => 'date',
+            'expense_date' => 'date:Y-m-d',
             'approved_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Account, $this>
+     */
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 
     /**

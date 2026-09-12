@@ -43,9 +43,9 @@ class Student extends Model
     {
         return [
             'fee_status' => FeeStatus::class,
-            'enrollment_date' => 'date',
-            'date_of_birth' => 'date',
-            'graduation_date' => 'date',
+            'enrollment_date' => 'date:Y-m-d',
+            'date_of_birth' => 'date:Y-m-d',
+            'graduation_date' => 'date:Y-m-d',
             'gpa' => 'decimal:2',
             'current_semester' => 'integer',
         ];
@@ -223,6 +223,7 @@ class Student extends Model
 
         if ($totalInvoiced <= 0) {
             $this->update(['fee_status' => FeeStatus::Paid]);
+
             return;
         }
 

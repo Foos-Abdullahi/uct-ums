@@ -29,7 +29,7 @@ class StudentCertificate extends Model
     protected function casts(): array
     {
         return [
-            'issue_date' => 'date',
+            'issue_date' => 'date:Y-m-d',
         ];
     }
 

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Deferred, Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
     Dialog,
     DialogContent,
@@ -14,6 +15,8 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { formatDate, formatDateTime } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import {
     DollarSign,
@@ -29,6 +32,7 @@ import {
     ArrowLeft,
     Receipt,
     Building2,
+    BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,6 +42,7 @@ interface ExpenseDetail {
     title: string;
     description: string | null;
     expense_type: string;
+    account_id: number | null;
     amount: number;
     expense_date: string;
     vendor: string | null;
@@ -48,6 +53,13 @@ interface ExpenseDetail {
     approved_at: string | null;
     created_at: string;
     notes: string | null;
+    account?: {
+        id: number;
+        code: number;
+        name: string;
+        normal_balance: string;
+        category?: { type: string; name: string };
+    };
     creator?: { id: number; name: string };
     approver?: { id: number; name: string };
     approvals?: Array<{
@@ -69,15 +81,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Expense Details', href: '#' },
 ];
 
-const TYPE_LABELS: Record<string, string> = {
-    salary: 'Salary',
-    utilities: 'Utilities',
-    equipment: 'Equipment',
-    maintenance: 'Maintenance',
-    supplies: 'Supplies',
-    others: 'Others',
-};
-
 export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetail }) {
     const [rejectComment, setRejectComment] = useState('');
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -88,6 +91,16 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
     const [markPaidProcessing, setMarkPaidProcessing] = useState(false);
 
     const formatCurrency = (val: number) => `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const expenseInitials = expense.title
+        ? expense.title
+              .split(' ')
+              .filter(Boolean)
+              .map((w) => w[0])
+              .join('')
+              .substring(0, 2)
+              .toUpperCase()
+        : 'EX';
 
     const levelRoles = expense.level_roles ?? {};
     const approvals = expense.approvals ?? [];
@@ -105,8 +118,9 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
                     setApproveComment('');
                     setApproveProcessing(false);
                 },
-                onError: () => {
-                    toast.error('Approval failed.');
+                onError: (errors) => {
+                    const msg = Object.values(errors)[0] ?? 'Approval failed.';
+                    toast.error(String(msg));
                     setApproveProcessing(false);
                 },
             }
@@ -125,8 +139,9 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
                     setRejectComment('');
                     setRejectProcessing(false);
                 },
-                onError: () => {
-                    toast.error('Failed to reject expense.');
+                onError: (errors) => {
+                    const msg = Object.values(errors)[0] ?? 'Failed to reject expense.';
+                    toast.error(String(msg));
                     setRejectProcessing(false);
                 },
             }
@@ -184,110 +199,110 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
             <Head title={`Expense ${expense.expense_no}`} />
 
             <div className="p-6 space-y-6">
-                {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex items-start gap-3">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                            <Link href="/admin/expenses">
-                                <ArrowLeft className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-lg font-semibold text-foreground tracking-tight">
-                                    {expense.title}
-                                </h1>
-                                {statusBadge()}
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                <span className="font-mono font-semibold">{expense.expense_no}</span> · {TYPE_LABELS[expense.expense_type] ?? expense.expense_type} · {expense.expense_date}
-                            </p>
-                        </div>
-                    </div>
+                {/* Header Banner — UctPanelCard */}
+                <UctPanelCard
+                    type="default"
+                    className="overflow-hidden"
+                    title={
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
+                            <Avatar className="h-14 w-14 border-2 border-primary/20 shrink-0">
+                                <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
+                                    {expenseInitials}
+                                </AvatarFallback>
+                            </Avatar>
 
-                    <div className="flex items-center gap-2">
-                        {expense.status === 'approved' && (
-                            <Button size="sm" disabled={markPaidProcessing} onClick={handleMarkPaid}>
-                                <HandCoins className="h-4 w-4 mr-1.5" />
-                                {markPaidProcessing ? 'Processing...' : 'Mark as Paid'}
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-lg font-bold text-foreground tracking-tight">
+                                        {expense.title}
+                                    </span>
+                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-muted text-foreground border border-border/60">
+                                        {expense.expense_no}
+                                    </span>
+                                    {statusBadge()}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {expense.account ? (
+                                        <>
+                                            <span className="font-medium text-foreground">{expense.account.name}</span>
+                                            {expense.account.code && (
+                                                <> ({expense.account.code})</>
+                                            )}
+                                            {expense.account.category?.name ? ` • ${expense.account.category.name}` : ''}
+                                            {' • '}
+                                        </>
+                                    ) : null}
+                                    {formatDate(expense.expense_date)}
+                                    {expense.vendor ? ` • Vendor: ${expense.vendor}` : ''}
+                                </p>
+                            </div>
+                        </div>
+                    }
+                    actions={
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href="/admin/expenses">
+                                    <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                                    Back to Expenses
+                                </Link>
                             </Button>
-                        )}
-                        {expense.status === 'pending_approval' && pendingApproval && (
-                            <>
-                                <Button
-                                    size="sm"
-                                    onClick={() => setApproveModalOpen(true)}
-                                >
-                                    <Check className="h-4 w-4 mr-1.5" />
-                                    Approve
+
+                            {expense.status === 'approved' && (
+                                <Button size="sm" disabled={markPaidProcessing} onClick={handleMarkPaid}>
+                                    <HandCoins className="h-3.5 w-3.5 mr-1.5" />
+                                    {markPaidProcessing ? 'Processing...' : 'Mark as Paid'}
                                 </Button>
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => setRejectModalOpen(true)}
-                                >
-                                    <X className="h-4 w-4 mr-1.5" />
-                                    Reject
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
+                            )}
+
+                            {expense.status === 'pending_approval' && pendingApproval && (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setApproveModalOpen(true)}
+                                    >
+                                        <Check className="h-3.5 w-3.5 mr-1.5" />
+                                        Approve
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => setRejectModalOpen(true)}
+                                    >
+                                        <X className="h-3.5 w-3.5 mr-1.5" />
+                                        Reject
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    }
+                />
 
                 {/* Info Cards */}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                    <Card>
-                        <CardContent className="pt-5">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-full bg-destructive/10 p-2 text-destructive">
-                                    <DollarSign className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Amount</p>
-                                    <p className="text-lg font-bold text-foreground">{formatCurrency(expense.amount)}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-5">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-full bg-primary/10 p-2 text-primary">
-                                    <Building2 className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Vendor</p>
-                                    <p className="text-sm font-semibold text-foreground">{expense.vendor || '—'}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-5">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-full bg-accent/10 p-2 text-accent">
-                                    <Receipt className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Budget Line</p>
-                                    <p className="text-sm font-semibold text-foreground">{expense.budget_line || '—'}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-5">
-                            <div className="flex items-center gap-3">
-                                <div className="rounded-full bg-emerald-500/10 p-2 text-emerald-600">
-                                    <Calendar className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Submitted By</p>
-                                    <p className="text-sm font-semibold text-foreground">{expense.creator?.name || 'N/A'}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <MetricCard
+                        title="Amount"
+                        value={formatCurrency(expense.amount)}
+                        icon={DollarSign}
+                        color="destructive"
+                    />
+                    <MetricCard
+                        title="Vendor"
+                        value={expense.vendor || '—'}
+                        icon={Building2}
+                        color="primary"
+                    />
+                    <MetricCard
+                        title="Account"
+                        value={expense.account?.name || '—'}
+                        icon={BookOpen}
+                        color="accent"
+                    />
+                    <MetricCard
+                        title="Submitted By"
+                        value={expense.creator?.name ? expense.creator.name.replace(/^System Administrator$/i, 'Sys Admin') : 'N/A'}
+                        icon={Calendar}
+                        color="success"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -315,12 +330,12 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
                                 {expense.approved_at && (
                                     <div>
                                         <p className="text-muted-foreground">Approved At</p>
-                                        <p className="font-semibold text-foreground">{new Date(expense.approved_at).toLocaleString()}</p>
+                                        <p className="font-semibold text-foreground">{formatDateTime(expense.approved_at)}</p>
                                     </div>
                                 )}
                                 <div>
                                     <p className="text-muted-foreground">Created At</p>
-                                    <p className="font-semibold text-foreground">{new Date(expense.created_at).toLocaleString()}</p>
+                                    <p className="font-semibold text-foreground">{formatDateTime(expense.created_at)}</p>
                                 </div>
                                 {expense.approver && (
                                     <div>
@@ -394,7 +409,7 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
                                                             )}
                                                             {approval?.acted_at && (
                                                                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                                                                    {approval.action} on {new Date(approval.acted_at).toLocaleString()}
+                                                                    {approval.action} on {formatDateTime(approval.acted_at)}
                                                                 </p>
                                                             )}
                                                         </div>
@@ -436,9 +451,9 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
                                 <Label htmlFor="approve_comment" className="text-xs font-semibold">
                                     Comment (optional)
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="approve_comment"
-                                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="min-h-[80px] text-xs"
                                     placeholder="Add an optional approval note..."
                                     value={approveComment}
                                     onChange={(e) => setApproveComment(e.target.value)}
@@ -473,13 +488,12 @@ export default function AdminExpenseDetails({ expense }: { expense: ExpenseDetai
                                 <Label htmlFor="reject_comment" className="text-xs font-semibold">
                                     Rejection Reason <span className="text-destructive">*</span>
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="reject_comment"
-                                    className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="min-h-[90px] text-xs"
                                     placeholder="Explain why this expense is being rejected..."
                                     value={rejectComment}
                                     onChange={(e) => setRejectComment(e.target.value)}
-                                    required
                                 />
                             </div>
 

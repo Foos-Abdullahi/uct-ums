@@ -43,8 +43,8 @@ class Lecturer extends Model
     protected function casts(): array
     {
         return [
-            'hire_date' => 'date',
-            'date_of_birth' => 'date',
+            'hire_date' => 'date:Y-m-d',
+            'date_of_birth' => 'date:Y-m-d',
         ];
     }
 

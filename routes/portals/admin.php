@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AssignmentController;
+use App\Http\Controllers\Admin\ChartOfAccountsController;
 use App\Http\Controllers\Admin\CourseController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnrollmentController;
@@ -136,6 +137,15 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::SuperAdmin->value])
             Route::patch('/payments/{payment}/status', [FinanceController::class, 'updatePaymentStatus'])->name('payments.status');
             Route::get('/invoices', [FinanceController::class, 'invoices'])->name('invoices');
             Route::get('/invoices/{invoice}', [FinanceController::class, 'invoiceDetails'])->name('invoices.show');
+            Route::get('/chart-of-accounts', [ChartOfAccountsController::class, 'index'])->name('chart-of-accounts');
+            Route::get('/chart-of-accounts/import', [ChartOfAccountsController::class, 'importIndex'])->name('chart-of-accounts.import');
+            Route::post('/chart-of-accounts/import-preview', [ChartOfAccountsController::class, 'importPreview'])->name('chart-of-accounts.import-preview');
+            Route::post('/chart-of-accounts/import', [ChartOfAccountsController::class, 'importStore'])->name('chart-of-accounts.import-store');
+            Route::post('/chart-of-accounts', [ChartOfAccountsController::class, 'store'])->name('chart-of-accounts.store');
+            Route::put('/chart-of-accounts/{account}', [ChartOfAccountsController::class, 'update'])->name('chart-of-accounts.update');
+            Route::delete('/chart-of-accounts/{account}', [ChartOfAccountsController::class, 'destroy'])->name('chart-of-accounts.destroy');
+            Route::post('/chart-of-accounts/{account}/status', [ChartOfAccountsController::class, 'toggleStatus'])->name('chart-of-accounts.status');
+            Route::get('/chart-of-accounts/{account}', [ChartOfAccountsController::class, 'show'])->name('chart-of-accounts.show');
             Route::post('/invoices', [FinanceController::class, 'storeInvoice'])->name('invoices.store');
             Route::put('/invoices/{invoice}', [FinanceController::class, 'updateInvoice'])->name('invoices.update');
             Route::delete('/invoices/{invoice}', [FinanceController::class, 'destroyInvoice'])->name('invoices.destroy');

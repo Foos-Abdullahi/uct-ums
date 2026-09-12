@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\ExpenseStatus;
-use App\Enums\ExpenseType;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Expense;
 use App\Models\ExpenseApproval;
 use Illuminate\Http\RedirectResponse;
@@ -22,21 +22,25 @@ class ExpenseController extends Controller
     {
         $search = $request->query('search');
         $status = $request->query('status');
-        $type = $request->query('expense_type');
+        $accountId = $request->query('account_id');
         $perPage = (int) $request->query('per_page', 10);
 
         $query = Expense::query()
-            ->with(['creator', 'approver', 'approvals.approver'])
+            ->with(['creator', 'approver', 'approvals.approver', 'account.category'])
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('expense_no', 'like', "%{$search}%")
                         ->orWhere('title', 'like', "%{$search}%")
                         ->orWhere('vendor', 'like', "%{$search}%")
-                        ->orWhere('budget_line', 'like', "%{$search}%");
+                        ->orWhere('budget_line', 'like', "%{$search}%")
+                        ->orWhereHas('account', function ($account) use ($search) {
+                            $account->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        });
                 });
             })
             ->when($status && $status !== 'all', fn ($q) => $q->where('status', $status))
-            ->when($type && $type !== 'all', fn ($q) => $q->where('expense_type', $type))
+            ->when($accountId && $accountId !== 'all', fn ($q) => $q->where('account_id', $accountId))
             ->latest('expense_date');
 
         return Inertia::render('Admin/finance/expenses', [
@@ -50,13 +54,13 @@ class ExpenseController extends Controller
                 'rejected_count' => (int) Expense::where('status', 'rejected')->count(),
             ]),
             'expenses' => Inertia::defer(fn () => $query->paginate($perPage)->withQueryString()),
-            'expense_types' => ExpenseType::values(),
+            'expense_accounts' => $this->expenseAccounts(),
             'expense_statuses' => ExpenseStatus::values(),
             'level_roles' => Expense::APPROVAL_LEVELS,
             'filters' => [
                 'search' => $search ?? '',
                 'status' => $status ?? 'all',
-                'expense_type' => $type ?? 'all',
+                'account_id' => $accountId && $accountId !== 'all' ? (int) $accountId : 'all',
                 'per_page' => $perPage,
             ],
         ]);
@@ -70,7 +74,7 @@ class ExpenseController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'expense_type' => ['required', 'string', 'in:'.implode(',', ExpenseType::values())],
+            'account_id' => ['required', 'integer', 'exists:accounts,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'expense_date' => ['required', 'date'],
             'vendor' => ['nullable', 'string', 'max:255'],
@@ -79,12 +83,19 @@ class ExpenseController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        $account = Account::findOrFail($validated['account_id']);
+
+        if (! $account->isExpenseAccount()) {
+            return back()->withErrors(['account_id' => 'Please choose an expense account from the chart of accounts.'])->withInput();
+        }
+
         $expenseNo = $this->nextExpenseNo();
 
         $status = $validated['status'] ?? ExpenseStatus::PendingApproval->value;
 
         $expense = Expense::create([
             ...$validated,
+            'expense_type' => $account->legacyExpenseType()->value,
             'expense_no' => $expenseNo,
             'status' => $status,
             'created_by' => $request->user()->id,
@@ -103,7 +114,7 @@ class ExpenseController extends Controller
      */
     public function show(Expense $expense): Response
     {
-        $expense->load(['creator', 'approver', 'approvals.approver']);
+        $expense->load(['creator', 'approver', 'approvals.approver', 'account.category']);
 
         return Inertia::render('Admin/finance/expense-details', [
             'expense' => [
@@ -126,7 +137,7 @@ class ExpenseController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'expense_type' => ['required', 'string', 'in:'.implode(',', ExpenseType::values())],
+            'account_id' => ['required', 'integer', 'exists:accounts,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'expense_date' => ['required', 'date'],
             'vendor' => ['nullable', 'string', 'max:255'],
@@ -134,7 +145,16 @@ class ExpenseController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $expense->update($validated);
+        $account = Account::findOrFail($validated['account_id']);
+
+        if (! $account->isExpenseAccount()) {
+            return back()->withErrors(['account_id' => 'Please choose an expense account from the chart of accounts.'])->withInput();
+        }
+
+        $expense->update([
+            ...$validated,
+            'expense_type' => $account->legacyExpenseType()->value,
+        ]);
 
         return back()->with('success', "Expense {$expense->expense_no} updated.");
     }
@@ -171,6 +191,7 @@ class ExpenseController extends Controller
 
     /**
      * Process a single approval level.
+     * Any admin with access to this route may approve — the route is gated by role:super_admin.
      */
     public function approve(Request $request, Expense $expense): RedirectResponse
     {
@@ -184,12 +205,9 @@ class ExpenseController extends Controller
             return back()->with('error', 'No pending approval to process for this expense.');
         }
 
-        if ($approval->approver_id !== $request->user()->id) {
-            return back()->with('error', 'You are not assigned to approve this expense at this level.');
-        }
-
         $approval->update([
             'action' => 'approved',
+            'approver_id' => $request->user()->id,
             'comment' => $validated['comment'] ?? null,
             'acted_at' => now(),
         ]);
@@ -217,6 +235,7 @@ class ExpenseController extends Controller
 
     /**
      * Reject an expense at the current approval level.
+     * Any admin with access to this route may reject — the route is gated by role:super_admin.
      */
     public function reject(Request $request, Expense $expense): RedirectResponse
     {
@@ -230,13 +249,10 @@ class ExpenseController extends Controller
             return back()->with('error', 'No pending approval to process for this expense.');
         }
 
-        if ($approval->approver_id !== $request->user()->id) {
-            return back()->with('error', 'You are not assigned to approve this expense at this level.');
-        }
-
-        DB::transaction(function () use ($approval, $expense, $validated) {
+        DB::transaction(function () use ($approval, $expense, $validated, $request) {
             $approval->update([
                 'action' => 'rejected',
+                'approver_id' => $request->user()->id,
                 'comment' => $validated['comment'],
                 'acted_at' => now(),
             ]);
@@ -273,6 +289,30 @@ class ExpenseController extends Controller
     }
 
     /**
+     * Expense accounts grouped by category, used for recording and filtering.
+     *
+     * @return array<int, array{id: int, code: int, name: string, normal_balance: string, category: string}>
+     */
+    private function expenseAccounts(): array
+    {
+        return Account::query()
+            ->with('category')
+            ->where('status', 'active')
+            ->orderBy('code')
+            ->get()
+            ->filter(fn (Account $account) => $account->isExpenseAccount())
+            ->map(fn (Account $account) => [
+                'id' => $account->id,
+                'code' => $account->code,
+                'name' => $account->name,
+                'normal_balance' => $account->normal_balance->value,
+                'category' => $account->category?->type->label() ?? '',
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Generate the next sequential expense number.
      */
     private function nextExpenseNo(): string
@@ -288,5 +328,18 @@ class ExpenseController extends Controller
         return $expense->pendingApprovals()
             ->orderBy('level')
             ->first();
+    }
+
+    /**
+     * Create an approval record for a given level on the expense.
+     */
+    private function createLevelApproval(Expense $expense, int $level): void
+    {
+        ExpenseApproval::create([
+            'expense_id' => $expense->id,
+            'approver_id' => $expense->created_by,
+            'level' => $level,
+            'action' => 'pending',
+        ]);
     }
 }

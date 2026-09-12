@@ -61,11 +61,11 @@ export function MetricCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           
-          <div className="min-w-0 flex flex-col gap-1">
+          <div className="min-w-0 flex-1 flex flex-col gap-1">
             <p className=" lg:text-xs text-[11px] font-medium uppercase tracking-wider text-muted-foreground truncate">
               {title}
             </p>
-            <h3 className="text-xl font-medium tracking-tight text-foreground tabular-nums ">
+            <h3 className="text-xl font-medium tracking-tight text-foreground tabular-nums truncate" title={typeof value === 'string' ? value : undefined}>
               {value}
             </h3>
             {trend && (

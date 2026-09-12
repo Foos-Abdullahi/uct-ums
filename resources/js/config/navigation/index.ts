@@ -84,6 +84,11 @@ export const adminNav: NavItem[] = [
                 href: '/admin/expenses',
                 icon: Receipt,
             },
+            {
+                title: 'Chart of Accounts',
+                href: '/admin/finance/chart-of-accounts',
+                icon: BookOpen,
+            },
         ],
     },
     { title: 'Reports', href: '/admin/reports', icon: BarChart3 },

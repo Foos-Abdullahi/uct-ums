@@ -1,13 +1,18 @@
 <?php
 
+use App\Enums\AccountCategoryType;
 use App\Enums\ExpenseStatus;
 use App\Enums\ExpenseType;
 use App\Enums\UserRole;
+use App\Models\Account;
+use App\Models\AccountCategory;
 use App\Models\Expense;
 use App\Models\Student;
 use App\Models\StudentInvoice;
 use App\Models\User;
+use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 
 uses(RefreshDatabase::class);
 
@@ -23,22 +28,26 @@ test('admin can view the expense index page', function () {
         ->assertInertia(fn ($page) => $page->component('Admin/finance/expenses'));
 });
 
-test('admin can filter expenses by status and type', function () {
+test('admin can filter expenses by status and account', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
 
-    Expense::factory()->create(['status' => 'pending_approval', 'expense_type' => 'utilities']);
-    Expense::factory()->create(['status' => 'paid', 'expense_type' => 'salary']);
+    $utilities = Account::factory()->expenseAccount(AccountCategoryType::ExpensesOperating, 6110)->create();
+    $salary = Account::factory()->expenseAccount(AccountCategoryType::ExpensesDirectAcademic, 5000)->create();
+
+    Expense::factory()->create(['status' => 'pending_approval', 'expense_type' => 'utilities', 'account_id' => $utilities->id]);
+    Expense::factory()->create(['status' => 'paid', 'expense_type' => 'salary', 'account_id' => $salary->id]);
 
     $response = $this->get(route('admin.expenses.index', [
         'status' => 'pending_approval',
-        'expense_type' => 'utilities',
+        'account_id' => $utilities->id,
     ]));
 
     $response->assertOk()->assertInertia(
         fn ($page) => $page->has('filters')
             ->where('filters.status', 'pending_approval')
-            ->where('filters.expense_type', 'utilities')
+            ->where('filters.account_id', $utilities->id)
+            ->has('expense_accounts')
     );
 });
 
@@ -49,10 +58,12 @@ test('admin can create an expense and submit for approval', function () {
     $approver = User::factory()->role(UserRole::Finance)->create();
     $this->actingAs($admin);
 
+    $account = Account::factory()->expenseAccount(AccountCategoryType::ExpensesOperating, 6110)->create();
+
     $response = $this->post(route('admin.expenses.store'), [
         'title' => 'Electricity bill',
         'description' => 'Monthly campus electricity',
-        'expense_type' => 'utilities',
+        'account_id' => $account->id,
         'amount' => 1500.50,
         'expense_date' => '2026-09-01',
         'vendor' => 'Golis Electric',
@@ -68,7 +79,7 @@ test('admin can create an expense and submit for approval', function () {
         ->and($expense->expense_no)->toStartWith('EXP-')
         ->and($expense->amount)->toBe('1500.50')
         ->and($expense->status)->toBe('pending_approval')
-        ->and($expense->expense_type)->toBe('utilities');
+        ->and($expense->account_id)->toBe($account->id);
 
     // Approval chain was created
     expect($expense->approvals()->count())->toBe(count(Expense::APPROVAL_LEVELS));
@@ -80,7 +91,25 @@ test('expense requires validation on required fields', function () {
 
     $response = $this->post(route('admin.expenses.store'), []);
 
-    $response->assertSessionHasErrors(['title', 'expense_type', 'amount', 'expense_date']);
+    $response->assertSessionHasErrors(['title', 'account_id', 'amount', 'expense_date']);
+});
+
+test('expense cannot be recorded against a non-expense account', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $asset = Account::factory()->expenseAccount(AccountCategoryType::Assets, 1010)->create();
+
+    $response = $this->post(route('admin.expenses.store'), [
+        'title' => 'Should fail',
+        'account_id' => $asset->id,
+        'amount' => 100,
+        'expense_date' => '2026-09-01',
+        'status' => 'pending_approval',
+    ]);
+
+    expect($response->getSession()->get('errors'))->not->toBeNull()
+        ->and(Expense::where('title', 'Should fail')->exists())->toBeFalse();
 });
 
 // ─── Expense Show ─────────────────────────────────────────────────────────────
@@ -380,4 +409,281 @@ test('finance user can submit an expense from the finance portal', function () {
 test('expense status and type enums expose expected values', function () {
     expect(ExpenseStatus::values())->toBe(['draft', 'pending_approval', 'approved', 'paid', 'rejected', 'cancelled'])
         ->and(ExpenseType::values())->toBe(['salary', 'utilities', 'equipment', 'maintenance', 'supplies', 'others']);
+});
+
+// ─── Chart of Accounts ────────────────────────────────────────────────────────
+
+test('chart of accounts seeder seeds the full UCT ledger', function () {
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    expect(AccountCategory::count())->toBe(7)
+        ->and(Account::count())->toBe(56);
+
+    expect(Account::where('code', 6110)->first()?->name)->toBe('Electricity & Utilities')
+        ->and(Account::where('code', 1590)->first()?->normal_balance->value)->toBe('credit')
+        ->and(Account::where('code', 7900)->first()?->isExpenseAccount())->toBeTrue()
+        ->and(Account::where('code', 4000)->first()?->isExpenseAccount())->toBeFalse();
+});
+
+test('chart of accounts seeder backfills legacy expenses onto accounts', function () {
+    $expense = Expense::factory()->create(['account_id' => null, 'expense_type' => 'utilities']);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $expense->refresh();
+
+    expect($expense->account_id)->not->toBeNull()
+        ->and(Account::find($expense->account_id)?->code)->toBe(6110);
+});
+
+test('admin can view the chart of accounts page', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $response = $this->get(route('admin.finance.chart-of-accounts'));
+
+    $response->assertOk()
+        ->assertInertia(
+            fn ($page) => $page
+                ->component('Admin/finance/chart-of-accounts')
+                ->has('categories', 7)
+        );
+});
+
+test('chart of accounts page shows posted expense totals per expense account', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $account = Account::where('code', 6110)->first();
+    Expense::factory()->paid()->create(['account_id' => $account->id, 'amount' => 500]);
+
+    $response = $this->get(route('admin.finance.chart-of-accounts'));
+
+    $response->assertOk()->assertInertia(
+        fn ($page) => $page
+            ->where('categories.5.accounts.3.code', 6110)
+            ->where('categories.5.accounts.3.expense_count', 1)
+            ->where('categories.5.accounts.3.total_amount', 500)
+    );
+});
+
+// ─── Chart of Accounts — Management Actions ──────────────────────────────────
+
+test('admin can create a new account in the chosen group', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $revenue = AccountCategory::where('type', AccountCategoryType::Revenue->value)->first();
+
+    $this->post(route('admin.finance.chart-of-accounts.store'), [
+        'account_category_id' => $revenue->id,
+        'code' => 4140,
+        'name' => 'Graduation Ceremony Fees',
+        'description' => 'Gown hire and ceremony charges',
+    ])->assertRedirect();
+
+    $account = Account::where('code', 4140)->first();
+
+    expect($account)->not->toBeNull()
+        ->and($account->name)->toBe('Graduation Ceremony Fees')
+        ->and($account->type->value)->toBe('revenue')
+        ->and($account->normal_balance->value)->toBe('credit')
+        ->and($account->status->value)->toBe('active')
+        ->and($account->histories()->where('action', 'created')->exists())->toBeTrue();
+});
+
+test('account creation rejects codes outside the chosen group range', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $revenue = AccountCategory::where('type', AccountCategoryType::Revenue->value)->first();
+
+    $this->post(route('admin.finance.chart-of-accounts.store'), [
+        'account_category_id' => $revenue->id,
+        'code' => 6170,
+        'name' => 'Misplaced account',
+    ])->assertSessionHasErrors('code');
+
+    expect(Account::where('code', 6170)->doesntExist())->toBeTrue();
+});
+
+test('account creation rejects duplicate codes', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $revenue = AccountCategory::where('type', AccountCategoryType::Revenue->value)->first();
+
+    $this->post(route('admin.finance.chart-of-accounts.store'), [
+        'account_category_id' => $revenue->id,
+        'code' => 4000,
+        'name' => 'Duplicate tuition revenue',
+    ])->assertSessionHasErrors('code');
+});
+
+test('admin can update an unused account including its code', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $account = Account::where('code', 4900)->first();
+
+    $this->put(route('admin.finance.chart-of-accounts.update', $account), [
+        'account_category_id' => $account->account_category_id,
+        'code' => 4910,
+        'name' => 'Miscellaneous Income',
+        'description' => 'Ungrouped sundry income',
+    ])->assertRedirect();
+
+    $account->refresh();
+
+    expect($account->code)->toBe(4910)
+        ->and($account->name)->toBe('Miscellaneous Income')
+        ->and($account->histories()->where('action', 'updated')->exists())->toBeTrue();
+});
+
+test('an account with posted transactions cannot change its code or group', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $account = Account::factory()->expenseAccount(AccountCategoryType::ExpensesOperating, 6110)->create();
+    Expense::factory()->paid()->create(['account_id' => $account->id, 'amount' => 250]);
+
+    $revenue = AccountCategory::factory()->type(AccountCategoryType::Revenue)->create();
+
+    $this->put(route('admin.finance.chart-of-accounts.update', $account), [
+        'account_category_id' => $account->account_category_id,
+        'code' => 6510,
+        'name' => 'Rewired code',
+    ])->assertSessionHasErrors('code');
+
+    $this->put(route('admin.finance.chart-of-accounts.update', $account), [
+        'account_category_id' => $revenue->id,
+        'code' => 6110,
+        'name' => 'Rewired group',
+    ])->assertSessionHasErrors('account_category_id');
+
+    expect(Account::find($account->id)?->code)->toBe(6110);
+});
+
+test('admin can deactivate and reactivate an account', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $account = Account::factory()->expenseAccount(AccountCategoryType::ExpensesOperating, 6110)->create();
+
+    $this->post(route('admin.finance.chart-of-accounts.status', $account))->assertRedirect();
+
+    expect($account->refresh()->status->value)->toBe('inactive')
+        ->and($account->histories()->where('action', 'deactivated')->exists())->toBeTrue();
+
+    $this->post(route('admin.finance.chart-of-accounts.status', $account))->assertRedirect();
+
+    expect($account->refresh()->status->value)->toBe('active')
+        ->and($account->histories()->where('action', 'reactivated')->exists())->toBeTrue();
+});
+
+test('accounts with transactions or system accounts cannot be deleted', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $system = Account::where('code', 6110)->firstOrFail();
+    $this->delete(route('admin.finance.chart-of-accounts.destroy', $system))->assertRedirect();
+    expect(Account::find($system->id))->not->toBeNull();
+
+    $used = Account::factory()->expenseAccount(AccountCategoryType::ExpensesDirectAcademic, 5200)->create();
+    Expense::factory()->create(['account_id' => $used->id]);
+    $this->delete(route('admin.finance.chart-of-accounts.destroy', $used))->assertRedirect();
+    expect(Account::find($used->id))->not->toBeNull();
+
+    $unused = Account::factory()->expenseAccount(AccountCategoryType::ExpensesDirectAcademic, 5210)->create();
+    $id = $unused->id;
+    $this->delete(route('admin.finance.chart-of-accounts.destroy', $unused))->assertRedirect();
+    expect(Account::find($id))->toBeNull();
+});
+
+test('account detail endpoint reports financial activity', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $account = Account::factory()->expenseAccount(AccountCategoryType::ExpensesOperating, 6110)->create();
+    Expense::factory()->paid()->create(['account_id' => $account->id, 'amount' => 500]);
+    Expense::factory()->create(['account_id' => $account->id, 'status' => 'pending_approval', 'amount' => 125]);
+
+    $this->getJson(route('admin.finance.chart-of-accounts.show', $account))
+        ->assertOk()
+        ->assertJsonPath('account.code', 6110)
+        ->assertJsonPath('account.can_change_code', false)
+        ->assertJsonPath('financial.transaction_count', 2)
+        ->assertJsonPath('financial.posted_count', 1)
+        ->assertJsonPath('financial.total_debits', 500)
+        ->assertJsonCount(2, 'recent_transactions');
+});
+
+// ─── Chart of Accounts — Excel Import ────────────────────────────────────────
+
+test('import preview validates a workbook without saving rows', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $file = UploadedFile::fake()->createWithContent('accounts.csv', implode("\n", [
+        'Code,Name,Group,Type,Normal Balance,Description',
+        '4910,Custom Training Income,revenue,revenue,credit,New row',
+        '6110,Existing Electricity,expenses_operating,expense,debit,Already seeded',
+        '9999,Out of Range,,expense,debit,Invalid',
+    ]));
+
+    $response = $this->postJson(route('admin.finance.chart-of-accounts.import-preview'), [
+        'file' => $file,
+    ]);
+
+    $response->assertOk()
+        ->assertJsonPath('total', 3)
+        ->assertJsonPath('valid', 1)
+        ->assertJsonPath('warnings', 1)
+        ->assertJsonPath('errors', 1)
+        ->assertJsonPath('rows.0.name', 'Custom Training Income')
+        ->assertJsonPath('rows.1.warnings.0', 'Code 6110 already exists and will be skipped.')
+        ->assertJsonPath('rows.2.errors.0', 'Invalid account code 9999. Codes must be between 1000 and 7999.');
+
+    expect(Account::count())->toBe(56);
+});
+
+test('import store creates rows and skips duplicates within a transaction', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $this->seed(ChartOfAccountsSeeder::class);
+
+    $this->postJson(route('admin.finance.chart-of-accounts.import-store'), [
+        'rows' => [
+            ['code' => 4910, 'name' => 'Custom Training Income', 'group' => 'revenue', 'description' => 'New'],
+            ['code' => 6110, 'name' => 'Already Seeded', 'group' => 'expenses_operating', 'description' => 'Duplicate'],
+            ['code' => 4910, 'name' => 'Duplicated Within File', 'group' => 'revenue', 'description' => null],
+        ],
+    ])->assertOk()
+        ->assertJsonPath('imported', 1)
+        ->assertJsonPath('skipped', 2);
+
+    $imported = Account::where('code', 4910)->first();
+
+    expect($imported)->not->toBeNull()
+        ->and($imported->name)->toBe('Custom Training Income')
+        ->and($imported->type->value)->toBe('revenue')
+        ->and($imported->is_system)->toBeFalse()
+        ->and($imported->histories()->where('action', 'imported')->exists())->toBeTrue();
 });

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Account;
 use App\Models\Expense;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,6 +24,7 @@ class ExpenseFactory extends Factory
             'title' => fake()->sentence(4),
             'description' => fake()->paragraph(),
             'expense_type' => fake()->randomElement(['salary', 'utilities', 'equipment', 'maintenance', 'supplies', 'others']),
+            'account_id' => Account::factory()->expenseAccount(),
             'amount' => fake()->randomFloat(2, 100, 50000),
             'expense_date' => fake()->date(),
             'vendor' => fake()->company(),

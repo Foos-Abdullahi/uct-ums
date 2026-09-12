@@ -4,6 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -17,6 +28,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { cn, formatDate } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -43,6 +55,7 @@ export interface ExpenseItem {
     title: string;
     description: string | null;
     expense_type: string;
+    account_id: number | null;
     amount: number;
     expense_date: string;
     vendor: string | null;
@@ -52,6 +65,13 @@ export interface ExpenseItem {
     approved_by: number | null;
     approved_at: string | null;
     created_at: string;
+    account?: {
+        id: number;
+        code: number;
+        name: string;
+        normal_balance: string;
+        category?: { type: string; name: string };
+    };
     creator?: { id: number; name: string };
     approver?: { id: number; name: string };
     approvals?: Array<{
@@ -82,16 +102,24 @@ export interface PaginatedData<T> {
     to: number | null;
 }
 
+export interface ExpenseAccountOption {
+    id: number;
+    code: number;
+    name: string;
+    normal_balance: string;
+    category: string;
+}
+
 interface AdminFinanceExpensesProps {
     stats?: ExpenseStats;
     expenses?: PaginatedData<ExpenseItem>;
-    expense_types: string[];
+    expense_accounts: ExpenseAccountOption[];
     expense_statuses: string[];
     level_roles: Record<number, string>;
     filters: {
         search: string;
         status: string;
-        expense_type: string;
+        account_id: number | 'all';
         per_page: number;
     };
 }
@@ -102,19 +130,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Expenses', href: '/admin/expenses' },
 ];
 
-const TYPE_LABELS: Record<string, string> = {
-    salary: 'Salary',
-    utilities: 'Utilities',
-    equipment: 'Equipment',
-    maintenance: 'Maintenance',
-    supplies: 'Supplies',
-    others: 'Others',
-};
-
 export default function AdminFinanceExpenses({
     stats,
     expenses,
-    expense_types = [],
+    expense_accounts = [],
     expense_statuses = [],
     level_roles = {},
     filters,
@@ -133,7 +152,7 @@ export default function AdminFinanceExpenses({
     const { data, setData, post, processing, reset, errors } = useForm({
         title: '',
         description: '',
-        expense_type: 'others',
+        account_id: '',
         amount: '',
         expense_date: new Date().toISOString().split('T')[0],
         vendor: '',
@@ -191,8 +210,11 @@ export default function AdminFinanceExpenses({
 
     const handleApprove = (expense: ExpenseItem) => {
         router.post(`/admin/expenses/${expense.id}/approve`, {}, {
-            onSuccess: () => toast.success(`Expense ${expense.expense_no} approved at this level.`),
-            onError: () => toast.error('Approval failed.'),
+            onSuccess: () => toast.success(`Expense ${expense.expense_no} approved.`),
+            onError: (errs) => {
+                const msg = Object.values(errs)[0] ?? 'Approval failed.';
+                toast.error(String(msg));
+            },
         });
     };
 
@@ -285,12 +307,24 @@ export default function AdminFinanceExpenses({
             ),
         },
         {
-            accessorKey: 'expense_type',
-            header: 'Type',
+            accessorKey: 'account',
+            header: 'Account',
             cell: ({ row }) => (
-                <Badge variant="secondary" className="capitalize text-[10px]">
-                    {TYPE_LABELS[row.original.expense_type] ?? row.original.expense_type}
-                </Badge>
+                <div className="max-w-[220px]">
+                    <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="font-mono text-[10px] font-semibold">
+                            {row.original.account?.code ?? '—'}
+                        </Badge>
+                    </div>
+                    <p className="text-xs text-foreground truncate mt-0.5">
+                        {row.original.account?.name || row.original.expense_type}
+                    </p>
+                    {/* {(row.original.account?.category?.name) && (
+                        <p className="text-[10px] text-muted-foreground truncate">
+                            {row.original.account.category.name}
+                        </p>
+                    )} */}
+                </div>
             ),
         },
         {
@@ -306,7 +340,7 @@ export default function AdminFinanceExpenses({
             accessorKey: 'expense_date',
             header: 'Date',
             cell: ({ row }) => (
-                <span className="text-xs text-muted-foreground">{row.original.expense_date}</span>
+                <span className="text-xs text-muted-foreground">{formatDate(row.original.expense_date)}</span>
             ),
         },
         {
@@ -340,13 +374,11 @@ export default function AdminFinanceExpenses({
                             Mark Paid
                         </Button>
                     )}
-                    {row.original.status === 'pending_approval' && row.original.approvals?.some(
-                        (a) => a.action === 'pending'
-                    ) && (
+                    {row.original.status === 'pending_approval' && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2 text-xs"
+                            className="h-7 px-2 text-xs text-blue-600 hover:text-blue-600"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleApprove(row.original);
@@ -354,6 +386,21 @@ export default function AdminFinanceExpenses({
                         >
                             <Check className="h-3.5 w-3.5 mr-1" />
                             Approve
+                        </Button>
+                    )}
+                    {row.original.status === 'pending_approval' && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setRejectTarget(row.original);
+                                setRejectModalOpen(true);
+                            }}
+                        >
+                            <X className="h-3.5 w-3.5 mr-1" />
+                            Reject
                         </Button>
                     )}
                     <Button
@@ -402,16 +449,16 @@ export default function AdminFinanceExpenses({
             value: filters.status || undefined,
         },
         {
-            key: 'expense_type',
-            title: 'Expense Type',
+            key: 'account_id',
+            title: 'Account',
             options: [
-                { label: 'All Types', value: 'all' },
-                ...expense_types.map((t) => ({
-                    label: TYPE_LABELS[t] ?? t,
-                    value: t,
+                { label: 'All Accounts', value: 'all' },
+                ...expense_accounts.map((a) => ({
+                    label: `${a.code} · ${a.name}`,
+                    value: String(a.id),
                 })),
             ],
-            value: filters.expense_type || undefined,
+            value: filters.account_id === 'all' ? undefined : String(filters.account_id),
         },
     ];
 
@@ -427,7 +474,7 @@ export default function AdminFinanceExpenses({
                             University Expense Management
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                            Track operational expenses across salary, utilities, equipment, maintenance, and supplies with multi-level approval.
+                            Track operational and academic expenses against the UCT chart of accounts with multi-level approval.
                         </p>
                     </div>
 
@@ -488,7 +535,7 @@ export default function AdminFinanceExpenses({
                         <div className="border border-border/60 rounded-md bg-card p-4">
                             <DataTable
                                 title="Expense Vouchers"
-                                searchTitle="Search by expense no, title, vendor, budget line..."
+                                searchTitle="Search by expense no, title, vendor, budget line, or account..."
                                 columns={columns}
                                 data={expenses.data}
                                 pagination={{
@@ -540,22 +587,35 @@ export default function AdminFinanceExpenses({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="expense_type" className="text-xs font-semibold">
-                                        Expense Type <span className="text-destructive">*</span>
+                                    <Label htmlFor="account_id" className="text-xs font-semibold">
+                                        Account <span className="text-destructive">*</span>
                                     </Label>
-                                    <select
-                                        id="expense_type"
-                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                        value={data.expense_type}
-                                        onChange={(e) => setData('expense_type', e.target.value)}
+                                    <Select
+                                        value={data.account_id}
+                                        onValueChange={(val) => setData('account_id', val)}
                                         required
                                     >
-                                        {expense_types.map((t) => (
-                                            <option key={t} value={t}>
-                                                {TYPE_LABELS[t] ?? t}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <SelectTrigger id="account_id" className="text-xs h-9">
+                                            <SelectValue placeholder="Select account..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Array.from(new Set(expense_accounts.map((a) => a.category))).map((category) => (
+                                                <SelectGroup key={category}>
+                                                    <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider">
+                                                        {category}
+                                                    </SelectLabel>
+                                                    {expense_accounts
+                                                        .filter((a) => a.category === category)
+                                                        .map((a) => (
+                                                            <SelectItem key={a.id} value={String(a.id)} className="text-xs">
+                                                                {a.code} · {a.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                </SelectGroup>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.account_id && <p className="text-[11px] text-destructive">{errors.account_id}</p>}
                                 </div>
                                 <div className="space-y-1.5">
                                     <Label htmlFor="amount" className="text-xs font-semibold">
@@ -579,14 +639,14 @@ export default function AdminFinanceExpenses({
                                     <Label htmlFor="expense_date" className="text-xs font-semibold">
                                         Expense Date <span className="text-destructive">*</span>
                                     </Label>
-                                    <Input
+                                    <DatePicker
                                         id="expense_date"
-                                        type="date"
                                         value={data.expense_date}
-                                        onChange={(e) => setData('expense_date', e.target.value)}
-                                        className="text-xs"
-                                        required
+                                        onChange={(val) => setData('expense_date', val)}
+                                        placeholder="Pick a date"
+                                        maxDate={new Date()}
                                     />
+                                    {errors.expense_date && <p className="text-[11px] text-destructive">{errors.expense_date}</p>}
                                 </div>
                                 <div className="space-y-1.5">
                                     <Label htmlFor="vendor" className="text-xs font-semibold">
@@ -619,15 +679,18 @@ export default function AdminFinanceExpenses({
                                     <Label htmlFor="status" className="text-xs font-semibold">
                                         Status
                                     </Label>
-                                    <select
-                                        id="status"
-                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    <Select
                                         value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
+                                        onValueChange={(val) => setData('status', val)}
                                     >
-                                        <option value="pending_approval">Submit for Approval</option>
-                                        <option value="draft">Save as Draft</option>
-                                    </select>
+                                        <SelectTrigger id="status" className="text-xs h-9">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pending_approval" className="text-xs">Submit for Approval</SelectItem>
+                                            <SelectItem value="draft" className="text-xs">Save as Draft</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
@@ -635,9 +698,9 @@ export default function AdminFinanceExpenses({
                                 <Label htmlFor="description" className="text-xs font-semibold">
                                     Description
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="description"
-                                    className="w-full min-h-[70px] rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="min-h-[70px] text-xs"
                                     placeholder="Details about this expense..."
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
@@ -672,13 +735,12 @@ export default function AdminFinanceExpenses({
                                 <Label htmlFor="reject_comment" className="text-xs font-semibold">
                                     Rejection Reason <span className="text-destructive">*</span>
                                 </Label>
-                                <textarea
+                                <Textarea
                                     id="reject_comment"
-                                    className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="min-h-[90px] text-xs"
                                     placeholder="Explain why this expense is being rejected..."
                                     value={rejectComment}
                                     onChange={(e) => setRejectComment(e.target.value)}
-                                    required
                                 />
                             </div>
 

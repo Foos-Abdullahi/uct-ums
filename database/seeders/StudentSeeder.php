@@ -295,7 +295,7 @@ class StudentSeeder extends Seeder
             // Create sample unpaid invoice for unpaid/partial students
             if ($s['fee_status'] === FeeStatus::Unpaid) {
                 StudentInvoice::query()->firstOrCreate(
-                    ['invoice_no' => 'INV-2026-' . $st->id],
+                    ['invoice_no' => 'INV-2026-'.$st->id],
                     [
                         'student_id' => $st->id,
                         'title' => 'Semester 1 Registration & Tuition',
@@ -308,7 +308,7 @@ class StudentSeeder extends Seeder
                 );
             } elseif ($s['fee_status'] === FeeStatus::Partial) {
                 $inv = StudentInvoice::query()->firstOrCreate(
-                    ['invoice_no' => 'INV-2026-' . $st->id],
+                    ['invoice_no' => 'INV-2026-'.$st->id],
                     [
                         'student_id' => $st->id,
                         'title' => 'Semester 3 Tuition Fee',
@@ -320,7 +320,7 @@ class StudentSeeder extends Seeder
                     ],
                 );
                 StudentPayment::query()->firstOrCreate(
-                    ['transaction_no' => 'TXN-PART-' . $st->id],
+                    ['transaction_no' => 'TXN-PART-'.$st->id],
                     [
                         'student_id' => $st->id,
                         'invoice_id' => $inv->id,

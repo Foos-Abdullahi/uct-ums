@@ -41,8 +41,8 @@ class StudentInvoice extends Model
             'tax_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'paid_amount' => 'decimal:2',
-            'due_date' => 'date',
-            'issue_date' => 'date',
+            'due_date' => 'date:Y-m-d',
+            'issue_date' => 'date:Y-m-d',
             'approved_at' => 'datetime',
         ];
     }

@@ -48,6 +48,12 @@ class RolePermissionSeeder extends Seeder
                 ['name' => 'Delete Invoices', 'slug' => 'finance.invoices.delete', 'description' => 'Cancel or remove unpaid invoices.'],
                 ['name' => 'Record Payments', 'slug' => 'finance.payments.create', 'description' => 'Record cash, bank, or mobile money payments.'],
                 ['name' => 'Verify Payments', 'slug' => 'finance.payments.verify', 'description' => 'Approve or reject pending transaction receipts.'],
+                ['name' => 'View Chart of Accounts', 'slug' => 'finance.accounts.view', 'description' => 'View, search and filter the chart of accounts.'],
+                ['name' => 'Create Accounts', 'slug' => 'finance.accounts.create', 'description' => 'Add new accounts to the chart of accounts.'],
+                ['name' => 'Edit Accounts', 'slug' => 'finance.accounts.edit', 'description' => 'Update account details and settings.'],
+                ['name' => 'Deactivate Accounts', 'slug' => 'finance.accounts.deactivate', 'description' => 'Deactivate or reactivate accounts.'],
+                ['name' => 'Import Accounts', 'slug' => 'finance.accounts.import', 'description' => 'Import accounts from an Excel or CSV workbook.'],
+                ['name' => 'View Account History', 'slug' => 'finance.accounts.history', 'description' => 'Inspect account audit history and changes.'],
             ],
             'Reports' => [
                 ['name' => 'View Reports', 'slug' => 'reports.view', 'description' => 'Access executive reports and statistical charts.'],
@@ -106,6 +112,7 @@ class RolePermissionSeeder extends Seeder
                 'permissions' => [
                     'students.view', 'admissions.view', 'finance.view', 'finance.invoices.create',
                     'finance.invoices.delete', 'finance.payments.create', 'finance.payments.verify',
+                    'finance.accounts.view', 'finance.accounts.history',
                     'reports.view', 'reports.finance.export',
                 ],
             ],
