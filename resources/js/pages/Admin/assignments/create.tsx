@@ -117,7 +117,7 @@ export default function AdminAssignmentsCreate({
                                 <Select
                                     value={String(data.lecturer_id)}
                                     onValueChange={(val) =>
-                                        setData('lecturer_id', Number(val))
+                                        setData('lecturer_id', val)
                                     }
                                 >
                                     <SelectTrigger id="lecturer_id">
@@ -149,7 +149,7 @@ export default function AdminAssignmentsCreate({
                                 <Select
                                     value={String(data.course_id)}
                                     onValueChange={(val) =>
-                                        setData('course_id', Number(val))
+                                        setData('course_id', val)
                                     }
                                 >
                                     <SelectTrigger id="course_id">

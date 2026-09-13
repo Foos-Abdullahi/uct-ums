@@ -14,7 +14,37 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Finance', href: '/admin/reports/finance' },
 ];
 
-export default function FinanceReport({ stats, transactions }) {
+interface FinanceStats {
+    total_revenue: number;
+    paid: number;
+    outstanding: number;
+    overdue: number;
+}
+
+interface FinanceReportProps {
+    stats?: FinanceStats;
+    transactions?: {
+        data: Array<{
+            invoice_no: string;
+            student_name: string;
+            amount: number;
+            paid: number;
+            balance: number;
+            status: string;
+        }>;
+        pagination: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+}
+
+export default function FinanceReport({
+    stats,
+    transactions,
+}: FinanceReportProps) {
     const columns = [
         { accessorKey: 'invoice_no', header: 'Invoice' },
         { accessorKey: 'student_name', header: 'Student' },

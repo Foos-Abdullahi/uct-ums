@@ -14,7 +14,37 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Attendance', href: '/admin/reports/attendance' },
 ];
 
-export default function AttendanceReport({ stats, attendanceRecords }) {
+interface AttendanceStats {
+    total_classes: number;
+    present: number;
+    absent: number;
+    rate: number;
+}
+
+interface AttendanceReportProps {
+    stats?: AttendanceStats;
+    attendanceRecords?: {
+        data: Array<{
+            student_name: string;
+            course_name: string;
+            total_classes: number;
+            present: number;
+            absent: number;
+            attendance_rate: number;
+        }>;
+        pagination: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+}
+
+export default function AttendanceReport({
+    stats,
+    attendanceRecords,
+}: AttendanceReportProps) {
     const columns = [
         { accessorKey: 'student_name', header: 'Student' },
         { accessorKey: 'course_name', header: 'Course' },
@@ -75,6 +105,7 @@ export default function AttendanceReport({ stats, attendanceRecords }) {
                     {attendanceRecords && (
                         <DataTable
                             title="Attendance Records"
+                            searchTitle="Search by student name or course..."
                             columns={columns}
                             data={attendanceRecords.data}
                             pagination={attendanceRecords.pagination}

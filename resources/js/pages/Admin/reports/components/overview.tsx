@@ -117,6 +117,7 @@ export default function OverviewReport({
                         <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
                                 title="Recent Activity"
+                                searchTitle="Search recent activity..."
                                 columns={columns}
                                 data={recentActivities}
                                 pagination={{

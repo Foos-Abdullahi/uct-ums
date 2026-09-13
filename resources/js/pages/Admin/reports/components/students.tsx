@@ -17,7 +17,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Students', href: '/admin/reports/students' },
 ];
 
-export default function StudentsReport({ stats, students }) {
+interface StudentsStats {
+    total: number;
+    active: number;
+    pending: number;
+    suspended: number;
+    graduated: number;
+}
+
+interface StudentsReportProps {
+    stats?: StudentsStats;
+    students?: {
+        data: Array<{
+            name: string;
+            matric_no: string;
+            program: string;
+            enrollment_status: string;
+        }>;
+        pagination: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+}
+
+export default function StudentsReport({
+    stats,
+    students,
+}: StudentsReportProps) {
     // Define student columns
     const columns = [
         { accessorKey: 'name', header: 'Name' },
@@ -88,6 +117,7 @@ export default function StudentsReport({ stats, students }) {
                     {students && (
                         <DataTable
                             title="Student List"
+                            searchTitle="Search by name, matric number, or program..."
                             columns={columns}
                             data={students.data}
                             pagination={students.pagination}

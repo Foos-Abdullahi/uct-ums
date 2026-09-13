@@ -388,7 +388,10 @@ export default function AdminLecturersEdit({
                                 <Select
                                     value={data.employment_status}
                                     onValueChange={(val) =>
-                                        setData('employment_status', val)
+                                        setData(
+                                            'employment_status',
+                                            val as Lecturer['employment_status'],
+                                        )
                                     }
                                 >
                                     <SelectTrigger id="employment_status">
@@ -423,7 +426,10 @@ export default function AdminLecturersEdit({
                                 <Select
                                     value={data.contract_type}
                                     onValueChange={(val) =>
-                                        setData('contract_type', val)
+                                        setData(
+                                            'contract_type',
+                                            val as Lecturer['contract_type'],
+                                        )
                                     }
                                 >
                                     <SelectTrigger id="contract_type">

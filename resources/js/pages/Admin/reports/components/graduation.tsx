@@ -14,7 +14,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Graduation', href: '/admin/reports/graduation' },
 ];
 
-export default function GraduationReport({ stats, graduates }) {
+interface GraduationStats {
+    total: number;
+    this_year: number;
+    certificates: number;
+    alumni: number;
+}
+
+interface GraduationReportProps {
+    stats?: GraduationStats;
+    graduates?: {
+        data: Array<{
+            name: string;
+            matric_no: string;
+            program: string;
+            graduation_date: string;
+            certificate_no: string;
+        }>;
+        pagination: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+}
+
+export default function GraduationReport({
+    stats,
+    graduates,
+}: GraduationReportProps) {
     const columns = [
         { accessorKey: 'name', header: 'Name' },
         { accessorKey: 'matric_no', header: 'Matric No' },
@@ -72,6 +101,7 @@ export default function GraduationReport({ stats, graduates }) {
                     {graduates && (
                         <DataTable
                             title="Graduates List"
+                            searchTitle="Search by name, matric number, or program..."
                             columns={columns}
                             data={graduates.data}
                             pagination={graduates.pagination}

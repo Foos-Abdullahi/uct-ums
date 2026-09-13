@@ -14,7 +14,36 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Academic', href: '/admin/reports/academic' },
 ];
 
-export default function AcademicReport({ stats, coursePerformance }) {
+interface AcademicStats {
+    total_courses: number;
+    avg_gpa: number;
+    pass_rate: number;
+    fail_rate: number;
+}
+
+interface AcademicReportProps {
+    stats?: AcademicStats;
+    coursePerformance?: {
+        data: Array<{
+            course_code: string;
+            course_name: string;
+            enrolled: number;
+            avg_grade: number | string;
+            pass_rate: number;
+        }>;
+        pagination: {
+            current_page: number;
+            last_page: number;
+            per_page: number;
+            total: number;
+        };
+    };
+}
+
+export default function AcademicReport({
+    stats,
+    coursePerformance,
+}: AcademicReportProps) {
     const columns = [
         { accessorKey: 'course_code', header: 'Code' },
         { accessorKey: 'course_name', header: 'Course' },
@@ -74,6 +103,7 @@ export default function AcademicReport({ stats, coursePerformance }) {
                     {coursePerformance && (
                         <DataTable
                             title="Course Performance"
+                            searchTitle="Search by course code or name..."
                             columns={columns}
                             data={coursePerformance.data}
                             pagination={coursePerformance.pagination}

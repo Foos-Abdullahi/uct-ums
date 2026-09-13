@@ -115,31 +115,32 @@ export default function AdminLecturersIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'employment_status',
-            label: 'Status',
+            title: 'Status',
             options: [
                 { label: 'Active', value: 'active' },
                 { label: 'On Leave', value: 'on_leave' },
                 { label: 'Sabbatical', value: 'sabbatical' },
+                { label: 'Inactive', value: 'inactive' },
                 { label: 'Terminated', value: 'terminated' },
             ],
-            defaultValue: filters.employment_status || 'all',
+            value: filters.employment_status || undefined,
         },
         {
             key: 'department',
-            label: 'Department',
+            title: 'Department',
             options: departments.map((d) => ({ label: d, value: d })),
-            defaultValue: filters.department || 'all',
+            value: filters.department || undefined,
         },
         {
             key: 'contract_type',
-            label: 'Contract',
+            title: 'Contract',
             options: [
                 { label: 'Full Time', value: 'full_time' },
                 { label: 'Part Time', value: 'part_time' },
                 { label: 'Adjunct', value: 'adjunct' },
                 { label: 'Visiting', value: 'visiting' },
             ],
-            defaultValue: filters.contract_type || 'all',
+            value: filters.contract_type || undefined,
         },
     ];
 
@@ -226,6 +227,8 @@ export default function AdminLecturersIndex({
                     {lecturers && (
                         <div className="animate-in duration-700 fade-in slide-in-from-bottom-6">
                             <DataTable
+                                title="Lecturers"
+                                searchTitle="Search by name, lecturer number, department, faculty, or designation..."
                                 columns={columns}
                                 data={lecturers.data}
                                 pagination={{

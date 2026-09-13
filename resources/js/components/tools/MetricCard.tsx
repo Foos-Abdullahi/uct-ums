@@ -9,9 +9,16 @@ export interface Stat {
     value: string | number;
     icon: LucideIcon;
     trend?: string;
+    description?: string;
     className?: string;
     color?:
-        'primary' | 'info' | 'success' | 'warning' | 'destructive' | 'accent';
+        | 'primary'
+        | 'info'
+        | 'success'
+        | 'warning'
+        | 'destructive'
+        | 'accent';
+    variant?: keyof typeof colorStyles | 'default';
 }
 
 const colorStyles = {
@@ -52,10 +59,15 @@ export function MetricCard({
     value,
     icon: Icon,
     trend,
+    description,
     className = '',
     color = 'primary',
+    variant,
 }: Stat) {
-    const styles = colorStyles[color] || colorStyles.primary;
+    const resolvedColor = (
+        variant && variant !== 'default' ? variant : color
+    ) as keyof typeof colorStyles;
+    const styles = colorStyles[resolvedColor] || colorStyles.primary;
 
     return (
         <Card
@@ -89,6 +101,11 @@ export function MetricCard({
                                 />
                                 <span>{trend}</span>
                             </div>
+                        )}
+                        {description && (
+                            <p className="truncate text-[11px] text-muted-foreground">
+                                {description}
+                            </p>
                         )}
                     </div>
                     <div

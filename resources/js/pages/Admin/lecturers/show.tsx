@@ -537,11 +537,11 @@ export default function AdminLecturersShow({
                 <ResetPasswordModal
                     open={passwordModalOpen}
                     onOpenChange={setPasswordModalOpen}
-                    user={{
-                        id: lecturer.user_id,
-                        name: lecturer.user?.name ?? '',
-                        email: lecturer.user?.email ?? '',
-                    }}
+                    resetUrl={`/admin/lecturers/${lecturer.id}/reset-password`}
+                    userName={lecturer.user?.name}
+                    userIdentifier={lecturer.lecturer_no}
+                    title="Reset Lecturer Password"
+                    description="Set a new secure password for this faculty member account."
                 />
 
                 <ConfirmDeleteDialog

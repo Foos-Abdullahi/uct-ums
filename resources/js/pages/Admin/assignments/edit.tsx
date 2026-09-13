@@ -261,7 +261,10 @@ export default function AdminAssignmentsEdit({
                                 <Select
                                     value={data.role}
                                     onValueChange={(val) =>
-                                        setData('role', val)
+                                        setData(
+                                            'role',
+                                            val as CourseAssignment['role'],
+                                        )
                                     }
                                 >
                                     <SelectTrigger id="role">
@@ -294,7 +297,10 @@ export default function AdminAssignmentsEdit({
                                 <Select
                                     value={data.status}
                                     onValueChange={(val) =>
-                                        setData('status', val)
+                                        setData(
+                                            'status',
+                                            val as CourseAssignment['status'],
+                                        )
                                     }
                                 >
                                     <SelectTrigger id="status">

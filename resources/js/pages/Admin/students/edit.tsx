@@ -15,7 +15,12 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import type { Program, Student } from '@/types/student';
+import type {
+    EnrollmentStatus,
+    Program,
+    Student,
+    StudentFeeStatus,
+} from '@/types/student';
 
 interface AdminStudentsEditProps {
     student: Student;
@@ -319,7 +324,7 @@ export default function AdminStudentsEdit({
                                 <Select
                                     value={data.enrollment_status}
                                     onValueChange={(val) =>
-                                        setData('enrollment_status', val)
+                                        setData('enrollment_status', val as EnrollmentStatus)
                                     }
                                 >
                                     <SelectTrigger
@@ -436,7 +441,7 @@ export default function AdminStudentsEdit({
                                 <Select
                                     value={data.fee_status}
                                     onValueChange={(val) =>
-                                        setData('fee_status', val)
+                                        setData('fee_status', val as StudentFeeStatus)
                                     }
                                 >
                                     <SelectTrigger
