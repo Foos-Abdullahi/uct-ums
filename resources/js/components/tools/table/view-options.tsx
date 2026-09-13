@@ -18,14 +18,15 @@ interface DataTableViewOptionsProps<TData> {
 export function DataTableViewOptions<TData>({
     table,
 }: DataTableViewOptionsProps<TData>) {
-    const [localVisibility, setLocalVisibility] = useState<Record<string, boolean>>({});
+    const [localVisibility, setLocalVisibility] = useState<
+        Record<string, boolean>
+    >({});
 
     const toggleableColumns = table
         .getAllColumns()
         .filter(
             (column) =>
-                typeof column.accessorFn !== 'undefined' &&
-                column.getCanHide(),
+                typeof column.accessorFn !== 'undefined' && column.getCanHide(),
         );
 
     const isColumnVisible = useCallback(
@@ -44,8 +45,8 @@ export function DataTableViewOptions<TData>({
             const column = table.getColumn(columnId);
 
             if (!column) {
-return;
-}
+                return;
+            }
 
             const currentlyVisible = isColumnVisible(columnId);
             const newValue = !currentlyVisible;
@@ -62,7 +63,7 @@ return;
                 <Button
                     variant="outline"
                     size="sm"
-                    className="ml-auto rounded-sm  hidden h-8 lg:flex"
+                    className="ml-auto hidden h-8 rounded-sm lg:flex"
                 >
                     <SlidersHorizontal className="mr-2 h-4 w-4" />
                     View

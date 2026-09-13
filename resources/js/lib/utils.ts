@@ -15,16 +15,23 @@ export function formatDate(
     value: string | Date | null | undefined,
     format: 'short' | 'long' | 'iso' = 'short',
 ): string {
-    if (!value) return '—';
+    if (!value) {
+        return '—';
+    }
 
     if (value instanceof Date) {
-        if (Number.isNaN(value.getTime())) return '—';
+        if (Number.isNaN(value.getTime())) {
+            return '—';
+        }
+
         if (format === 'iso') {
             const year = value.getFullYear();
             const month = String(value.getMonth() + 1).padStart(2, '0');
             const day = String(value.getDate()).padStart(2, '0');
+
             return `${year}-${month}-${day}`;
         }
+
         return value.toLocaleDateString('en-US', {
             year: 'numeric',
             month: format === 'long' ? 'long' : 'short',
@@ -41,7 +48,9 @@ export function formatDate(
         const day = parseInt(parts[2], 10);
         const date = new Date(year, month, day);
 
-        if (Number.isNaN(date.getTime())) return value;
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
 
         if (format === 'iso') {
             return clean;
@@ -55,7 +64,10 @@ export function formatDate(
     }
 
     const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return value;
+
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
 
     return parsed.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -64,10 +76,18 @@ export function formatDate(
     });
 }
 
-export function formatDateTime(value: string | Date | null | undefined): string {
-    if (!value) return '—';
+export function formatDateTime(
+    value: string | Date | null | undefined,
+): string {
+    if (!value) {
+        return '—';
+    }
+
     const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return String(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
 
     return date.toLocaleString('en-US', {
         year: 'numeric',

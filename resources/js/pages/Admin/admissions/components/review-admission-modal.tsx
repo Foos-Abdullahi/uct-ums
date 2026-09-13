@@ -1,5 +1,7 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { CheckSquare, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,8 +19,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { CheckSquare, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import type { Admission } from '@/types/admission';
 
 interface ReviewAdmissionModalProps {
@@ -32,7 +32,7 @@ export function ReviewAdmissionModal({
     onOpenChange,
     admission,
 }: ReviewAdmissionModalProps) {
-    const { data, setData, patch, processing, errors, reset } = useForm({
+    const { data, setData, patch, processing, errors } = useForm({
         status: admission?.status ?? 'under_review',
         review_notes: admission?.review_notes ?? '',
     });
@@ -40,15 +40,21 @@ export function ReviewAdmissionModal({
     React.useEffect(() => {
         if (admission) {
             setData({
-                status: admission.status === 'enrolled' ? 'approved' : admission.status,
+                status:
+                    admission.status === 'enrolled'
+                        ? 'approved'
+                        : admission.status,
                 review_notes: admission.review_notes ?? '',
             });
         }
-    }, [admission]);
+    }, [admission, setData]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!admission) return;
+
+        if (!admission) {
+            return;
+        }
 
         patch(`/admin/admissions/${admission.id}/status`, {
             onSuccess: () => {
@@ -76,13 +82,15 @@ export function ReviewAdmissionModal({
                                 </DialogTitle>
                                 {admission && (
                                     <p className="text-xs text-muted-foreground">
-                                        {admission.application_no} — {admission.full_name}
+                                        {admission.application_no} —{' '}
+                                        {admission.full_name}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <DialogDescription className="text-xs text-muted-foreground pt-1">
-                            Evaluate the admission application and record academic review decisions.
+                        <DialogDescription className="pt-1 text-xs text-muted-foreground">
+                            Evaluate the admission application and record
+                            academic review decisions.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -91,33 +99,53 @@ export function ReviewAdmissionModal({
                             <Label htmlFor="status">Decision Status</Label>
                             <Select
                                 value={data.status}
-                                onValueChange={(val: any) => setData('status', val)}
+                                onValueChange={(val: any) =>
+                                    setData('status', val)
+                                }
                             >
                                 <SelectTrigger id="status">
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="under_review">Under Review</SelectItem>
-                                    <SelectItem value="approved">Approve Application</SelectItem>
-                                    <SelectItem value="rejected">Reject Application</SelectItem>
-                                    <SelectItem value="pending">Keep as Pending</SelectItem>
+                                    <SelectItem value="under_review">
+                                        Under Review
+                                    </SelectItem>
+                                    <SelectItem value="approved">
+                                        Approve Application
+                                    </SelectItem>
+                                    <SelectItem value="rejected">
+                                        Reject Application
+                                    </SelectItem>
+                                    <SelectItem value="pending">
+                                        Keep as Pending
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
-                            {errors.status && <p className="text-xs text-destructive">{errors.status}</p>}
+                            {errors.status && (
+                                <p className="text-xs text-destructive">
+                                    {errors.status}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="review_notes">Review Feedback / Decision Notes</Label>
+                            <Label htmlFor="review_notes">
+                                Review Feedback / Decision Notes
+                            </Label>
                             <textarea
                                 id="review_notes"
                                 rows={4}
-                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs shadow-xs placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 placeholder="Explain evaluation details, qualification checks, or rejection reasons..."
                                 value={data.review_notes}
-                                onChange={(e) => setData('review_notes', e.target.value)}
+                                onChange={(e) =>
+                                    setData('review_notes', e.target.value)
+                                }
                             />
                             {errors.review_notes && (
-                                <p className="text-xs text-destructive">{errors.review_notes}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.review_notes}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -133,7 +161,9 @@ export function ReviewAdmissionModal({
                             Cancel
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Save Decision
                         </Button>
                     </DialogFooter>

@@ -1,12 +1,12 @@
-import React from 'react';
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Deferred } from '@inertiajs/react';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import type { BreadcrumbItem } from '@/types';
 import { DollarSign, CreditCard, Receipt, AlertCircle } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/admin/dashboard' },
@@ -27,26 +27,56 @@ export default function FinanceReport({ stats, transactions }) {
     return (
         <>
             <Head title="Finance Report" />
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 <div>
-                    <h1 className="text-lg font-semibold text-foreground tracking-tight">Finance Report</h1>
-                    <p className="text-xs text-muted-foreground">Revenue, outstanding balances, and payment trends.</p>
+                    <h1 className="text-lg font-semibold tracking-tight text-foreground">
+                        Finance Report
+                    </h1>
+                    <p className="text-xs text-muted-foreground">
+                        Revenue, outstanding balances, and payment trends.
+                    </p>
                 </div>
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                            <MetricCard title="Total Revenue" value={`$${stats.total_revenue}`} icon={DollarSign} color="primary" />
-                            <MetricCard title="Paid" value={`$${stats.paid}`} icon={CreditCard} color="success" />
-                            <MetricCard title="Outstanding" value={`$${stats.outstanding}`} icon={AlertCircle} color="destructive" />
-                            <MetricCard title="Overdue" value={`$${stats.overdue}`} icon={Receipt} color="warning" />
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+                            <MetricCard
+                                title="Total Revenue"
+                                value={`$${stats.total_revenue}`}
+                                icon={DollarSign}
+                                color="primary"
+                            />
+                            <MetricCard
+                                title="Paid"
+                                value={`$${stats.paid}`}
+                                icon={CreditCard}
+                                color="success"
+                            />
+                            <MetricCard
+                                title="Outstanding"
+                                value={`$${stats.outstanding}`}
+                                icon={AlertCircle}
+                                color="destructive"
+                            />
+                            <MetricCard
+                                title="Overdue"
+                                value={`$${stats.overdue}`}
+                                icon={Receipt}
+                                color="warning"
+                            />
                         </div>
                     )}
                 </Deferred>
 
                 <Deferred data="transactions" fallback={<div>Loading...</div>}>
                     {transactions && (
-                        <DataTable title="Transaction History" columns={columns} data={transactions.data} pagination={transactions.pagination} searchTitle={''} />
+                        <DataTable
+                            title="Transaction History"
+                            columns={columns}
+                            data={transactions.data}
+                            pagination={transactions.pagination}
+                            searchTitle={''}
+                        />
                     )}
                 </Deferred>
             </div>
@@ -54,4 +84,6 @@ export default function FinanceReport({ stats, transactions }) {
     );
 }
 
-FinanceReport.layout = (page: any) => <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
+FinanceReport.layout = (page: any) => (
+    <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>
+);

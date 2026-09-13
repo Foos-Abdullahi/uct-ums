@@ -1,12 +1,4 @@
-import React from 'react';
 import { Deferred, Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import type { BreadcrumbItem } from '@/types';
 import {
     Wallet,
     CreditCard,
@@ -21,6 +13,14 @@ import {
     HandCoins,
     Shield,
 } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import type { BreadcrumbItem } from '@/types';
 
 interface FinanceDashboardProps {
     stats?: {
@@ -106,45 +106,46 @@ const STATUS_COLORS: Record<string, string> = {
 export default function FinanceDashboard({
     stats,
     recent_payments = [],
-    recent_invoices = [],
     recent_expenses = [],
     expenses_by_type = [],
     revenue_by_method = [],
 }: FinanceDashboardProps) {
-    const formatCurrency = (val: number) => `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const formatCurrency = (val: number) =>
+        `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     return (
         <>
             <Head title="Finance Dashboard" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Finance Control Center
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Real-time fee collections, university expenses, invoice management, and multi-level approval queue.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Real-time fee collections, university expenses,
+                            invoice management, and multi-level approval queue.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/finance/expenses">
-                                <Receipt className="h-4 w-4 mr-1.5" />
+                                <Receipt className="mr-1.5 h-4 w-4" />
                                 Expenses
                             </Link>
                         </Button>
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/finance/invoices">
-                                <FileText className="h-4 w-4 mr-1.5" />
+                                <FileText className="mr-1.5 h-4 w-4" />
                                 Invoices
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/finance/payments">
-                                <CreditCard className="h-4 w-4 mr-1.5" />
+                                <CreditCard className="mr-1.5 h-4 w-4" />
                                 Payments
                             </Link>
                         </Button>
@@ -154,7 +155,7 @@ export default function FinanceDashboard({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-6 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-6">
                             <MetricCard
                                 title="Total Collected"
                                 value={formatCurrency(stats.total_collected)}
@@ -196,42 +197,82 @@ export default function FinanceDashboard({
                 </Deferred>
 
                 {/* Main 2-Column Analytics */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <div className="space-y-6 lg:col-span-2">
                         {/* Recent Payments */}
                         <UctPanelCard
                             title="Recent Payments"
                             description="Latest student fee payments."
                             icon={CreditCard}
                             actions={
-                                <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    asChild
+                                >
                                     <Link href="/finance/payments">
-                                        View All <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                                        View All{' '}
+                                        <ArrowRight className="ml-1 h-3.5 w-3.5" />
                                     </Link>
                                 </Button>
                             }
                         >
-                            <Deferred data="recent_payments" fallback={<div className="h-40 animate-pulse bg-muted/20 rounded" />}>
+                            <Deferred
+                                data="recent_payments"
+                                fallback={
+                                    <div className="h-40 animate-pulse rounded bg-muted/20" />
+                                }
+                            >
                                 {recent_payments.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground italic py-6 text-center">No payment transactions recorded yet.</p>
+                                    <p className="py-6 text-center text-xs text-muted-foreground italic">
+                                        No payment transactions recorded yet.
+                                    </p>
                                 ) : (
-                                    <div className="divide-y divide-border/40 text-xs pt-1">
+                                    <div className="divide-y divide-border/40 pt-1 text-xs">
                                         {recent_payments.map((pmt) => (
-                                            <div key={pmt.id} className="flex items-center justify-between py-2.5 px-1 hover:bg-muted/20 rounded transition-colors">
+                                            <div
+                                                key={pmt.id}
+                                                className="flex items-center justify-between rounded px-1 py-2.5 transition-colors hover:bg-muted/20"
+                                            >
                                                 <div className="flex items-center gap-3">
                                                     <div className="rounded-full bg-emerald-500/10 p-2 text-emerald-600">
                                                         <DollarSign className="h-4 w-4" />
                                                     </div>
                                                     <div>
-                                                        <span className="font-semibold text-foreground">{pmt.student?.user?.name || 'Student'}</span>
-                                                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                            {pmt.transaction_no} · {pmt.payment_method.replace('_', ' ').toUpperCase()} · {pmt.payment_date}
+                                                        <span className="font-semibold text-foreground">
+                                                            {pmt.student?.user
+                                                                ?.name ||
+                                                                'Student'}
+                                                        </span>
+                                                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                                            {pmt.transaction_no}{' '}
+                                                            ·{' '}
+                                                            {pmt.payment_method
+                                                                .replace(
+                                                                    '_',
+                                                                    ' ',
+                                                                )
+                                                                .toUpperCase()}{' '}
+                                                            · {pmt.payment_date}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">+{formatCurrency(pmt.amount)}</p>
-                                                    <Badge className={STATUS_COLORS[pmt.status] ?? 'bg-muted text-muted-foreground text-[10px]'}>
+                                                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                                        +
+                                                        {formatCurrency(
+                                                            pmt.amount,
+                                                        )}
+                                                    </p>
+                                                    <Badge
+                                                        className={
+                                                            STATUS_COLORS[
+                                                                pmt.status
+                                                            ] ??
+                                                            'bg-muted text-[10px] text-muted-foreground'
+                                                        }
+                                                    >
                                                         {pmt.status}
                                                     </Badge>
                                                 </div>
@@ -248,36 +289,79 @@ export default function FinanceDashboard({
                             description="Latest university expense vouchers."
                             icon={Receipt}
                             actions={
-                                <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    asChild
+                                >
                                     <Link href="/finance/expenses">
-                                        View All <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                                        View All{' '}
+                                        <ArrowRight className="ml-1 h-3.5 w-3.5" />
                                     </Link>
                                 </Button>
                             }
                         >
-                            <Deferred data="recent_expenses" fallback={<div className="h-40 animate-pulse bg-muted/20 rounded" />}>
+                            <Deferred
+                                data="recent_expenses"
+                                fallback={
+                                    <div className="h-40 animate-pulse rounded bg-muted/20" />
+                                }
+                            >
                                 {recent_expenses.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground italic py-6 text-center">No expenses recorded yet.</p>
+                                    <p className="py-6 text-center text-xs text-muted-foreground italic">
+                                        No expenses recorded yet.
+                                    </p>
                                 ) : (
-                                    <div className="divide-y divide-border/40 text-xs pt-1">
+                                    <div className="divide-y divide-border/40 pt-1 text-xs">
                                         {recent_expenses.map((exp) => (
-                                            <div key={exp.id} className="flex items-center justify-between py-2.5 px-1 hover:bg-muted/20 rounded transition-colors">
+                                            <div
+                                                key={exp.id}
+                                                className="flex items-center justify-between rounded px-1 py-2.5 transition-colors hover:bg-muted/20"
+                                            >
                                                 <div className="flex items-center gap-3">
                                                     <div className="rounded-full bg-destructive/10 p-2 text-destructive">
                                                         <HandCoins className="h-4 w-4" />
                                                     </div>
                                                     <div>
-                                                        <span className="font-semibold text-foreground">{exp.title}</span>
-                                                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                                                            <Badge variant="secondary" className="text-[10px] capitalize mr-1">{EXPENSE_LABELS[exp.expense_type] ?? exp.expense_type}</Badge>
-                                                            {exp.expense_date} · {exp.creator?.name}
+                                                        <span className="font-semibold text-foreground">
+                                                            {exp.title}
+                                                        </span>
+                                                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="mr-1 text-[10px] capitalize"
+                                                            >
+                                                                {EXPENSE_LABELS[
+                                                                    exp
+                                                                        .expense_type
+                                                                ] ??
+                                                                    exp.expense_type}
+                                                            </Badge>
+                                                            {exp.expense_date} ·{' '}
+                                                            {exp.creator?.name}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold text-destructive text-sm">-{formatCurrency(exp.amount)}</p>
-                                                    <Badge className={STATUS_COLORS[exp.status] ?? 'bg-muted text-muted-foreground text-[10px]'}>
-                                                        {exp.status.replace('_', ' ')}
+                                                    <p className="text-sm font-bold text-destructive">
+                                                        -
+                                                        {formatCurrency(
+                                                            exp.amount,
+                                                        )}
+                                                    </p>
+                                                    <Badge
+                                                        className={
+                                                            STATUS_COLORS[
+                                                                exp.status
+                                                            ] ??
+                                                            'bg-muted text-[10px] text-muted-foreground'
+                                                        }
+                                                    >
+                                                        {exp.status.replace(
+                                                            '_',
+                                                            ' ',
+                                                        )}
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -296,21 +380,42 @@ export default function FinanceDashboard({
                             description="Breakdown by collection method."
                             icon={Wallet}
                         >
-                            <Deferred data="revenue_by_method" fallback={<div className="h-32 animate-pulse bg-muted/20 rounded" />}>
+                            <Deferred
+                                data="revenue_by_method"
+                                fallback={
+                                    <div className="h-32 animate-pulse rounded bg-muted/20" />
+                                }
+                            >
                                 {revenue_by_method.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground italic py-4 text-center">No payment data available.</p>
+                                    <p className="py-4 text-center text-xs text-muted-foreground italic">
+                                        No payment data available.
+                                    </p>
                                 ) : (
                                     <div className="space-y-3 pt-2">
                                         {revenue_by_method.map((method) => (
-                                            <div key={method.payment_method} className="space-y-1">
+                                            <div
+                                                key={method.payment_method}
+                                                className="space-y-1"
+                                            >
                                                 <div className="flex justify-between text-xs font-medium">
-                                                    <span className="capitalize text-foreground">{method.payment_method.replace('_', ' ')}</span>
-                                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{formatCurrency(method.total)}</span>
+                                                    <span className="text-foreground capitalize">
+                                                        {method.payment_method.replace(
+                                                            '_',
+                                                            ' ',
+                                                        )}
+                                                    </span>
+                                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                                                        {formatCurrency(
+                                                            method.total,
+                                                        )}
+                                                    </span>
                                                 </div>
-                                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                                     <div
-                                                        className="h-full bg-primary rounded-full"
-                                                        style={{ width: `${Math.min(100, Math.max(10, (Number(method.total) / (stats?.total_collected || 1)) * 100))}%` }}
+                                                        className="h-full rounded-full bg-primary"
+                                                        style={{
+                                                            width: `${Math.min(100, Math.max(10, (Number(method.total) / (stats?.total_collected || 1)) * 100))}%`,
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
@@ -326,17 +431,37 @@ export default function FinanceDashboard({
                             description="Operational spending by category."
                             icon={Receipt}
                         >
-                            <Deferred data="expenses_by_type" fallback={<div className="h-32 animate-pulse bg-muted/20 rounded" />}>
+                            <Deferred
+                                data="expenses_by_type"
+                                fallback={
+                                    <div className="h-32 animate-pulse rounded bg-muted/20" />
+                                }
+                            >
                                 {expenses_by_type.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground italic py-4 text-center">No expense data available.</p>
+                                    <p className="py-4 text-center text-xs text-muted-foreground italic">
+                                        No expense data available.
+                                    </p>
                                 ) : (
-                                    <div className="divide-y divide-border/40 text-xs pt-1">
+                                    <div className="divide-y divide-border/40 pt-1 text-xs">
                                         {expenses_by_type.map((type) => (
-                                            <div key={type.expense_type} className="flex items-center justify-between py-2">
-                                                <span className="capitalize font-medium text-foreground">{EXPENSE_LABELS[type.expense_type] ?? type.expense_type}</span>
+                                            <div
+                                                key={type.expense_type}
+                                                className="flex items-center justify-between py-2"
+                                            >
+                                                <span className="font-medium text-foreground capitalize">
+                                                    {EXPENSE_LABELS[
+                                                        type.expense_type
+                                                    ] ?? type.expense_type}
+                                                </span>
                                                 <div className="text-right">
-                                                    <span className="font-semibold text-foreground">{formatCurrency(type.total)}</span>
-                                                    <span className="text-[10px] text-muted-foreground block">{type.count} vouchers</span>
+                                                    <span className="font-semibold text-foreground">
+                                                        {formatCurrency(
+                                                            type.total,
+                                                        )}
+                                                    </span>
+                                                    <span className="block text-[10px] text-muted-foreground">
+                                                        {type.count} vouchers
+                                                    </span>
                                                 </div>
                                             </div>
                                         ))}
@@ -347,17 +472,29 @@ export default function FinanceDashboard({
 
                         {/* Quick Links */}
                         <Card>
-                            <CardContent className="pt-5 space-y-2">
-                                <p className="text-xs font-semibold text-foreground mb-3">Quick Actions</p>
-                                <Button variant="outline" size="sm" className="w-full justify-start text-xs" asChild>
+                            <CardContent className="space-y-2 pt-5">
+                                <p className="mb-3 text-xs font-semibold text-foreground">
+                                    Quick Actions
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start text-xs"
+                                    asChild
+                                >
                                     <Link href="/finance/approvals">
-                                        <Shield className="h-4 w-4 mr-2" />
+                                        <Shield className="mr-2 h-4 w-4" />
                                         My Approval Queue
                                     </Link>
                                 </Button>
-                                <Button variant="outline" size="sm" className="w-full justify-start text-xs" asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full justify-start text-xs"
+                                    asChild
+                                >
                                     <Link href="/finance/invoices">
-                                        <FileText className="h-4 w-4 mr-2" />
+                                        <FileText className="mr-2 h-4 w-4" />
                                         All Invoices
                                     </Link>
                                 </Button>

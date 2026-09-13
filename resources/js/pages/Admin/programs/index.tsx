@@ -1,18 +1,7 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     BookOpen,
-    GraduationCap,
     Users,
     Layers,
     Plus,
@@ -20,9 +9,18 @@ import {
     Eye,
     Trash2,
     CheckCircle,
-    XCircle,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
 
 export interface ProgramItem {
     id: number;
@@ -82,7 +80,8 @@ export default function AdminProgramsIndex({
     faculties = [],
     filters,
 }: AdminProgramsIndexProps) {
-    const [selectedForDelete, setSelectedForDelete] = useState<ProgramItem | null>(null);
+    const [selectedForDelete, setSelectedForDelete] =
+        useState<ProgramItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
@@ -106,7 +105,10 @@ export default function AdminProgramsIndex({
     };
 
     const confirmDelete = () => {
-        if (!selectedForDelete) return;
+        if (!selectedForDelete) {
+            return;
+        }
+
         setDeleteProcessing(true);
 
         router.delete(`/admin/programs/${selectedForDelete.id}`, {
@@ -128,7 +130,10 @@ export default function AdminProgramsIndex({
             accessorKey: 'code',
             header: 'Code',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.code || 'N/A'}
                 </Badge>
             ),
@@ -138,8 +143,14 @@ export default function AdminProgramsIndex({
             header: 'Program Name',
             cell: ({ row }) => (
                 <div className="max-w-[280px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{row.original.department || row.original.faculty || 'General Department'}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.name}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                        {row.original.department ||
+                            row.original.faculty ||
+                            'General Department'}
+                    </p>
                 </div>
             ),
         },
@@ -156,7 +167,7 @@ export default function AdminProgramsIndex({
             accessorKey: 'degree_level',
             header: 'Degree Level',
             cell: ({ row }) => (
-                <Badge variant="secondary" className="capitalize text-[11px]">
+                <Badge variant="secondary" className="text-[11px] capitalize">
                     {row.original.degree_level}
                 </Badge>
             ),
@@ -166,7 +177,8 @@ export default function AdminProgramsIndex({
             header: 'Duration',
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
-                    {row.original.duration_semesters} Semesters ({row.original.total_credits} Credits)
+                    {row.original.duration_semesters} Semesters (
+                    {row.original.total_credits} Credits)
                 </span>
             ),
         },
@@ -195,25 +207,27 @@ export default function AdminProgramsIndex({
             header: 'Status',
             cell: ({ row }) => {
                 const status = row.original.status;
+
                 if (status === 'active') {
                     return (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200">
+                        <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
                             Active
                         </Badge>
                     );
                 }
+
                 if (status === 'inactive') {
                     return (
-                        <Badge variant="outline" className="text-muted-foreground">
+                        <Badge
+                            variant="outline"
+                            className="text-muted-foreground"
+                        >
                             Inactive
                         </Badge>
                     );
                 }
-                return (
-                    <Badge variant="destructive">
-                        Archived
-                    </Badge>
-                );
+
+                return <Badge variant="destructive">Archived</Badge>;
             },
         },
         {
@@ -228,7 +242,7 @@ export default function AdminProgramsIndex({
                         asChild
                     >
                         <Link href={`/admin/programs/${row.original.id}`}>
-                            <Eye className="h-3.5 w-3.5 mr-1" />
+                            <Eye className="mr-1 h-3.5 w-3.5" />
                             View
                         </Link>
                     </Button>
@@ -292,28 +306,30 @@ export default function AdminProgramsIndex({
         <>
             <Head title="Academic Programs" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Academic Programs
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Manage undergraduate and postgraduate degree curricula, faculty departments, and credit requirements.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Manage undergraduate and postgraduate degree
+                            curricula, faculty departments, and credit
+                            requirements.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/courses">
-                                <BookOpen className="h-4 w-4 mr-1.5" />
+                                <BookOpen className="mr-1.5 h-4 w-4" />
                                 Course Catalog
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/programs/create">
-                                <Plus className="h-4 w-4 mr-1.5" />
+                                <Plus className="mr-1.5 h-4 w-4" />
                                 New Program
                             </Link>
                         </Button>
@@ -323,7 +339,7 @@ export default function AdminProgramsIndex({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Programs"
                                 value={stats.total_programs}
@@ -361,7 +377,7 @@ export default function AdminProgramsIndex({
                 {/* Programs Data Table */}
                 <Deferred data="programs" fallback={<TableSkeleton />}>
                     {programs && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Programs List"
                                 searchTitle="Search by program name, code, department..."
@@ -373,16 +389,36 @@ export default function AdminProgramsIndex({
                                     per_page: programs.per_page,
                                     total: programs.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/programs', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/programs',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/programs/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/programs/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}

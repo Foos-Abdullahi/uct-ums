@@ -1,25 +1,14 @@
-import React from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
-import {
-    ScrollText,
-    Shield,
-    Activity,
-    Clock,
-    User,
-    Server,
-    Laptop,
-    CheckCircle2,
-    AlertTriangle,
-} from 'lucide-react';
+import { Shield, Activity, Clock, User, Laptop } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
 
 export interface AuditLogItem {
     id: number;
@@ -81,16 +70,43 @@ export default function AdminAuditLogIndex({
     };
 
     const getEventBadge = (event: string) => {
-        if (event.includes('Created') || event.includes('Approved') || event.includes('Verified')) {
-            return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[11px]">{event}</Badge>;
+        if (
+            event.includes('Created') ||
+            event.includes('Approved') ||
+            event.includes('Verified')
+        ) {
+            return (
+                <Badge className="border-emerald-200 bg-emerald-500/10 text-[11px] text-emerald-700">
+                    {event}
+                </Badge>
+            );
         }
-        if (event.includes('Updated') || event.includes('Issued') || event.includes('Submitted')) {
-            return <Badge className="bg-primary/10 text-primary border-primary/20 text-[11px]">{event}</Badge>;
+
+        if (
+            event.includes('Updated') ||
+            event.includes('Issued') ||
+            event.includes('Submitted')
+        ) {
+            return (
+                <Badge className="border-primary/20 bg-primary/10 text-[11px] text-primary">
+                    {event}
+                </Badge>
+            );
         }
+
         if (event.includes('Deleted') || event.includes('Rejected')) {
-            return <Badge variant="destructive" className="text-[11px]">{event}</Badge>;
+            return (
+                <Badge variant="destructive" className="text-[11px]">
+                    {event}
+                </Badge>
+            );
         }
-        return <Badge variant="outline" className="text-[11px]">{event}</Badge>;
+
+        return (
+            <Badge variant="outline" className="text-[11px]">
+                {event}
+            </Badge>
+        );
     };
 
     const columns: ColumnDef<AuditLogItem>[] = [
@@ -99,10 +115,19 @@ export default function AdminAuditLogIndex({
             header: 'Initiator',
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
-                    <p className="font-semibold text-foreground truncate text-sm">{row.original.user_name}</p>
+                    <p className="truncate text-sm font-semibold text-foreground">
+                        {row.original.user_name}
+                    </p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Badge variant="secondary" className="text-[10px] px-1 py-0">{row.original.role}</Badge>
-                        <span className="truncate">{row.original.user_email}</span>
+                        <Badge
+                            variant="secondary"
+                            className="px-1 py-0 text-[10px]"
+                        >
+                            {row.original.role}
+                        </Badge>
+                        <span className="truncate">
+                            {row.original.user_email}
+                        </span>
                     </div>
                 </div>
             ),
@@ -116,7 +141,7 @@ export default function AdminAuditLogIndex({
             accessorKey: 'resource',
             header: 'Target Entity / Resource',
             cell: ({ row }) => (
-                <span className="text-xs font-mono font-medium text-foreground">
+                <span className="font-mono text-xs font-medium text-foreground">
                     {row.original.resource}
                 </span>
             ),
@@ -126,8 +151,12 @@ export default function AdminAuditLogIndex({
             header: 'Network & Device',
             cell: ({ row }) => (
                 <div className="text-xs">
-                    <span className="font-mono text-muted-foreground">{row.original.ip_address}</span>
-                    <span className="text-[11px] text-muted-foreground block truncate max-w-[180px]">{row.original.device}</span>
+                    <span className="font-mono text-muted-foreground">
+                        {row.original.ip_address}
+                    </span>
+                    <span className="block max-w-[180px] truncate text-[11px] text-muted-foreground">
+                        {row.original.device}
+                    </span>
                 </div>
             ),
         },
@@ -135,7 +164,7 @@ export default function AdminAuditLogIndex({
             accessorKey: 'status',
             header: 'Status',
             cell: ({ row }) => (
-                <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[10px] uppercase font-bold">
+                <Badge className="border-emerald-200 bg-emerald-500/10 text-[10px] font-bold text-emerald-700 uppercase">
                     {row.original.status}
                 </Badge>
             ),
@@ -173,22 +202,24 @@ export default function AdminAuditLogIndex({
         <>
             <Head title="System Audit Logs & Security Events" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Security & Audit Trail Log
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Comprehensive ledger of all administrative events, user authentications, financial actions, and record modifications.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Comprehensive ledger of all administrative events,
+                            user authentications, financial actions, and record
+                            modifications.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/settings/users">
-                                <User className="h-4 w-4 mr-1.5" />
+                                <User className="mr-1.5 h-4 w-4" />
                                 Users Roster
                             </Link>
                         </Button>
@@ -198,7 +229,7 @@ export default function AdminAuditLogIndex({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
                                 title="Total Logged Events"
                                 value={`${stats.total_logs} actions`}
@@ -228,7 +259,7 @@ export default function AdminAuditLogIndex({
                 </Deferred>
 
                 {/* Audit Log Table */}
-                <div className="border border-border/60 rounded-md bg-card p-4">
+                <div className="rounded-md border border-border/60 bg-card p-4">
                     <DataTable
                         title="Security Audit Records"
                         searchTitle="Search by initiator, resource, IP address..."
@@ -239,7 +270,11 @@ export default function AdminAuditLogIndex({
                             handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
                         }}
                         onServerFilterClear={() => {
-                            router.get('/admin/settings/audit-log', {}, { preserveState: true });
+                            router.get(
+                                '/admin/settings/audit-log',
+                                {},
+                                { preserveState: true },
+                            );
                         }}
                     />
                 </div>

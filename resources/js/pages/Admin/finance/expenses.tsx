@@ -1,36 +1,4 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router, useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/ui/date-picker';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { cn, formatDate } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     Wallet,
@@ -47,7 +15,39 @@ import {
     X,
     HandCoins,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { formatDate } from '@/lib/utils';
+import type { BreadcrumbItem } from '@/types';
 
 export interface ExpenseItem {
     id: number;
@@ -114,8 +114,6 @@ interface AdminFinanceExpensesProps {
     stats?: ExpenseStats;
     expenses?: PaginatedData<ExpenseItem>;
     expense_accounts: ExpenseAccountOption[];
-    expense_statuses: string[];
-    level_roles: Record<number, string>;
     filters: {
         search: string;
         status: string;
@@ -134,12 +132,11 @@ export default function AdminFinanceExpenses({
     stats,
     expenses,
     expense_accounts = [],
-    expense_statuses = [],
-    level_roles = {},
     filters,
 }: AdminFinanceExpensesProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [selectedForDelete, setSelectedForDelete] = useState<ExpenseItem | null>(null);
+    const [selectedForDelete, setSelectedForDelete] =
+        useState<ExpenseItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
     const [rejectTarget, setRejectTarget] = useState<ExpenseItem | null>(null);
@@ -147,7 +144,8 @@ export default function AdminFinanceExpenses({
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectProcessing, setRejectProcessing] = useState(false);
 
-    const formatCurrency = (val: number) => `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const formatCurrency = (val: number) =>
+        `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         title: '',
@@ -191,12 +189,17 @@ export default function AdminFinanceExpenses({
     };
 
     const confirmDelete = () => {
-        if (!selectedForDelete) return;
+        if (!selectedForDelete) {
+            return;
+        }
+
         setDeleteProcessing(true);
 
         router.delete(`/admin/expenses/${selectedForDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Expense ${selectedForDelete.expense_no} deleted.`);
+                toast.success(
+                    `Expense ${selectedForDelete.expense_no} deleted.`,
+                );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
                 setDeleteProcessing(false);
@@ -209,24 +212,39 @@ export default function AdminFinanceExpenses({
     };
 
     const handleApprove = (expense: ExpenseItem) => {
-        router.post(`/admin/expenses/${expense.id}/approve`, {}, {
-            onSuccess: () => toast.success(`Expense ${expense.expense_no} approved.`),
-            onError: (errs) => {
-                const msg = Object.values(errs)[0] ?? 'Approval failed.';
-                toast.error(String(msg));
+        router.post(
+            `/admin/expenses/${expense.id}/approve`,
+            {},
+            {
+                onSuccess: () =>
+                    toast.success(`Expense ${expense.expense_no} approved.`),
+                onError: (errs) => {
+                    const msg = Object.values(errs)[0] ?? 'Approval failed.';
+                    toast.error(String(msg));
+                },
             },
-        });
+        );
     };
 
     const handleMarkPaid = (expense: ExpenseItem) => {
-        router.post(`/admin/expenses/${expense.id}/mark-paid`, {}, {
-            onSuccess: () => toast.success(`Expense ${expense.expense_no} marked as paid.`),
-            onError: () => toast.error('Failed to mark expense as paid.'),
-        });
+        router.post(
+            `/admin/expenses/${expense.id}/mark-paid`,
+            {},
+            {
+                onSuccess: () =>
+                    toast.success(
+                        `Expense ${expense.expense_no} marked as paid.`,
+                    ),
+                onError: () => toast.error('Failed to mark expense as paid.'),
+            },
+        );
     };
 
     const confirmReject = () => {
-        if (!rejectTarget) return;
+        if (!rejectTarget) {
+            return;
+        }
+
         setRejectProcessing(true);
 
         router.post(
@@ -234,7 +252,9 @@ export default function AdminFinanceExpenses({
             { comment: rejectComment },
             {
                 onSuccess: () => {
-                    toast.success(`Expense ${rejectTarget.expense_no} rejected.`);
+                    toast.success(
+                        `Expense ${rejectTarget.expense_no} rejected.`,
+                    );
                     setRejectModalOpen(false);
                     setRejectTarget(null);
                     setRejectComment('');
@@ -244,43 +264,36 @@ export default function AdminFinanceExpenses({
                     toast.error('Failed to reject expense.');
                     setRejectProcessing(false);
                 },
-            }
+            },
         );
     };
 
     const getStatusBadge = (status: string) => {
         const map: Record<string, React.ReactNode> = {
             paid: (
-                <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200">
-                    <Check className="h-3 w-3 mr-1" /> Paid
+                <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
+                    <Check className="mr-1 h-3 w-3" /> Paid
                 </Badge>
             ),
             approved: (
-                <Badge className="bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 border-blue-200">
-                    <CheckCircle2 className="h-3 w-3 mr-1" /> Approved
+                <Badge className="border-blue-200 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20">
+                    <CheckCircle2 className="mr-1 h-3 w-3" /> Approved
                 </Badge>
             ),
             pending_approval: (
-                <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200">
-                    <Clock className="h-3 w-3 mr-1" /> Pending
+                <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
+                    <Clock className="mr-1 h-3 w-3" /> Pending
                 </Badge>
             ),
             rejected: (
                 <Badge variant="destructive">
-                    <X className="h-3 w-3 mr-1" /> Rejected
+                    <X className="mr-1 h-3 w-3" /> Rejected
                 </Badge>
             ),
-            draft: (
-                <Badge variant="outline">
-                    Draft
-                </Badge>
-            ),
-            cancelled: (
-                <Badge variant="secondary">
-                    Cancelled
-                </Badge>
-            ),
+            draft: <Badge variant="outline">Draft</Badge>,
+            cancelled: <Badge variant="secondary">Cancelled</Badge>,
         };
+
         return map[status] ?? <Badge variant="outline">{status}</Badge>;
     };
 
@@ -289,7 +302,10 @@ export default function AdminFinanceExpenses({
             accessorKey: 'expense_no',
             header: 'Expense No',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.expense_no}
                 </Badge>
             ),
@@ -299,9 +315,13 @@ export default function AdminFinanceExpenses({
             header: 'Expense',
             cell: ({ row }) => (
                 <div className="max-w-[240px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.title}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.title}
+                    </p>
                     {row.original.vendor && (
-                        <p className="text-xs text-muted-foreground truncate">{row.original.vendor}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                            {row.original.vendor}
+                        </p>
                     )}
                 </div>
             ),
@@ -312,12 +332,16 @@ export default function AdminFinanceExpenses({
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
                     <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className="font-mono text-[10px] font-semibold">
+                        <Badge
+                            variant="outline"
+                            className="font-mono text-[10px] font-semibold"
+                        >
                             {row.original.account?.code ?? '—'}
                         </Badge>
                     </div>
-                    <p className="text-xs text-foreground truncate mt-0.5">
-                        {row.original.account?.name || row.original.expense_type}
+                    <p className="mt-0.5 truncate text-xs text-foreground">
+                        {row.original.account?.name ||
+                            row.original.expense_type}
                     </p>
                     {/* {(row.original.account?.category?.name) && (
                         <p className="text-[10px] text-muted-foreground truncate">
@@ -340,14 +364,18 @@ export default function AdminFinanceExpenses({
             accessorKey: 'expense_date',
             header: 'Date',
             cell: ({ row }) => (
-                <span className="text-xs text-muted-foreground">{formatDate(row.original.expense_date)}</span>
+                <span className="text-xs text-muted-foreground">
+                    {formatDate(row.original.expense_date)}
+                </span>
             ),
         },
         {
             accessorKey: 'budget_line',
             header: 'Budget Line',
             cell: ({ row }) => (
-                <span className="text-xs text-muted-foreground">{row.original.budget_line || '—'}</span>
+                <span className="text-xs text-muted-foreground">
+                    {row.original.budget_line || '—'}
+                </span>
             ),
         },
         {
@@ -370,7 +398,7 @@ export default function AdminFinanceExpenses({
                                 handleMarkPaid(row.original);
                             }}
                         >
-                            <HandCoins className="h-3.5 w-3.5 mr-1" />
+                            <HandCoins className="mr-1 h-3.5 w-3.5" />
                             Mark Paid
                         </Button>
                     )}
@@ -384,7 +412,7 @@ export default function AdminFinanceExpenses({
                                 handleApprove(row.original);
                             }}
                         >
-                            <Check className="h-3.5 w-3.5 mr-1" />
+                            <Check className="mr-1 h-3.5 w-3.5" />
                             Approve
                         </Button>
                     )}
@@ -399,7 +427,7 @@ export default function AdminFinanceExpenses({
                                 setRejectModalOpen(true);
                             }}
                         >
-                            <X className="h-3.5 w-3.5 mr-1" />
+                            <X className="mr-1 h-3.5 w-3.5" />
                             Reject
                         </Button>
                     )}
@@ -410,11 +438,16 @@ export default function AdminFinanceExpenses({
                         asChild
                     >
                         <Link href={`/admin/expenses/${row.original.id}`}>
-                            <Eye className="h-3.5 w-3.5 mr-1" />
+                            <Eye className="mr-1 h-3.5 w-3.5" />
                             View
                         </Link>
                     </Button>
-                    {['draft', 'rejected', 'cancelled', 'pending_approval'].includes(row.original.status) && (
+                    {[
+                        'draft',
+                        'rejected',
+                        'cancelled',
+                        'pending_approval',
+                    ].includes(row.original.status) && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -458,7 +491,10 @@ export default function AdminFinanceExpenses({
                     value: String(a.id),
                 })),
             ],
-            value: filters.account_id === 'all' ? undefined : String(filters.account_id),
+            value:
+                filters.account_id === 'all'
+                    ? undefined
+                    : String(filters.account_id),
         },
     ];
 
@@ -466,26 +502,28 @@ export default function AdminFinanceExpenses({
         <>
             <Head title="University Expenses" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             University Expense Management
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Track operational and academic expenses against the UCT chart of accounts with multi-level approval.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Track operational and academic expenses against the
+                            UCT chart of accounts with multi-level approval.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance">
-                                Finance Overview
-                            </Link>
+                            <Link href="/admin/finance">Finance Overview</Link>
                         </Button>
-                        <Button size="sm" onClick={() => setCreateModalOpen(true)}>
-                            <Plus className="h-4 w-4 mr-1.5" />
+                        <Button
+                            size="sm"
+                            onClick={() => setCreateModalOpen(true)}
+                        >
+                            <Plus className="mr-1.5 h-4 w-4" />
                             Record Expense
                         </Button>
                     </div>
@@ -494,7 +532,7 @@ export default function AdminFinanceExpenses({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Expense"
                                 value={formatCurrency(stats.total_spent)}
@@ -532,7 +570,7 @@ export default function AdminFinanceExpenses({
                 {/* Expenses Data Table */}
                 <Deferred data="expenses" fallback={<TableSkeleton />}>
                     {expenses && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Expense Vouchers"
                                 searchTitle="Search by expense no, title, vendor, budget line, or account..."
@@ -544,82 +582,159 @@ export default function AdminFinanceExpenses({
                                     per_page: expenses.per_page,
                                     total: expenses.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/expenses', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/expenses',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/expenses/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/expenses/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}
                 </Deferred>
 
                 {/* Record Expense Modal */}
-                <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+                <Dialog
+                    open={createModalOpen}
+                    onOpenChange={setCreateModalOpen}
+                >
                     <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
-                            <DialogTitle className="text-base font-semibold">Record University Expense</DialogTitle>
+                            <DialogTitle className="text-base font-semibold">
+                                Record University Expense
+                            </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Submit an expense voucher. Submitted expenses enter the multi-level approval chain.
+                                Submit an expense voucher. Submitted expenses
+                                enter the multi-level approval chain.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleCreateExpense} className="space-y-4 py-2">
+                        <form
+                            onSubmit={handleCreateExpense}
+                            className="space-y-4 py-2"
+                        >
                             <div className="space-y-1.5">
-                                <Label htmlFor="title" className="text-xs font-semibold">
-                                    Expense Title <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="title"
+                                    className="text-xs font-semibold"
+                                >
+                                    Expense Title{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="title"
                                     placeholder="e.g. Electricity bill for main campus"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('title', e.target.value)
+                                    }
                                     className="text-xs"
                                     required
                                 />
-                                {errors.title && <p className="text-[11px] text-destructive">{errors.title}</p>}
+                                {errors.title && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.title}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="account_id" className="text-xs font-semibold">
-                                        Account <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="account_id"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Account{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <Select
                                         value={data.account_id}
-                                        onValueChange={(val) => setData('account_id', val)}
+                                        onValueChange={(val) =>
+                                            setData('account_id', val)
+                                        }
                                         required
                                     >
-                                        <SelectTrigger id="account_id" className="text-xs h-9">
+                                        <SelectTrigger
+                                            id="account_id"
+                                            className="h-9 text-xs"
+                                        >
                                             <SelectValue placeholder="Select account..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {Array.from(new Set(expense_accounts.map((a) => a.category))).map((category) => (
+                                            {Array.from(
+                                                new Set(
+                                                    expense_accounts.map(
+                                                        (a) => a.category,
+                                                    ),
+                                                ),
+                                            ).map((category) => (
                                                 <SelectGroup key={category}>
-                                                    <SelectLabel className="text-[10px] font-semibold uppercase tracking-wider">
+                                                    <SelectLabel className="text-[10px] font-semibold tracking-wider uppercase">
                                                         {category}
                                                     </SelectLabel>
                                                     {expense_accounts
-                                                        .filter((a) => a.category === category)
+                                                        .filter(
+                                                            (a) =>
+                                                                a.category ===
+                                                                category,
+                                                        )
                                                         .map((a) => (
-                                                            <SelectItem key={a.id} value={String(a.id)} className="text-xs">
-                                                                {a.code} · {a.name}
+                                                            <SelectItem
+                                                                key={a.id}
+                                                                value={String(
+                                                                    a.id,
+                                                                )}
+                                                                className="text-xs"
+                                                            >
+                                                                {a.code} ·{' '}
+                                                                {a.name}
                                                             </SelectItem>
                                                         ))}
                                                 </SelectGroup>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    {errors.account_id && <p className="text-[11px] text-destructive">{errors.account_id}</p>}
+                                    {errors.account_id && (
+                                        <p className="text-[11px] text-destructive">
+                                            {errors.account_id}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="amount" className="text-xs font-semibold">
-                                        Amount ($) <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="amount"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Amount ($){' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <Input
                                         id="amount"
@@ -627,7 +742,9 @@ export default function AdminFinanceExpenses({
                                         step="0.01"
                                         placeholder="1500.00"
                                         value={data.amount}
-                                        onChange={(e) => setData('amount', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('amount', e.target.value)
+                                        }
                                         className="text-xs"
                                         required
                                     />
@@ -636,27 +753,44 @@ export default function AdminFinanceExpenses({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="expense_date" className="text-xs font-semibold">
-                                        Expense Date <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="expense_date"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Expense Date{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <DatePicker
                                         id="expense_date"
                                         value={data.expense_date}
-                                        onChange={(val) => setData('expense_date', val)}
+                                        onChange={(val) =>
+                                            setData('expense_date', val)
+                                        }
                                         placeholder="Pick a date"
                                         maxDate={new Date()}
                                     />
-                                    {errors.expense_date && <p className="text-[11px] text-destructive">{errors.expense_date}</p>}
+                                    {errors.expense_date && (
+                                        <p className="text-[11px] text-destructive">
+                                            {errors.expense_date}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="vendor" className="text-xs font-semibold">
+                                    <Label
+                                        htmlFor="vendor"
+                                        className="text-xs font-semibold"
+                                    >
                                         Vendor / Payee
                                     </Label>
                                     <Input
                                         id="vendor"
                                         placeholder="e.g. Golis Electric"
                                         value={data.vendor}
-                                        onChange={(e) => setData('vendor', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('vendor', e.target.value)
+                                        }
                                         className="text-xs"
                                     />
                                 </div>
@@ -664,38 +798,67 @@ export default function AdminFinanceExpenses({
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="budget_line" className="text-xs font-semibold">
+                                    <Label
+                                        htmlFor="budget_line"
+                                        className="text-xs font-semibold"
+                                    >
                                         Budget Line
                                     </Label>
                                     <Input
                                         id="budget_line"
                                         placeholder="e.g. Operations"
                                         value={data.budget_line}
-                                        onChange={(e) => setData('budget_line', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'budget_line',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="text-xs"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="status" className="text-xs font-semibold">
+                                    <Label
+                                        htmlFor="status"
+                                        className="text-xs font-semibold"
+                                    >
                                         Status
                                     </Label>
                                     <Select
                                         value={data.status}
-                                        onValueChange={(val) => setData('status', val)}
+                                        onValueChange={(val) =>
+                                            setData('status', val)
+                                        }
                                     >
-                                        <SelectTrigger id="status" className="text-xs h-9">
+                                        <SelectTrigger
+                                            id="status"
+                                            className="h-9 text-xs"
+                                        >
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="pending_approval" className="text-xs">Submit for Approval</SelectItem>
-                                            <SelectItem value="draft" className="text-xs">Save as Draft</SelectItem>
+                                            <SelectItem
+                                                value="pending_approval"
+                                                className="text-xs"
+                                            >
+                                                Submit for Approval
+                                            </SelectItem>
+                                            <SelectItem
+                                                value="draft"
+                                                className="text-xs"
+                                            >
+                                                Save as Draft
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="description" className="text-xs font-semibold">
+                                <Label
+                                    htmlFor="description"
+                                    className="text-xs font-semibold"
+                                >
                                     Description
                                 </Label>
                                 <Textarea
@@ -703,17 +866,30 @@ export default function AdminFinanceExpenses({
                                     className="min-h-[70px] text-xs"
                                     placeholder="Details about this expense..."
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('description', e.target.value)
+                                    }
                                 />
                             </div>
 
                             <DialogFooter className="pt-2">
-                                <Button type="button" variant="outline" size="sm" onClick={() => setCreateModalOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCreateModalOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" size="sm" disabled={processing}>
-                                    <Save className="h-4 w-4 mr-1.5" />
-                                    {processing ? 'Saving...' : 'Record Expense'}
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={processing}
+                                >
+                                    <Save className="mr-1.5 h-4 w-4" />
+                                    {processing
+                                        ? 'Saving...'
+                                        : 'Record Expense'}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -721,42 +897,65 @@ export default function AdminFinanceExpenses({
                 </Dialog>
 
                 {/* Reject Modal */}
-                <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+                <Dialog
+                    open={rejectModalOpen}
+                    onOpenChange={setRejectModalOpen}
+                >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle className="text-base font-semibold">Reject Expense</DialogTitle>
+                            <DialogTitle className="text-base font-semibold">
+                                Reject Expense
+                            </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Provide a reason for rejecting {rejectTarget?.expense_no}. Rejection requires a comment.
+                                Provide a reason for rejecting{' '}
+                                {rejectTarget?.expense_no}. Rejection requires a
+                                comment.
                             </DialogDescription>
                         </DialogHeader>
 
                         <div className="space-y-3 py-2">
                             <div className="space-y-1.5">
-                                <Label htmlFor="reject_comment" className="text-xs font-semibold">
-                                    Rejection Reason <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="reject_comment"
+                                    className="text-xs font-semibold"
+                                >
+                                    Rejection Reason{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Textarea
                                     id="reject_comment"
                                     className="min-h-[90px] text-xs"
                                     placeholder="Explain why this expense is being rejected..."
                                     value={rejectComment}
-                                    onChange={(e) => setRejectComment(e.target.value)}
+                                    onChange={(e) =>
+                                        setRejectComment(e.target.value)
+                                    }
                                 />
                             </div>
 
                             <DialogFooter className="pt-2">
-                                <Button type="button" variant="outline" size="sm" onClick={() => setRejectModalOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setRejectModalOpen(false)}
+                                >
                                     Cancel
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="destructive"
                                     size="sm"
-                                    disabled={rejectProcessing || !rejectComment.trim()}
+                                    disabled={
+                                        rejectProcessing ||
+                                        !rejectComment.trim()
+                                    }
                                     onClick={confirmReject}
                                 >
-                                    <X className="h-4 w-4 mr-1.5" />
-                                    {rejectProcessing ? 'Rejecting...' : 'Confirm Reject'}
+                                    <X className="mr-1.5 h-4 w-4" />
+                                    {rejectProcessing
+                                        ? 'Rejecting...'
+                                        : 'Confirm Reject'}
                                 </Button>
                             </DialogFooter>
                         </div>
@@ -769,7 +968,11 @@ export default function AdminFinanceExpenses({
                     onOpenChange={setDeleteModalOpen}
                     title="Delete Expense"
                     description="Are you sure you want to delete this expense voucher? Only draft, rejected, cancelled or pending expenses can be deleted."
-                    itemName={selectedForDelete ? `${selectedForDelete.expense_no} (${selectedForDelete.title})` : undefined}
+                    itemName={
+                        selectedForDelete
+                            ? `${selectedForDelete.expense_no} (${selectedForDelete.title})`
+                            : undefined
+                    }
                     loading={deleteProcessing}
                     onConfirm={confirmDelete}
                 />

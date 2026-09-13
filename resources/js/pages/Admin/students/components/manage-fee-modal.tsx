@@ -1,10 +1,12 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { Receipt, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -18,9 +20,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
-import { Receipt, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface ManageFeeModalProps {
     open: boolean;
@@ -28,7 +27,11 @@ interface ManageFeeModalProps {
     studentId: number;
 }
 
-export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModalProps) {
+export function ManageFeeModal({
+    open,
+    onOpenChange,
+    studentId,
+}: ManageFeeModalProps) {
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         type: 'tuition',
@@ -45,7 +48,9 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
                 onOpenChange(false);
             },
             onError: () => {
-                toast.error('Failed to create fee invoice. Please check the form.');
+                toast.error(
+                    'Failed to create fee invoice. Please check the form.',
+                );
             },
         });
     };
@@ -64,7 +69,8 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
                                     Issue Fee Invoice
                                 </DialogTitle>
                                 <p className="text-xs text-muted-foreground">
-                                    Assign a new fee invoice or charge to this student.
+                                    Assign a new fee invoice or charge to this
+                                    student.
                                 </p>
                             </div>
                         </div>
@@ -72,15 +78,23 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
 
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="title">Invoice Title / Description</Label>
+                            <Label htmlFor="title">
+                                Invoice Title / Description
+                            </Label>
                             <Input
                                 id="title"
                                 placeholder="e.g. Semester 2 Tuition Fee"
                                 value={data.title}
-                                onChange={(e) => setData('title', e.target.value)}
+                                onChange={(e) =>
+                                    setData('title', e.target.value)
+                                }
                                 required
                             />
-                            {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+                            {errors.title && (
+                                <p className="text-xs text-destructive">
+                                    {errors.title}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -88,21 +102,39 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
                                 <Label htmlFor="type">Fee Type</Label>
                                 <Select
                                     value={data.type}
-                                    onValueChange={(val) => setData('type', val)}
+                                    onValueChange={(val) =>
+                                        setData('type', val)
+                                    }
                                 >
                                     <SelectTrigger id="type">
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="tuition">Tuition</SelectItem>
-                                        <SelectItem value="registration">Registration</SelectItem>
-                                        <SelectItem value="exam">Examination</SelectItem>
-                                        <SelectItem value="lab">Lab / Tech Fee</SelectItem>
-                                        <SelectItem value="library">Library</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
+                                        <SelectItem value="tuition">
+                                            Tuition
+                                        </SelectItem>
+                                        <SelectItem value="registration">
+                                            Registration
+                                        </SelectItem>
+                                        <SelectItem value="exam">
+                                            Examination
+                                        </SelectItem>
+                                        <SelectItem value="lab">
+                                            Lab / Tech Fee
+                                        </SelectItem>
+                                        <SelectItem value="library">
+                                            Library
+                                        </SelectItem>
+                                        <SelectItem value="other">
+                                            Other
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.type && <p className="text-xs text-destructive">{errors.type}</p>}
+                                {errors.type && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.type}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
@@ -114,10 +146,16 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
                                     min="1"
                                     placeholder="1200.00"
                                     value={data.amount}
-                                    onChange={(e) => setData('amount', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('amount', e.target.value)
+                                    }
                                     required
                                 />
-                                {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
+                                {errors.amount && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.amount}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -130,7 +168,9 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
                                 minDate={new Date()}
                             />
                             {errors.due_date && (
-                                <p className="text-xs text-destructive">{errors.due_date}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.due_date}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -146,7 +186,9 @@ export function ManageFeeModal({ open, onOpenChange, studentId }: ManageFeeModal
                             Cancel
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Create Invoice
                         </Button>
                     </DialogFooter>

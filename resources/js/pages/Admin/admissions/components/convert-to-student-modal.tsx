@@ -1,5 +1,7 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { UserCheck, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,8 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserCheck, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import type { Admission } from '@/types/admission';
 
 interface ConvertToStudentModalProps {
@@ -33,7 +33,10 @@ export function ConvertToStudentModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!admission) return;
+
+        if (!admission) {
+            return;
+        }
 
         post(`/admin/admissions/${admission.id}/convert`, {
             onSuccess: () => {
@@ -62,28 +65,40 @@ export function ConvertToStudentModal({
                                 </DialogTitle>
                                 {admission && (
                                     <p className="text-xs text-muted-foreground">
-                                        For {admission.full_name} ({admission.application_no})
+                                        For {admission.full_name} (
+                                        {admission.application_no})
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <DialogDescription className="text-xs text-muted-foreground pt-1">
-                            This will create an official Student profile, user login account, and generate Semester 1 tuition invoice.
+                        <DialogDescription className="pt-1 text-xs text-muted-foreground">
+                            This will create an official Student profile, user
+                            login account, and generate Semester 1 tuition
+                            invoice.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                             <Label htmlFor="matric_no">
-                                Matriculation ID <span className="text-muted-foreground font-normal text-xs">(Auto-generated if empty)</span>
+                                Matriculation ID{' '}
+                                <span className="text-xs font-normal text-muted-foreground">
+                                    (Auto-generated if empty)
+                                </span>
                             </Label>
                             <Input
                                 id="matric_no"
                                 placeholder="Auto-generate e.g. UCT-2026-00001"
                                 value={data.matric_no}
-                                onChange={(e) => setData('matric_no', e.target.value)}
+                                onChange={(e) =>
+                                    setData('matric_no', e.target.value)
+                                }
                             />
-                            {errors.matric_no && <p className="text-xs text-destructive">{errors.matric_no}</p>}
+                            {errors.matric_no && (
+                                <p className="text-xs text-destructive">
+                                    {errors.matric_no}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid gap-2">
@@ -96,11 +111,18 @@ export function ConvertToStudentModal({
                                 step="0.01"
                                 placeholder="1200.00"
                                 value={data.initial_fee_amount}
-                                onChange={(e) => setData('initial_fee_amount', e.target.value)}
+                                onChange={(e) =>
+                                    setData(
+                                        'initial_fee_amount',
+                                        e.target.value,
+                                    )
+                                }
                                 required
                             />
                             {errors.initial_fee_amount && (
-                                <p className="text-xs text-destructive">{errors.initial_fee_amount}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.initial_fee_amount}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -119,9 +141,11 @@ export function ConvertToStudentModal({
                             type="submit"
                             size="sm"
                             disabled={processing}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                            className="bg-purple-600 text-white hover:bg-purple-700"
                         >
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Confirm & Enroll Student
                         </Button>
                     </DialogFooter>

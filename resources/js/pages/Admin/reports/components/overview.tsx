@@ -1,14 +1,5 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Head } from '@inertiajs/react';
 import { Deferred } from '@inertiajs/react';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { BreadcrumbItem } from '@/types';
 import {
     Users,
     GraduationCap,
@@ -17,6 +8,13 @@ import {
     Calendar,
     BarChart3,
 } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 interface OverviewStats {
     total_students: number;
@@ -37,7 +35,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Overview', href: '/admin/reports/overview' },
 ];
 
-export default function OverviewReport({ stats, recentActivities }: OverviewReportProps) {
+export default function OverviewReport({
+    stats,
+    recentActivities,
+}: OverviewReportProps) {
     const columns = [
         { accessorKey: 'description', header: 'Activity' },
         { accessorKey: 'date', header: 'Date' },
@@ -47,11 +48,11 @@ export default function OverviewReport({ stats, recentActivities }: OverviewRepo
         <>
             <Head title="Overview Report" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Overview Report
                         </h1>
                         <p className="text-xs text-muted-foreground">
@@ -60,7 +61,7 @@ export default function OverviewReport({ stats, recentActivities }: OverviewRepo
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm">
-                            <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                            <Calendar className="mr-1.5 h-3.5 w-3.5" />
                             Date Range
                         </Button>
                         <Button variant="outline" size="sm">
@@ -72,7 +73,7 @@ export default function OverviewReport({ stats, recentActivities }: OverviewRepo
                 {/* Summary Metrics */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Students"
                                 value={stats.total_students}
@@ -108,9 +109,12 @@ export default function OverviewReport({ stats, recentActivities }: OverviewRepo
                 </Deferred>
 
                 {/* Recent Activity Table */}
-                <Deferred data="recentActivities" fallback={<div>Loading...</div>}>
+                <Deferred
+                    data="recentActivities"
+                    fallback={<div>Loading...</div>}
+                >
                     {recentActivities && (
-                        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-in-out">
+                        <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
                                 title="Recent Activity"
                                 columns={columns}
@@ -130,4 +134,6 @@ export default function OverviewReport({ stats, recentActivities }: OverviewRepo
     );
 }
 
-OverviewReport.layout = (page: any) => <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
+OverviewReport.layout = (page: any) => (
+    <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>
+);

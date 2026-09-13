@@ -13,7 +13,9 @@ export function ResetPasswordModal({
     onOpenChange,
     student,
 }: ResetPasswordModalProps) {
-    if (!student) return null;
+    if (!student) {
+        return null;
+    }
 
     return (
         <BaseResetPasswordModal

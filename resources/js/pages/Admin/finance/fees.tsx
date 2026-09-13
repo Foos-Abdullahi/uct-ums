@@ -1,14 +1,4 @@
-import React from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     Receipt,
@@ -17,11 +7,18 @@ import {
     AlertCircle,
     DollarSign,
     Users,
-    Layers,
-    BookOpen,
     Eye,
-    Plus,
 } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
 
 export interface StudentFeeRecord {
     id: number;
@@ -62,7 +59,12 @@ export interface PaginatedData<T> {
 interface AdminFinanceFeesProps {
     stats?: FeeStats;
     students?: PaginatedData<StudentFeeRecord>;
-    programs: Array<{ id: number; name: string; code: string | null; degree_level: string }>;
+    programs: Array<{
+        id: number;
+        name: string;
+        code: string | null;
+        degree_level: string;
+    }>;
     filters: {
         search: string;
         program_id: string;
@@ -83,7 +85,8 @@ export default function AdminFinanceFees({
     programs = [],
     filters,
 }: AdminFinanceFeesProps) {
-    const formatCurrency = (val: number) => `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const formatCurrency = (val: number) =>
+        `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
@@ -109,7 +112,10 @@ export default function AdminFinanceFees({
             accessorKey: 'matric_no',
             header: 'Matric No',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.matric_no}
                 </Badge>
             ),
@@ -119,8 +125,12 @@ export default function AdminFinanceFees({
             header: 'Student Name',
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.user?.name || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{row.original.user?.email || '—'}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.user?.name || 'N/A'}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                        {row.original.user?.email || '—'}
+                    </p>
                 </div>
             ),
         },
@@ -129,10 +139,13 @@ export default function AdminFinanceFees({
             header: 'Program & Level',
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
-                    <span className="text-xs font-medium text-foreground truncate block">
+                    <span className="block truncate text-xs font-medium text-foreground">
                         {row.original.program?.name || 'Unassigned'}
                     </span>
-                    <Badge variant="secondary" className="text-[10px] uppercase capitalize mt-0.5">
+                    <Badge
+                        variant="secondary"
+                        className="mt-0.5 text-[10px] capitalize uppercase"
+                    >
                         {row.original.program?.degree_level || 'Undergraduate'}
                     </Badge>
                 </div>
@@ -165,7 +178,9 @@ export default function AdminFinanceFees({
                 const balance = Math.max(0, billed - paid);
 
                 return (
-                    <span className={`text-xs font-bold ${balance > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    <span
+                        className={`text-xs font-bold ${balance > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
+                    >
                         {balance > 0 ? formatCurrency(balance) : '$0.00'}
                     </span>
                 );
@@ -176,25 +191,24 @@ export default function AdminFinanceFees({
             header: 'Status',
             cell: ({ row }) => {
                 const status = String(row.original.fee_status);
+
                 if (status === 'paid') {
                     return (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200">
+                        <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
                             Fully Paid
                         </Badge>
                     );
                 }
+
                 if (status === 'partial') {
                     return (
-                        <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200">
+                        <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
                             Partial
                         </Badge>
                     );
                 }
-                return (
-                    <Badge variant="destructive">
-                        Unpaid
-                    </Badge>
-                );
+
+                return <Badge variant="destructive">Unpaid</Badge>;
             },
         },
         {
@@ -208,8 +222,10 @@ export default function AdminFinanceFees({
                         className="h-7 px-2 text-xs"
                         asChild
                     >
-                        <Link href={`/admin/students/${row.original.id}?tab=finance`}>
-                            <Eye className="h-3.5 w-3.5 mr-1" />
+                        <Link
+                            href={`/admin/students/${row.original.id}?tab=finance`}
+                        >
+                            <Eye className="mr-1 h-3.5 w-3.5" />
                             Account
                         </Link>
                     </Button>
@@ -248,28 +264,29 @@ export default function AdminFinanceFees({
         <>
             <Head title="Tuition & Fee Schedules" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Tuition & Fee Schedules
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Tuition fee matrix by degree level, student ledger balance reconciliation, and debtor audit.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Tuition fee matrix by degree level, student ledger
+                            balance reconciliation, and debtor audit.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/finance/invoices">
-                                <Receipt className="h-4 w-4 mr-1.5" />
+                                <Receipt className="mr-1.5 h-4 w-4" />
                                 Invoices
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/finance/payments">
-                                <DollarSign className="h-4 w-4 mr-1.5" />
+                                <DollarSign className="mr-1.5 h-4 w-4" />
                                 Record Payment
                             </Link>
                         </Button>
@@ -279,7 +296,7 @@ export default function AdminFinanceFees({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Receivables"
                                 value={formatCurrency(stats.total_receivables)}
@@ -320,33 +337,80 @@ export default function AdminFinanceFees({
                     description="Approved standard fee schedule by faculty degree program."
                     icon={Receipt}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                        <div className="p-3.5 rounded border border-border/60 bg-muted/20 space-y-2">
+                    <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-3">
+                        <div className="space-y-2 rounded border border-border/60 bg-muted/20 p-3.5">
                             <div className="flex items-center justify-between">
-                                <span className="font-semibold text-xs text-foreground">Undergraduate Tuition</span>
-                                <Badge variant="outline" className="text-[10px]">Bachelor</Badge>
+                                <span className="text-xs font-semibold text-foreground">
+                                    Undergraduate Tuition
+                                </span>
+                                <Badge
+                                    variant="outline"
+                                    className="text-[10px]"
+                                >
+                                    Bachelor
+                                </Badge>
                             </div>
-                            <p className="text-xl font-bold text-foreground">$450.00 <span className="text-xs font-normal text-muted-foreground">/ semester</span></p>
-                            <p className="text-[11px] text-muted-foreground">Includes course registration, lab access, campus library, and examination fees.</p>
+                            <p className="text-xl font-bold text-foreground">
+                                $450.00{' '}
+                                <span className="text-xs font-normal text-muted-foreground">
+                                    / semester
+                                </span>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                                Includes course registration, lab access, campus
+                                library, and examination fees.
+                            </p>
                         </div>
 
-                        <div className="p-3.5 rounded border border-border/60 bg-muted/20 space-y-2">
+                        <div className="space-y-2 rounded border border-border/60 bg-muted/20 p-3.5">
                             <div className="flex items-center justify-between">
-                                <span className="font-semibold text-xs text-foreground">Postgraduate Tuition</span>
-                                <Badge variant="outline" className="text-[10px]">Master / Ph.D.</Badge>
+                                <span className="text-xs font-semibold text-foreground">
+                                    Postgraduate Tuition
+                                </span>
+                                <Badge
+                                    variant="outline"
+                                    className="text-[10px]"
+                                >
+                                    Master / Ph.D.
+                                </Badge>
                             </div>
-                            <p className="text-xl font-bold text-foreground">$750.00 <span className="text-xs font-normal text-muted-foreground">/ semester</span></p>
-                            <p className="text-[11px] text-muted-foreground">Includes advanced thesis supervision, journal repository, and laboratory facilities.</p>
+                            <p className="text-xl font-bold text-foreground">
+                                $750.00{' '}
+                                <span className="text-xs font-normal text-muted-foreground">
+                                    / semester
+                                </span>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                                Includes advanced thesis supervision, journal
+                                repository, and laboratory facilities.
+                            </p>
                         </div>
 
-                        <div className="p-3.5 rounded border border-border/60 bg-muted/20 space-y-2">
+                        <div className="space-y-2 rounded border border-border/60 bg-muted/20 p-3.5">
                             <div className="flex items-center justify-between">
-                                <span className="font-semibold text-xs text-foreground">One-Time Institutional Fees</span>
-                                <Badge variant="outline" className="text-[10px]">Ancillary</Badge>
+                                <span className="text-xs font-semibold text-foreground">
+                                    One-Time Institutional Fees
+                                </span>
+                                <Badge
+                                    variant="outline"
+                                    className="text-[10px]"
+                                >
+                                    Ancillary
+                                </Badge>
                             </div>
-                            <div className="text-xs space-y-1 text-muted-foreground pt-1">
-                                <div className="flex justify-between"><span>Admission & Matriculation:</span> <span className="font-semibold text-foreground">$50.00</span></div>
-                                <div className="flex justify-between"><span>Graduation & Transcript:</span> <span className="font-semibold text-foreground">$100.00</span></div>
+                            <div className="space-y-1 pt-1 text-xs text-muted-foreground">
+                                <div className="flex justify-between">
+                                    <span>Admission & Matriculation:</span>{' '}
+                                    <span className="font-semibold text-foreground">
+                                        $50.00
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Graduation & Transcript:</span>{' '}
+                                    <span className="font-semibold text-foreground">
+                                        $100.00
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -355,7 +419,7 @@ export default function AdminFinanceFees({
                 {/* Student Fee Ledger Data Table */}
                 <Deferred data="students" fallback={<TableSkeleton />}>
                     {students && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Student Fee Accounts Roster"
                                 searchTitle="Search by matric no, student name, email..."
@@ -367,16 +431,36 @@ export default function AdminFinanceFees({
                                     per_page: students.per_page,
                                     total: students.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/finance/fees', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/finance/fees',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/students/${row.original.id}?tab=finance`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/students/${row.original.id}?tab=finance`,
+                                    )
+                                }
                             />
                         </div>
                     )}

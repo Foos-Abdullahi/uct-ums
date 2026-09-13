@@ -1,19 +1,10 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { BreadcrumbItem } from '@/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     Shield,
     KeyRound,
     Plus,
     Users,
-    CheckCircle2,
     Eye,
     Edit3,
     Trash2,
@@ -21,7 +12,15 @@ import {
     UserCheck,
     Layers,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
 
 export interface RoleItem {
     id: number;
@@ -59,33 +58,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function AdminRolesIndex({
     stats,
     roles = [],
-    filters,
 }: AdminRolesIndexProps) {
-    const [selectedForDelete, setSelectedForDelete] = useState<RoleItem | null>(null);
+    const [selectedForDelete, setSelectedForDelete] = useState<RoleItem | null>(
+        null,
+    );
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
-    const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
-        const query = {
-            ...filters,
-            ...newFilters,
-        };
-
-        const cleanQuery: Record<string, any> = {};
-        Object.entries(query).forEach(([key, val]) => {
-            if (val !== undefined && val !== '') {
-                cleanQuery[key] = val;
-            }
-        });
-
-        router.get('/admin/settings/roles', cleanQuery, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
-
     const confirmDelete = () => {
-        if (!selectedForDelete) return;
+        if (!selectedForDelete) {
+            return;
+        }
+
         setDeleteProcessing(true);
 
         router.delete(`/admin/settings/roles/${selectedForDelete.id}`, {
@@ -105,19 +89,26 @@ export default function AdminRolesIndex({
             header: 'Role Name',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                         <Shield className="h-4 w-4" />
                     </div>
                     <div className="max-w-[220px]">
                         <div className="flex items-center gap-2">
-                            <p className="font-semibold text-foreground text-sm">{row.original.name}</p>
+                            <p className="text-sm font-semibold text-foreground">
+                                {row.original.name}
+                            </p>
                             {row.original.is_system && (
-                                <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                <Badge
+                                    variant="secondary"
+                                    className="px-1 py-0 text-[10px]"
+                                >
                                     System
                                 </Badge>
                             )}
                         </div>
-                        <p className="text-xs text-muted-foreground font-mono">{row.original.slug}</p>
+                        <p className="font-mono text-xs text-muted-foreground">
+                            {row.original.slug}
+                        </p>
                     </div>
                 </div>
             ),
@@ -126,7 +117,7 @@ export default function AdminRolesIndex({
             accessorKey: 'description',
             header: 'Description',
             cell: ({ row }) => (
-                <p className="text-xs text-muted-foreground max-w-[280px] truncate">
+                <p className="max-w-[280px] truncate text-xs text-muted-foreground">
                     {row.original.description || 'No description provided.'}
                 </p>
             ),
@@ -156,6 +147,7 @@ export default function AdminRolesIndex({
             header: () => <span className="sr-only">Actions</span>,
             cell: ({ row }) => {
                 const r = row.original;
+
                 return (
                     <div className="flex items-center justify-end gap-1">
                         <Button
@@ -165,7 +157,7 @@ export default function AdminRolesIndex({
                             asChild
                         >
                             <Link href={`/admin/settings/roles/${r.id}`}>
-                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                <Eye className="mr-1 h-3.5 w-3.5" />
                                 View
                             </Link>
                         </Button>
@@ -176,7 +168,7 @@ export default function AdminRolesIndex({
                             asChild
                         >
                             <Link href={`/admin/settings/roles/${r.id}/edit`}>
-                                <Edit3 className="h-3.5 w-3.5 mr-1" />
+                                <Edit3 className="mr-1 h-3.5 w-3.5" />
                                 Edit
                             </Link>
                         </Button>
@@ -204,28 +196,29 @@ export default function AdminRolesIndex({
         <>
             <Head title="Roles & Permissions Management" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Roles & Access Permissions
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Manage role hierarchies, configure fine-grained module privileges, and audit assigned user accounts.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Manage role hierarchies, configure fine-grained
+                            module privileges, and audit assigned user accounts.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/settings/users">
-                                <Users className="h-4 w-4 mr-1.5" />
+                                <Users className="mr-1.5 h-4 w-4" />
                                 Users Roster
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/settings/roles/create">
-                                <Plus className="h-4 w-4 mr-1.5" />
+                                <Plus className="mr-1.5 h-4 w-4" />
                                 Create Role
                             </Link>
                         </Button>
@@ -235,7 +228,7 @@ export default function AdminRolesIndex({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Roles"
                                 value={stats.total_roles}
@@ -271,13 +264,17 @@ export default function AdminRolesIndex({
                 </Deferred>
 
                 {/* Roles Data Table */}
-                <div className="border border-border/60 rounded-md bg-card p-4">
+                <div className="rounded-md border border-border/60 bg-card p-4">
                     <DataTable
                         title="Configured Roles Roster"
                         searchTitle="Search by role name, slug, description..."
                         columns={columns}
                         data={roles}
-                        onRowClick={(row) => router.visit(`/admin/settings/roles/${row.original.id}`)}
+                        onRowClick={(row) =>
+                            router.visit(
+                                `/admin/settings/roles/${row.original.id}`,
+                            )
+                        }
                     />
                 </div>
 
@@ -287,7 +284,11 @@ export default function AdminRolesIndex({
                     onOpenChange={setDeleteModalOpen}
                     title="Delete Custom Role"
                     description="Are you sure you want to delete this custom role? This will revoke all permissions attached to it."
-                    itemName={selectedForDelete ? `${selectedForDelete.name} (${selectedForDelete.slug})` : undefined}
+                    itemName={
+                        selectedForDelete
+                            ? `${selectedForDelete.name} (${selectedForDelete.slug})`
+                            : undefined
+                    }
                     loading={deleteProcessing}
                     onConfirm={confirmDelete}
                 />

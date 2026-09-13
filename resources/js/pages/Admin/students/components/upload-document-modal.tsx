@@ -1,10 +1,11 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { FileUp, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -18,8 +19,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { FileUp, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface UploadDocumentModalProps {
     open: boolean;
@@ -47,7 +46,9 @@ export function UploadDocumentModal({
                 onOpenChange(false);
             },
             onError: () => {
-                toast.error('Failed to upload document. Please check the file.');
+                toast.error(
+                    'Failed to upload document. Please check the file.',
+                );
             },
         });
     };
@@ -66,7 +67,8 @@ export function UploadDocumentModal({
                                     Upload Student Document
                                 </DialogTitle>
                                 <p className="text-xs text-muted-foreground">
-                                    Attach an academic, identity, or admission document.
+                                    Attach an academic, identity, or admission
+                                    document.
                                 </p>
                             </div>
                         </div>
@@ -79,44 +81,70 @@ export function UploadDocumentModal({
                                 id="doc_title"
                                 placeholder="e.g. High School Transcript"
                                 value={data.title}
-                                onChange={(e) => setData('title', e.target.value)}
+                                onChange={(e) =>
+                                    setData('title', e.target.value)
+                                }
                                 required
                             />
-                            {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+                            {errors.title && (
+                                <p className="text-xs text-destructive">
+                                    {errors.title}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="category">Category</Label>
                             <Select
                                 value={data.category}
-                                onValueChange={(val) => setData('category', val)}
+                                onValueChange={(val) =>
+                                    setData('category', val)
+                                }
                             >
                                 <SelectTrigger id="category">
                                     <SelectValue placeholder="Select Category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="academic">Academic (Transcripts, Certificates)</SelectItem>
-                                    <SelectItem value="identity">Identity (Passport, National ID)</SelectItem>
-                                    <SelectItem value="admission">Admission (Application, Recommendation)</SelectItem>
-                                    <SelectItem value="financial">Financial (Proof of Payment, Sponsor)</SelectItem>
+                                    <SelectItem value="academic">
+                                        Academic (Transcripts, Certificates)
+                                    </SelectItem>
+                                    <SelectItem value="identity">
+                                        Identity (Passport, National ID)
+                                    </SelectItem>
+                                    <SelectItem value="admission">
+                                        Admission (Application, Recommendation)
+                                    </SelectItem>
+                                    <SelectItem value="financial">
+                                        Financial (Proof of Payment, Sponsor)
+                                    </SelectItem>
                                     <SelectItem value="other">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                             {errors.category && (
-                                <p className="text-xs text-destructive">{errors.category}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.category}
+                                </p>
                             )}
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="doc_file">Document File (PDF, Images up to 10MB)</Label>
+                            <Label htmlFor="doc_file">
+                                Document File (PDF, Images up to 10MB)
+                            </Label>
                             <Input
                                 id="doc_file"
                                 type="file"
                                 className="cursor-pointer text-xs"
-                                onChange={(e) => setData('file', e.target.files?.[0] ?? null)}
+                                onChange={(e) =>
+                                    setData('file', e.target.files?.[0] ?? null)
+                                }
                                 required
                             />
-                            {errors.file && <p className="text-xs text-destructive">{errors.file}</p>}
+                            {errors.file && (
+                                <p className="text-xs text-destructive">
+                                    {errors.file}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -131,7 +159,9 @@ export function UploadDocumentModal({
                             Cancel
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Upload Document
                         </Button>
                     </DialogFooter>

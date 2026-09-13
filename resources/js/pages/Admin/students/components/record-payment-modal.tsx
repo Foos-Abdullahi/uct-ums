@@ -1,10 +1,12 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { CreditCard, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -18,9 +20,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
-import { CreditCard, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import type { StudentInvoice } from '@/types/student';
 
 interface RecordPaymentModalProps {
@@ -55,7 +54,9 @@ export function RecordPaymentModal({
                 onOpenChange(false);
             },
             onError: () => {
-                toast.error('Failed to record payment. Please check the form errors.');
+                toast.error(
+                    'Failed to record payment. Please check the form errors.',
+                );
             },
         });
     };
@@ -74,7 +75,8 @@ export function RecordPaymentModal({
                                     Record Fee Payment
                                 </DialogTitle>
                                 <p className="text-xs text-muted-foreground">
-                                    Process and record a student tuition or fee payment.
+                                    Process and record a student tuition or fee
+                                    payment.
                                 </p>
                             </div>
                         </div>
@@ -83,18 +85,35 @@ export function RecordPaymentModal({
                     <div className="grid gap-4 py-4">
                         {invoices.length > 0 && (
                             <div className="grid gap-2">
-                                <Label htmlFor="invoice_id">Link to Invoice (Optional)</Label>
+                                <Label htmlFor="invoice_id">
+                                    Link to Invoice (Optional)
+                                </Label>
                                 <Select
                                     value={data.invoice_id}
                                     onValueChange={(val) => {
-                                        setData('invoice_id', val === 'none' ? '' : val);
-                                        const selected = invoices.find((inv) => String(inv.id) === val);
+                                        setData(
+                                            'invoice_id',
+                                            val === 'none' ? '' : val,
+                                        );
+                                        const selected = invoices.find(
+                                            (inv) => String(inv.id) === val,
+                                        );
 
                                         if (selected && !data.amount) {
-                                            const remaining = Math.max(0, Number(selected.amount) - Number(selected.paid_amount));
+                                            const remaining = Math.max(
+                                                0,
+                                                Number(selected.amount) -
+                                                    Number(
+                                                        selected.paid_amount,
+                                                    ),
+                                            );
 
                                             if (remaining > 0) {
-                                                setData((d) => ({ ...d, invoice_id: val, amount: String(remaining) }));
+                                                setData((d) => ({
+                                                    ...d,
+                                                    invoice_id: val,
+                                                    amount: String(remaining),
+                                                }));
                                             }
                                         }
                                     }}
@@ -103,16 +122,26 @@ export function RecordPaymentModal({
                                         <SelectValue placeholder="Select an outstanding invoice" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="none">General Payment (No specific invoice)</SelectItem>
+                                        <SelectItem value="none">
+                                            General Payment (No specific
+                                            invoice)
+                                        </SelectItem>
                                         {invoices.map((inv) => (
-                                            <SelectItem key={inv.id} value={String(inv.id)}>
-                                                {inv.invoice_no} - {inv.title} (${Number(inv.amount).toFixed(2)})
+                                            <SelectItem
+                                                key={inv.id}
+                                                value={String(inv.id)}
+                                            >
+                                                {inv.invoice_no} - {inv.title}{' '}
+                                                ($
+                                                {Number(inv.amount).toFixed(2)})
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                                 {errors.invoice_id && (
-                                    <p className="text-xs text-destructive">{errors.invoice_id}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.invoice_id}
+                                    </p>
                                 )}
                             </div>
                         )}
@@ -127,46 +156,74 @@ export function RecordPaymentModal({
                                     min="1"
                                     placeholder="1200.00"
                                     value={data.amount}
-                                    onChange={(e) => setData('amount', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('amount', e.target.value)
+                                    }
                                     required
                                 />
-                                {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
+                                {errors.amount && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.amount}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="payment_method">Payment Method</Label>
+                                <Label htmlFor="payment_method">
+                                    Payment Method
+                                </Label>
                                 <Select
                                     value={data.payment_method}
-                                    onValueChange={(val: any) => setData('payment_method', val)}
+                                    onValueChange={(val: any) =>
+                                        setData('payment_method', val)
+                                    }
                                 >
                                     <SelectTrigger id="payment_method">
                                         <SelectValue placeholder="Payment Method" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                        <SelectItem value="cash">Cash Desk</SelectItem>
-                                        <SelectItem value="card">Credit/Debit Card</SelectItem>
-                                        <SelectItem value="online">Online / Mobile Money</SelectItem>
-                                        <SelectItem value="cheque">Cheque</SelectItem>
+                                        <SelectItem value="bank_transfer">
+                                            Bank Transfer
+                                        </SelectItem>
+                                        <SelectItem value="cash">
+                                            Cash Desk
+                                        </SelectItem>
+                                        <SelectItem value="card">
+                                            Credit/Debit Card
+                                        </SelectItem>
+                                        <SelectItem value="online">
+                                            Online / Mobile Money
+                                        </SelectItem>
+                                        <SelectItem value="cheque">
+                                            Cheque
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {errors.payment_method && (
-                                    <p className="text-xs text-destructive">{errors.payment_method}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.payment_method}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
                             <div className="grid gap-2">
-                                <Label htmlFor="payment_date">Payment Date</Label>
+                                <Label htmlFor="payment_date">
+                                    Payment Date
+                                </Label>
                                 <DatePicker
                                     id="payment_date"
                                     value={data.payment_date}
-                                    onChange={(val) => setData('payment_date', val)}
+                                    onChange={(val) =>
+                                        setData('payment_date', val)
+                                    }
                                     maxDate={new Date()}
                                 />
                                 {errors.payment_date && (
-                                    <p className="text-xs text-destructive">{errors.payment_date}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.payment_date}
+                                    </p>
                                 )}
                             </div>
 
@@ -174,32 +231,49 @@ export function RecordPaymentModal({
                                 <Label htmlFor="status">Payment Status</Label>
                                 <Select
                                     value={data.status}
-                                    onValueChange={(val: any) => setData('status', val)}
+                                    onValueChange={(val: any) =>
+                                        setData('status', val)
+                                    }
                                 >
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="approved">Approved - Apply to Balance</SelectItem>
-                                        <SelectItem value="pending">Pending - Await Verification</SelectItem>
+                                        <SelectItem value="approved">
+                                            Approved - Apply to Balance
+                                        </SelectItem>
+                                        <SelectItem value="pending">
+                                            Pending - Await Verification
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {errors.status && (
-                                    <p className="text-xs text-destructive">{errors.status}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.status}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="receipt">Receipt File (Optional)</Label>
+                            <Label htmlFor="receipt">
+                                Receipt File (Optional)
+                            </Label>
                             <Input
                                 id="receipt"
                                 type="file"
                                 className="cursor-pointer text-xs"
-                                onChange={(e) => setData('receipt', e.target.files?.[0] ?? null)}
+                                onChange={(e) =>
+                                    setData(
+                                        'receipt',
+                                        e.target.files?.[0] ?? null,
+                                    )
+                                }
                             />
                             {errors.receipt && (
-                                <p className="text-xs text-destructive">{errors.receipt}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.receipt}
+                                </p>
                             )}
                         </div>
 
@@ -209,9 +283,15 @@ export function RecordPaymentModal({
                                 id="notes"
                                 placeholder="e.g. Bank Ref #PRM-891024"
                                 value={data.notes}
-                                onChange={(e) => setData('notes', e.target.value)}
+                                onChange={(e) =>
+                                    setData('notes', e.target.value)
+                                }
                             />
-                            {errors.notes && <p className="text-xs text-destructive">{errors.notes}</p>}
+                            {errors.notes && (
+                                <p className="text-xs text-destructive">
+                                    {errors.notes}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -225,8 +305,15 @@ export function RecordPaymentModal({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" size="sm" disabled={processing} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                        <Button
+                            type="submit"
+                            size="sm"
+                            disabled={processing}
+                            className="bg-emerald-600 text-white hover:bg-emerald-700"
+                        >
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Record Payment
                         </Button>
                     </DialogFooter>

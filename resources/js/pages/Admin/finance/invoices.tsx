@@ -1,31 +1,10 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router, useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     FileText,
     Receipt,
     DollarSign,
     CheckCircle2,
-    Clock,
     AlertCircle,
     Plus,
     Trash2,
@@ -35,7 +14,27 @@ import {
     Tag,
     ListChecks,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { BreadcrumbItem } from '@/types';
 
 export interface InvoiceItem {
     id: number;
@@ -103,11 +102,13 @@ export default function AdminFinanceInvoices({
     filters,
 }: AdminFinanceInvoicesProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [selectedForDelete, setSelectedForDelete] = useState<InvoiceItem | null>(null);
+    const [selectedForDelete, setSelectedForDelete] =
+        useState<InvoiceItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
-    const formatCurrency = (val: number) => `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const formatCurrency = (val: number) =>
+        `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         student_id: '',
@@ -119,7 +120,12 @@ export default function AdminFinanceInvoices({
         discount_amount: '0',
         due_date: '',
         issue_date: '',
-        items: [] as Array<{ description: string; quantity: string; unit_price: string; amount: string }>,
+        items: [] as Array<{
+            description: string;
+            quantity: string;
+            unit_price: string;
+            amount: string;
+        }>,
     });
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
@@ -144,9 +150,12 @@ export default function AdminFinanceInvoices({
     const handleCreateInvoice = (e: React.FormEvent) => {
         e.preventDefault();
         // Compute amount from line items if they exist
-        const computedAmount = data.items.length > 0
-            ? data.items.reduce((sum, it) => sum + Number(it.amount || 0), 0).toFixed(2)
-            : data.amount;
+        const computedAmount =
+            data.items.length > 0
+                ? data.items
+                      .reduce((sum, it) => sum + Number(it.amount || 0), 0)
+                      .toFixed(2)
+                : data.amount;
         setData('amount', computedAmount);
         post('/admin/finance/invoices', {
             onSuccess: () => {
@@ -164,35 +173,51 @@ export default function AdminFinanceInvoices({
     };
 
     const removeItem = (index: number) => {
-        setData('items', data.items.filter((_, i) => i !== index));
+        setData(
+            'items',
+            data.items.filter((_, i) => i !== index),
+        );
     };
 
     const updateItemField = (index: number, field: string, value: string) => {
         const items = data.items.map((item, i) => {
-            if (i !== index) return item;
+            if (i !== index) {
+                return item;
+            }
+
             const updated = { ...item, [field]: value };
+
             if (field === 'quantity' || field === 'unit_price') {
                 const qty = Number(updated.quantity || 0);
                 const price = Number(updated.unit_price || 0);
                 updated.amount = Number((qty * price).toFixed(2)).toString();
             }
+
             return updated;
         });
         setData('items', items);
 
         if (items.length > 0) {
-            const computed = items.reduce((sum, it) => sum + Number(it.amount || 0), 0);
+            const computed = items.reduce(
+                (sum, it) => sum + Number(it.amount || 0),
+                0,
+            );
             setData('amount', String(Number(computed.toFixed(2))));
         }
     };
 
     const confirmDelete = () => {
-        if (!selectedForDelete) return;
+        if (!selectedForDelete) {
+            return;
+        }
+
         setDeleteProcessing(true);
 
         router.delete(`/admin/finance/invoices/${selectedForDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Invoice ${selectedForDelete.invoice_no} deleted.`);
+                toast.success(
+                    `Invoice ${selectedForDelete.invoice_no} deleted.`,
+                );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
                 setDeleteProcessing(false);
@@ -209,7 +234,10 @@ export default function AdminFinanceInvoices({
             accessorKey: 'invoice_no',
             header: 'Invoice No',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.invoice_no}
                 </Badge>
             ),
@@ -219,8 +247,12 @@ export default function AdminFinanceInvoices({
             header: 'Student',
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.student?.user?.name || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{row.original.student?.matric_no}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.student?.user?.name || 'N/A'}
+                    </p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                        {row.original.student?.matric_no}
+                    </p>
                 </div>
             ),
         },
@@ -229,8 +261,13 @@ export default function AdminFinanceInvoices({
             header: 'Fee Description',
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
-                    <p className="font-medium text-foreground truncate text-xs">{row.original.title}</p>
-                    <Badge variant="secondary" className="capitalize text-[10px] mt-0.5">
+                    <p className="truncate text-xs font-medium text-foreground">
+                        {row.original.title}
+                    </p>
+                    <Badge
+                        variant="secondary"
+                        className="mt-0.5 text-[10px] capitalize"
+                    >
                         {row.original.type}
                     </Badge>
                 </div>
@@ -258,9 +295,15 @@ export default function AdminFinanceInvoices({
             id: 'balance',
             header: 'Balance Due',
             cell: ({ row }) => {
-                const balance = Math.max(0, row.original.amount - row.original.paid_amount);
+                const balance = Math.max(
+                    0,
+                    row.original.amount - row.original.paid_amount,
+                );
+
                 return (
-                    <span className={`text-xs font-bold ${balance > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    <span
+                        className={`text-xs font-bold ${balance > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
+                    >
                         {balance > 0 ? formatCurrency(balance) : '$0.00'}
                     </span>
                 );
@@ -271,10 +314,15 @@ export default function AdminFinanceInvoices({
             header: 'Due Date',
             cell: ({ row }) => {
                 const dueDate = row.original.due_date;
-                const isOverdue = dueDate && new Date(dueDate) < new Date() && row.original.status !== 'paid';
+                const isOverdue =
+                    dueDate &&
+                    new Date(dueDate) < new Date() &&
+                    row.original.status !== 'paid';
 
                 return (
-                    <span className={`text-xs ${isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
+                    <span
+                        className={`text-xs ${isOverdue ? 'font-semibold text-destructive' : 'text-muted-foreground'}`}
+                    >
                         {dueDate || 'No Due Date'}
                         {isOverdue && ' (Overdue)'}
                     </span>
@@ -286,33 +334,32 @@ export default function AdminFinanceInvoices({
             header: 'Status',
             cell: ({ row }) => {
                 const status = row.original.status;
+
                 if (status === 'paid') {
                     return (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200">
+                        <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
                             Paid
                         </Badge>
                     );
                 }
+
                 if (status === 'partial') {
                     return (
-                        <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200">
+                        <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
                             Partial
                         </Badge>
                     );
                 }
-                return (
-                    <Badge variant="destructive">
-                        Unpaid
-                    </Badge>
-                );
+
+                return <Badge variant="destructive">Unpaid</Badge>;
             },
         },
         {
             id: 'items_count',
             header: 'Items',
             cell: ({ row }) => (
-                <Badge variant="outline" className="text-[10px] font-mono">
-                    <ListChecks className="h-3 w-3 mr-1" />
+                <Badge variant="outline" className="font-mono text-[10px]">
+                    <ListChecks className="mr-1 h-3 w-3" />
                     {row.original.items_count ?? '—'}
                 </Badge>
             ),
@@ -328,8 +375,10 @@ export default function AdminFinanceInvoices({
                         className="h-7 px-2 text-xs"
                         asChild
                     >
-                        <Link href={`/admin/finance/invoices/${row.original.id}`}>
-                            <Eye className="h-3.5 w-3.5 mr-1" />
+                        <Link
+                            href={`/admin/finance/invoices/${row.original.id}`}
+                        >
+                            <Eye className="mr-1 h-3.5 w-3.5" />
                             View
                         </Link>
                     </Button>
@@ -383,26 +432,28 @@ export default function AdminFinanceInvoices({
         <>
             <Head title="Student Invoices & Billing" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Student Invoices & Billing
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Issue semester tuition assessments, lab fees, graduation invoices, and reconcile debtor balances.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Issue semester tuition assessments, lab fees,
+                            graduation invoices, and reconcile debtor balances.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/payments">
-                                Payments
-                            </Link>
+                            <Link href="/admin/finance/payments">Payments</Link>
                         </Button>
-                        <Button size="sm" onClick={() => setCreateModalOpen(true)}>
-                            <Plus className="h-4 w-4 mr-1.5" />
+                        <Button
+                            size="sm"
+                            onClick={() => setCreateModalOpen(true)}
+                        >
+                            <Plus className="mr-1.5 h-4 w-4" />
                             Issue Invoice
                         </Button>
                     </div>
@@ -411,7 +462,7 @@ export default function AdminFinanceInvoices({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Invoiced"
                                 value={formatCurrency(stats.total_billed)}
@@ -449,7 +500,7 @@ export default function AdminFinanceInvoices({
                 {/* Invoices Data Table */}
                 <Deferred data="invoices" fallback={<TableSkeleton />}>
                     {invoices && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Invoices Directory"
                                 searchTitle="Search by invoice no, student name, matric no..."
@@ -461,41 +512,76 @@ export default function AdminFinanceInvoices({
                                     per_page: invoices.per_page,
                                     total: invoices.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/finance/invoices', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/finance/invoices',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/students/${row.original.student_id}?tab=finance`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/students/${row.original.student_id}?tab=finance`,
+                                    )
+                                }
                             />
                         </div>
                     )}
                 </Deferred>
 
                 {/* Issue Invoice Modal */}
-                <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+                <Dialog
+                    open={createModalOpen}
+                    onOpenChange={setCreateModalOpen}
+                >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle className="text-base font-semibold">Issue Student Invoice</DialogTitle>
+                            <DialogTitle className="text-base font-semibold">
+                                Issue Student Invoice
+                            </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Create an official invoice bill assigned to student fee ledger.
+                                Create an official invoice bill assigned to
+                                student fee ledger.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleCreateInvoice} className="space-y-4 py-2">
+                        <form
+                            onSubmit={handleCreateInvoice}
+                            className="space-y-4 py-2"
+                        >
                             <div className="space-y-1.5">
-                                <Label htmlFor="student_id" className="text-xs font-semibold">
-                                    Student <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="student_id"
+                                    className="text-xs font-semibold"
+                                >
+                                    Student{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="student_id"
-                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.student_id}
-                                    onChange={(e) => setData('student_id', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('student_id', e.target.value)
+                                    }
                                     required
                                 >
                                     <option value="">Select Student</option>
@@ -505,50 +591,86 @@ export default function AdminFinanceInvoices({
                                         </option>
                                     ))}
                                 </select>
-                                {errors.student_id && <p className="text-[11px] text-destructive">{errors.student_id}</p>}
+                                {errors.student_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.student_id}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="title" className="text-xs font-semibold">
-                                    Invoice Title <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="title"
+                                    className="text-xs font-semibold"
+                                >
+                                    Invoice Title{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="title"
                                     placeholder="e.g. Tuition Fee - Fall 2026 Semester 1"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('title', e.target.value)
+                                    }
                                     className="text-xs"
                                     required
                                 />
-                                {errors.title && <p className="text-[11px] text-destructive">{errors.title}</p>}
+                                {errors.title && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.title}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="type" className="text-xs font-semibold">
-                                        Fee Category <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="type"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Fee Category{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <select
                                         id="type"
-                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                         value={data.type}
-                                        onChange={(e) => setData('type', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('type', e.target.value)
+                                        }
                                         required
                                     >
                                         <option value="tuition">Tuition</option>
-                                        <option value="admission">Admission</option>
-                                        <option value="examination">Examination</option>
-                                        <option value="laboratory">Laboratory</option>
+                                        <option value="admission">
+                                            Admission
+                                        </option>
+                                        <option value="examination">
+                                            Examination
+                                        </option>
+                                        <option value="laboratory">
+                                            Laboratory
+                                        </option>
                                         <option value="library">Library</option>
-                                        <option value="graduation">Graduation</option>
+                                        <option value="graduation">
+                                            Graduation
+                                        </option>
                                         <option value="hostel">Hostel</option>
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="amount" className="text-xs font-semibold">
-                                        Amount ($) <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="amount"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Amount ($){' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <Input
                                         id="amount"
@@ -556,7 +678,9 @@ export default function AdminFinanceInvoices({
                                         step="0.01"
                                         placeholder="450.00"
                                         value={data.amount}
-                                        onChange={(e) => setData('amount', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('amount', e.target.value)
+                                        }
                                         className="text-xs"
                                         required
                                     />
@@ -565,8 +689,12 @@ export default function AdminFinanceInvoices({
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="tax_amount" className="text-xs font-semibold">
-                                        <Percent className="h-3 w-3 mr-1 inline" /> Tax ($)
+                                    <Label
+                                        htmlFor="tax_amount"
+                                        className="text-xs font-semibold"
+                                    >
+                                        <Percent className="mr-1 inline h-3 w-3" />{' '}
+                                        Tax ($)
                                     </Label>
                                     <Input
                                         id="tax_amount"
@@ -575,13 +703,22 @@ export default function AdminFinanceInvoices({
                                         min="0"
                                         placeholder="0"
                                         value={data.tax_amount}
-                                        onChange={(e) => setData('tax_amount', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'tax_amount',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="text-xs"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="discount_amount" className="text-xs font-semibold">
-                                        <Tag className="h-3 w-3 mr-1 inline" /> Discount ($)
+                                    <Label
+                                        htmlFor="discount_amount"
+                                        className="text-xs font-semibold"
+                                    >
+                                        <Tag className="mr-1 inline h-3 w-3" />{' '}
+                                        Discount ($)
                                     </Label>
                                     <Input
                                         id="discount_amount"
@@ -590,19 +727,29 @@ export default function AdminFinanceInvoices({
                                         min="0"
                                         placeholder="0"
                                         value={data.discount_amount}
-                                        onChange={(e) => setData('discount_amount', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'discount_amount',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="text-xs"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="due_date" className="text-xs font-semibold">
+                                    <Label
+                                        htmlFor="due_date"
+                                        className="text-xs font-semibold"
+                                    >
                                         Due Date
                                     </Label>
                                     <Input
                                         id="due_date"
                                         type="date"
                                         value={data.due_date}
-                                        onChange={(e) => setData('due_date', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('due_date', e.target.value)
+                                        }
                                         className="text-xs"
                                     />
                                 </div>
@@ -612,25 +759,41 @@ export default function AdminFinanceInvoices({
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xs font-semibold text-muted-foreground">
-                                        <ListChecks className="h-3.5 w-3.5 mr-1 inline" />
+                                        <ListChecks className="mr-1 inline h-3.5 w-3.5" />
                                         Line Items
                                     </Label>
-                                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={addItem}>
-                                        <Plus className="h-3 w-3 mr-1" />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-xs"
+                                        onClick={addItem}
+                                    >
+                                        <Plus className="mr-1 h-3 w-3" />
                                         Add Item
                                     </Button>
                                 </div>
                                 {data.items.length === 0 && (
-                                    <p className="text-[11px] text-muted-foreground italic py-2">
-                                        Add line items to itemize the invoice charges.
+                                    <p className="py-2 text-[11px] text-muted-foreground italic">
+                                        Add line items to itemize the invoice
+                                        charges.
                                     </p>
                                 )}
                                 {data.items.map((item, index) => (
-                                    <div key={index} className="grid grid-cols-[1fr_50px_70px_70px_28px] gap-1.5 items-center">
+                                    <div
+                                        key={index}
+                                        className="grid grid-cols-[1fr_50px_70px_70px_28px] items-center gap-1.5"
+                                    >
                                         <Input
                                             placeholder="Description"
                                             value={item.description}
-                                            onChange={(e) => updateItemField(index, 'description', e.target.value)}
+                                            onChange={(e) =>
+                                                updateItemField(
+                                                    index,
+                                                    'description',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="text-xs"
                                         />
                                         <Input
@@ -638,7 +801,13 @@ export default function AdminFinanceInvoices({
                                             type="number"
                                             min="1"
                                             value={item.quantity}
-                                            onChange={(e) => updateItemField(index, 'quantity', e.target.value)}
+                                            onChange={(e) =>
+                                                updateItemField(
+                                                    index,
+                                                    'quantity',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="text-xs"
                                         />
                                         <Input
@@ -647,7 +816,13 @@ export default function AdminFinanceInvoices({
                                             step="0.01"
                                             min="0"
                                             value={item.unit_price}
-                                            onChange={(e) => updateItemField(index, 'unit_price', e.target.value)}
+                                            onChange={(e) =>
+                                                updateItemField(
+                                                    index,
+                                                    'unit_price',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="text-xs"
                                         />
                                         <Input
@@ -655,7 +830,13 @@ export default function AdminFinanceInvoices({
                                             type="number"
                                             step="0.01"
                                             value={item.amount}
-                                            onChange={(e) => updateItemField(index, 'amount', e.target.value)}
+                                            onChange={(e) =>
+                                                updateItemField(
+                                                    index,
+                                                    'amount',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="text-xs"
                                         />
                                         <Button
@@ -670,18 +851,35 @@ export default function AdminFinanceInvoices({
                                     </div>
                                 ))}
                                 {data.items.length > 0 && (
-                                    <p className="text-[11px] text-muted-foreground text-right pt-1 border-t border-border/30">
-                                        Computed amount: ${data.items.reduce((sum, it) => sum + Number(it.amount || 0), 0).toFixed(2)}
+                                    <p className="border-t border-border/30 pt-1 text-right text-[11px] text-muted-foreground">
+                                        Computed amount: $
+                                        {data.items
+                                            .reduce(
+                                                (sum, it) =>
+                                                    sum +
+                                                    Number(it.amount || 0),
+                                                0,
+                                            )
+                                            .toFixed(2)}
                                     </p>
                                 )}
                             </div>
 
                             <DialogFooter className="pt-2">
-                                <Button type="button" variant="outline" size="sm" onClick={() => setCreateModalOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCreateModalOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" size="sm" disabled={processing}>
-                                    <Save className="h-4 w-4 mr-1.5" />
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={processing}
+                                >
+                                    <Save className="mr-1.5 h-4 w-4" />
                                     {processing ? 'Saving...' : 'Issue Invoice'}
                                 </Button>
                             </DialogFooter>
@@ -695,7 +893,11 @@ export default function AdminFinanceInvoices({
                     onOpenChange={setDeleteModalOpen}
                     title="Delete Invoice"
                     description="Are you sure you want to delete this invoice? Invoices with collected payments cannot be deleted."
-                    itemName={selectedForDelete ? `${selectedForDelete.invoice_no} (${selectedForDelete.title})` : undefined}
+                    itemName={
+                        selectedForDelete
+                            ? `${selectedForDelete.invoice_no} (${selectedForDelete.title})`
+                            : undefined
+                    }
                     loading={deleteProcessing}
                     onConfirm={confirmDelete}
                 />

@@ -1,6 +1,7 @@
 import type { UserRole } from './auth';
 
-export type EnrollmentStatus = 'enrolled' | 'pending' | 'suspended' | 'graduated' | 'withdrawn';
+export type EnrollmentStatus =
+    'enrolled' | 'pending' | 'suspended' | 'graduated' | 'withdrawn';
 export type StudentFeeStatus = 'paid' | 'unpaid' | 'partial';
 
 export interface Program {

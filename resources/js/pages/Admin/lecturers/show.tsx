@@ -1,50 +1,35 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { LecturerStatusBadge } from './components/lecturer-status-badge';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import type { Lecturer } from '@/types/lecturer';
-import {
-    ArrowLeft,
     Edit3,
     KeyRound,
     Ban,
     CheckCircle2,
-    BookOpen,
     User,
     Shield,
     Briefcase,
-    MapPin,
     FileText,
     GraduationCap,
     Trash2,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import ResetPasswordModal from '@/components/tools/reset-password-modal';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Lecturer } from '@/types/lecturer';
+import { LecturerStatusBadge } from './components/lecturer-status-badge';
 
 interface AdminLecturersShowProps {
     lecturer: Lecturer;
 }
 
-export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps) {
+export default function AdminLecturersShow({
+    lecturer,
+}: AdminLecturersShowProps) {
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
@@ -57,7 +42,9 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
         .substring(0, 2)
         .toUpperCase();
 
-    const isInactive = lecturer.employment_status === 'inactive' || lecturer.employment_status === 'terminated';
+    const isInactive =
+        lecturer.employment_status === 'inactive' ||
+        lecturer.employment_status === 'terminated';
 
     const handleToggleStatus = () => {
         router.post(
@@ -66,10 +53,14 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success(isInactive ? 'Lecturer activated.' : 'Lecturer deactivated.');
+                    toast.success(
+                        isInactive
+                            ? 'Lecturer activated.'
+                            : 'Lecturer deactivated.',
+                    );
                 },
                 onError: () => toast.error('Failed to change status.'),
-            }
+            },
         );
     };
 
@@ -92,14 +83,14 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
         <>
             <Head title={`Lecturer - ${name}`} />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Profile Header Banner */}
                 <UctPanelCard
                     type="default"
                     className="overflow-hidden"
                     title={
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
-                            <Avatar className="h-14 w-14 border-2 border-primary/20 shrink-0">
+                        <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:items-center">
+                            <Avatar className="h-14 w-14 shrink-0 border-2 border-primary/20">
                                 <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
                                     {initials}
                                 </AvatarFallback>
@@ -107,14 +98,21 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
 
                             <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-lg font-bold text-foreground tracking-tight">{name}</span>
-                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-muted text-foreground border border-border/60">
+                                    <span className="text-lg font-bold tracking-tight text-foreground">
+                                        {name}
+                                    </span>
+                                    <span className="rounded border border-border/60 bg-muted px-2 py-0.5 font-mono text-xs font-semibold text-foreground">
                                         {lecturer.lecturer_no}
                                     </span>
-                                    <LecturerStatusBadge status={lecturer.employment_status} />
+                                    <LecturerStatusBadge
+                                        status={lecturer.employment_status}
+                                    />
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    {lecturer.designation ? `${lecturer.designation} • ` : ''}{lecturer.department}
+                                    {lecturer.designation
+                                        ? `${lecturer.designation} • `
+                                        : ''}
+                                    {lecturer.department}
                                 </p>
                             </div>
                         </div>
@@ -128,12 +126,12 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             >
                                 {isInactive ? (
                                     <>
-                                        <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                                        <CheckCircle2 className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
                                         Activate
                                     </>
                                 ) : (
                                     <>
-                                        <Ban className="h-3.5 w-3.5 mr-1.5" />
+                                        <Ban className="mr-1.5 h-3.5 w-3.5" />
                                         Deactivate
                                     </>
                                 )}
@@ -144,13 +142,15 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                                 size="sm"
                                 onClick={() => setPasswordModalOpen(true)}
                             >
-                                <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                                <KeyRound className="mr-1.5 h-3.5 w-3.5" />
                                 Password
                             </Button>
 
                             <Button size="sm" asChild>
-                                <Link href={`/admin/lecturers/${lecturer.id}/edit`}>
-                                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                                <Link
+                                    href={`/admin/lecturers/${lecturer.id}/edit`}
+                                >
+                                    <Edit3 className="mr-1.5 h-3.5 w-3.5" />
                                     Edit Lecturer
                                 </Link>
                             </Button>
@@ -160,7 +160,7 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                                 size="sm"
                                 onClick={() => setDeleteModalOpen(true)}
                             >
-                                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                                 Delete
                             </Button>
                         </div>
@@ -169,17 +169,27 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
 
                 {/* Tabs */}
                 <Tabs defaultValue="overview" className="space-y-4">
-                    <TabsList className="bg-muted/60 p-1 rounded-sm border border-border/40 flex-wrap h-auto">
-                        <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-                        <TabsTrigger value="employment" className="text-xs">Employment</TabsTrigger>
-                        <TabsTrigger value="qualifications" className="text-xs">Qualifications</TabsTrigger>
-                        <TabsTrigger value="documents" className="text-xs">Documents</TabsTrigger>
-                        <TabsTrigger value="account" className="text-xs">Account</TabsTrigger>
+                    <TabsList className="h-auto flex-wrap rounded-sm border border-border/40 bg-muted/60 p-1">
+                        <TabsTrigger value="overview" className="text-xs">
+                            Overview
+                        </TabsTrigger>
+                        <TabsTrigger value="employment" className="text-xs">
+                            Employment
+                        </TabsTrigger>
+                        <TabsTrigger value="qualifications" className="text-xs">
+                            Qualifications
+                        </TabsTrigger>
+                        <TabsTrigger value="documents" className="text-xs">
+                            Documents
+                        </TabsTrigger>
+                        <TabsTrigger value="account" className="text-xs">
+                            Account
+                        </TabsTrigger>
                     </TabsList>
 
                     {/* Tab 1: Overview */}
                     <TabsContent value="overview" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <UctPanelCard
                                 title="Personal Information"
                                 description="Contact details, staff ID, and identity."
@@ -188,32 +198,64 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             >
                                 <div className="divide-y divide-border/30 text-xs">
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Full Name</span>
-                                        <span className="font-medium text-foreground">{name}</span>
+                                        <span className="text-muted-foreground">
+                                            Full Name
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {name}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Staff ID</span>
-                                        <span className="font-mono font-medium text-foreground">{lecturer.lecturer_no}</span>
+                                        <span className="text-muted-foreground">
+                                            Staff ID
+                                        </span>
+                                        <span className="font-mono font-medium text-foreground">
+                                            {lecturer.lecturer_no}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Email</span>
-                                        <span className="font-medium text-foreground">{lecturer.user?.email}</span>
+                                        <span className="text-muted-foreground">
+                                            Email
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.user?.email}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Phone</span>
-                                        <span className="font-medium text-foreground">{lecturer.phone || '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Phone
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.phone || '—'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Gender</span>
-                                        <span className="font-medium text-foreground">{lecturer.gender || '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Gender
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.gender || '—'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Date of Birth</span>
-                                        <span className="font-medium text-foreground">{lecturer.date_of_birth ? String(lecturer.date_of_birth).split('T')[0] : '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Date of Birth
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.date_of_birth
+                                                ? String(
+                                                      lecturer.date_of_birth,
+                                                  ).split('T')[0]
+                                                : '—'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Address</span>
-                                        <span className="font-medium text-foreground text-right">{lecturer.address || '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Address
+                                        </span>
+                                        <span className="text-right font-medium text-foreground">
+                                            {lecturer.address || '—'}
+                                        </span>
                                     </div>
                                 </div>
                             </UctPanelCard>
@@ -226,32 +268,67 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             >
                                 <div className="divide-y divide-border/30 text-xs">
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Department</span>
-                                        <span className="font-medium text-foreground">{lecturer.department}</span>
+                                        <span className="text-muted-foreground">
+                                            Department
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.department}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Faculty</span>
-                                        <span className="font-medium text-foreground">{lecturer.faculty}</span>
+                                        <span className="text-muted-foreground">
+                                            Faculty
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.faculty}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Designation</span>
-                                        <span className="font-medium text-foreground">{lecturer.designation}</span>
+                                        <span className="text-muted-foreground">
+                                            Designation
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.designation}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Employment Status</span>
-                                        <LecturerStatusBadge status={lecturer.employment_status} />
+                                        <span className="text-muted-foreground">
+                                            Employment Status
+                                        </span>
+                                        <LecturerStatusBadge
+                                            status={lecturer.employment_status}
+                                        />
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Contract Type</span>
-                                        <span className="font-medium capitalize text-foreground">{lecturer.contract_type?.replace('_', ' ') || '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Contract Type
+                                        </span>
+                                        <span className="font-medium text-foreground capitalize">
+                                            {lecturer.contract_type?.replace(
+                                                '_',
+                                                ' ',
+                                            ) || '—'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Hire Date</span>
-                                        <span className="font-medium text-foreground">{lecturer.hire_date ? String(lecturer.hire_date).split('T')[0] : '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Hire Date
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.hire_date
+                                                ? String(
+                                                      lecturer.hire_date,
+                                                  ).split('T')[0]
+                                                : '—'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Office Location</span>
-                                        <span className="font-medium text-foreground">{lecturer.office_location || '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Office Location
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturer.office_location || '—'}
+                                        </span>
                                     </div>
                                 </div>
                             </UctPanelCard>
@@ -265,7 +342,9 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                                 icon={FileText}
                                 type="default"
                             >
-                                <p className="text-xs text-foreground whitespace-pre-wrap">{lecturer.bio}</p>
+                                <p className="text-xs whitespace-pre-wrap text-foreground">
+                                    {lecturer.bio}
+                                </p>
                             </UctPanelCard>
                         )}
                     </TabsContent>
@@ -278,22 +357,45 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             icon={Briefcase}
                             type="default"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                            <div className="grid grid-cols-1 gap-6 text-xs md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Employment Status</p>
-                                    <LecturerStatusBadge status={lecturer.employment_status} />
+                                    <p className="text-muted-foreground">
+                                        Employment Status
+                                    </p>
+                                    <LecturerStatusBadge
+                                        status={lecturer.employment_status}
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Contract Type</p>
-                                    <p className="font-medium capitalize">{lecturer.contract_type?.replace('_', ' ') || '—'}</p>
+                                    <p className="text-muted-foreground">
+                                        Contract Type
+                                    </p>
+                                    <p className="font-medium capitalize">
+                                        {lecturer.contract_type?.replace(
+                                            '_',
+                                            ' ',
+                                        ) || '—'}
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Hire Date</p>
-                                    <p className="font-medium">{lecturer.hire_date ? String(lecturer.hire_date).split('T')[0] : '—'}</p>
+                                    <p className="text-muted-foreground">
+                                        Hire Date
+                                    </p>
+                                    <p className="font-medium">
+                                        {lecturer.hire_date
+                                            ? String(lecturer.hire_date).split(
+                                                  'T',
+                                              )[0]
+                                            : '—'}
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Office Location</p>
-                                    <p className="font-medium">{lecturer.office_location || '—'}</p>
+                                    <p className="text-muted-foreground">
+                                        Office Location
+                                    </p>
+                                    <p className="font-medium">
+                                        {lecturer.office_location || '—'}
+                                    </p>
                                 </div>
                             </div>
                         </UctPanelCard>
@@ -307,14 +409,22 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             icon={GraduationCap}
                             type="default"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                            <div className="grid grid-cols-1 gap-6 text-xs md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Highest Qualification</p>
-                                    <p className="font-medium">{lecturer.qualification || '—'}</p>
+                                    <p className="text-muted-foreground">
+                                        Highest Qualification
+                                    </p>
+                                    <p className="font-medium">
+                                        {lecturer.qualification || '—'}
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Specialization / Research Area</p>
-                                    <p className="font-medium">{lecturer.specialization || '—'}</p>
+                                    <p className="text-muted-foreground">
+                                        Specialization / Research Area
+                                    </p>
+                                    <p className="font-medium">
+                                        {lecturer.specialization || '—'}
+                                    </p>
                                 </div>
                             </div>
                         </UctPanelCard>
@@ -329,8 +439,8 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             type="default"
                         >
                             {/* You can add a document management section similar to student's tab */}
-                            <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border rounded-md bg-muted/20">
-                                <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                            <div className="rounded-md border border-dashed border-border bg-muted/20 py-8 text-center text-xs text-muted-foreground">
+                                <FileText className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                                 Document management coming soon.
                             </div>
                         </UctPanelCard>
@@ -345,18 +455,29 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                             type="default"
                         >
                             <div className="space-y-4 text-xs">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-3 bg-muted/30 rounded border border-border/40 space-y-2">
-                                        <p className="text-muted-foreground">Login Email</p>
-                                        <p className="font-semibold text-foreground">{lecturer.user?.email}</p>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="space-y-2 rounded border border-border/40 bg-muted/30 p-3">
+                                        <p className="text-muted-foreground">
+                                            Login Email
+                                        </p>
+                                        <p className="font-semibold text-foreground">
+                                            {lecturer.user?.email}
+                                        </p>
                                     </div>
-                                    <div className="p-3 bg-muted/30 rounded border border-border/40 space-y-2">
-                                        <p className="text-muted-foreground">Account Status</p>
+                                    <div className="space-y-2 rounded border border-border/40 bg-muted/30 p-3">
+                                        <p className="text-muted-foreground">
+                                            Account Status
+                                        </p>
                                         <div className="flex items-center gap-2">
                                             {isInactive ? (
-                                                <Badge variant="destructive">Account Inactive</Badge>
+                                                <Badge variant="destructive">
+                                                    Account Inactive
+                                                </Badge>
                                             ) : (
-                                                <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                                                >
                                                     Active & Unlocked
                                                 </Badge>
                                             )}
@@ -364,29 +485,35 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                                     </div>
                                 </div>
 
-                                <div className="pt-4 border-t border-border/30 flex flex-wrap items-center gap-3">
+                                <div className="flex flex-wrap items-center gap-3 border-t border-border/30 pt-4">
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => setPasswordModalOpen(true)}
+                                        onClick={() =>
+                                            setPasswordModalOpen(true)
+                                        }
                                     >
-                                        <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                                        <KeyRound className="mr-1.5 h-3.5 w-3.5" />
                                         Reset Lecturer Password
                                     </Button>
 
                                     <Button
                                         size="sm"
-                                        variant={isInactive ? 'outline' : 'destructive'}
+                                        variant={
+                                            isInactive
+                                                ? 'outline'
+                                                : 'destructive'
+                                        }
                                         onClick={handleToggleStatus}
                                     >
                                         {isInactive ? (
                                             <>
-                                                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                                                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
                                                 Re-activate Account
                                             </>
                                         ) : (
                                             <>
-                                                <Ban className="h-3.5 w-3.5 mr-1.5" />
+                                                <Ban className="mr-1.5 h-3.5 w-3.5" />
                                                 Deactivate Account
                                             </>
                                         )}
@@ -397,7 +524,7 @@ export default function AdminLecturersShow({ lecturer }: AdminLecturersShowProps
                                         variant="destructive"
                                         onClick={() => setDeleteModalOpen(true)}
                                     >
-                                        <Ban className="h-3.5 w-3.5 mr-1.5" />
+                                        <Ban className="mr-1.5 h-3.5 w-3.5" />
                                         Delete Record
                                     </Button>
                                 </div>

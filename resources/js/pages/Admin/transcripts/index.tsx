@@ -1,22 +1,15 @@
-import React from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
-import {
-    ScrollText,
-    Award,
-    GraduationCap,
-    TrendingUp,
-    Eye,
-    FileText,
-} from 'lucide-react';
+import { Award, GraduationCap, TrendingUp, Eye, FileText } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
 
 export interface TranscriptRecord {
     id: number;
@@ -100,7 +93,10 @@ export default function AdminTranscriptsIndex({
             accessorKey: 'matric_no',
             header: 'Matric No',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.matric_no}
                 </Badge>
             ),
@@ -110,8 +106,12 @@ export default function AdminTranscriptsIndex({
             header: 'Student Name',
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.user?.name || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{row.original.user?.email || '—'}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.user?.name || 'N/A'}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                        {row.original.user?.email || '—'}
+                    </p>
                 </div>
             ),
         },
@@ -120,11 +120,14 @@ export default function AdminTranscriptsIndex({
             header: 'Enrolled Program',
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
-                    <span className="text-xs font-medium text-foreground truncate block">
+                    <span className="block truncate text-xs font-medium text-foreground">
                         {row.original.program?.name || 'Unassigned'}
                     </span>
                     {row.original.program?.code && (
-                        <Badge variant="secondary" className="font-mono text-[10px] uppercase mt-0.5">
+                        <Badge
+                            variant="secondary"
+                            className="mt-0.5 font-mono text-[10px] uppercase"
+                        >
                             {row.original.program.code}
                         </Badge>
                     )}
@@ -137,14 +140,19 @@ export default function AdminTranscriptsIndex({
             cell: ({ row }) => {
                 const gpa = Number(row.original.gpa ?? 0);
                 let badgeStyle = 'bg-red-500/10 text-red-700 border-red-200';
+
                 if (gpa >= 3.5) {
-                    badgeStyle = 'bg-emerald-500/10 text-emerald-700 border-emerald-200';
+                    badgeStyle =
+                        'bg-emerald-500/10 text-emerald-700 border-emerald-200';
                 } else if (gpa >= 2.5) {
-                    badgeStyle = 'bg-amber-500/10 text-amber-700 border-amber-200';
+                    badgeStyle =
+                        'bg-amber-500/10 text-amber-700 border-amber-200';
                 }
 
                 return (
-                    <Badge className={`${badgeStyle} font-mono font-bold text-xs`}>
+                    <Badge
+                        className={`${badgeStyle} font-mono text-xs font-bold`}
+                    >
                         {gpa > 0 ? gpa.toFixed(2) : '0.00'}
                     </Badge>
                 );
@@ -182,7 +190,7 @@ export default function AdminTranscriptsIndex({
                         asChild
                     >
                         <Link href={`/admin/students/${row.original.id}`}>
-                            <Eye className="h-3.5 w-3.5 mr-1" />
+                            <Eye className="mr-1 h-3.5 w-3.5" />
                             Academic Record
                         </Link>
                     </Button>
@@ -210,22 +218,24 @@ export default function AdminTranscriptsIndex({
         <>
             <Head title="Academic Transcripts & Grades" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Official Academic Transcripts
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Verify cumulative GPAs, awarded course grades, semester credits, and official academic certificates.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Verify cumulative GPAs, awarded course grades,
+                            semester credits, and official academic
+                            certificates.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/students">
-                                <GraduationCap className="h-4 w-4 mr-1.5" />
+                                <GraduationCap className="mr-1.5 h-4 w-4" />
                                 All Students
                             </Link>
                         </Button>
@@ -235,7 +245,7 @@ export default function AdminTranscriptsIndex({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
                                 title="Enrolled Students"
                                 value={stats.total_students}
@@ -244,7 +254,11 @@ export default function AdminTranscriptsIndex({
                             />
                             <MetricCard
                                 title="Institution Avg GPA"
-                                value={stats.avg_institution_gpa ? `${stats.avg_institution_gpa.toFixed(2)}` : '3.42'}
+                                value={
+                                    stats.avg_institution_gpa
+                                        ? `${stats.avg_institution_gpa.toFixed(2)}`
+                                        : '3.42'
+                                }
                                 icon={TrendingUp}
                                 color="success"
                             />
@@ -267,7 +281,7 @@ export default function AdminTranscriptsIndex({
                 {/* Transcripts Data Table */}
                 <Deferred data="transcripts" fallback={<TableSkeleton />}>
                     {transcripts && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Transcripts Directory"
                                 searchTitle="Search by student name, matric no, email..."
@@ -279,16 +293,36 @@ export default function AdminTranscriptsIndex({
                                     per_page: transcripts.per_page,
                                     total: transcripts.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/transcripts', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/transcripts',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/students/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/students/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}

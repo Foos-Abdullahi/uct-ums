@@ -1,12 +1,11 @@
-import React from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, BookOpen, Save } from 'lucide-react';
+import React from 'react';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import type { BreadcrumbItem } from '@/types';
-import { ArrowLeft, BookOpen, Save } from 'lucide-react';
 
 interface EditCourseProps {
     course: {
@@ -23,7 +22,10 @@ interface EditCourseProps {
     programs: Array<{ id: number; name: string; code: string | null }>;
 }
 
-export default function AdminCourseEdit({ course, programs = [] }: EditCourseProps) {
+export default function AdminCourseEdit({
+    course,
+    programs = [],
+}: EditCourseProps) {
     const { data, setData, put, processing, errors } = useForm({
         program_id: course.program_id,
         code: course.code,
@@ -40,31 +42,25 @@ export default function AdminCourseEdit({ course, programs = [] }: EditCoursePro
         put(`/admin/courses/${course.id}`);
     };
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Courses', href: '/admin/courses' },
-        { title: `${course.code} - ${course.name}`, href: `/admin/courses/${course.id}` },
-        { title: 'Edit', href: `/admin/courses/${course.id}/edit` },
-    ];
-
     return (
         <>
             <Head title={`Edit ${course.code} - ${course.name}`} />
 
-            <div className="p-6 max-w-4xl space-y-6">
+            <div className="max-w-4xl space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Edit Course
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Update credit allocation, term, status, and syllabus outline.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Update credit allocation, term, status, and syllabus
+                            outline.
                         </p>
                     </div>
 
                     <Button variant="outline" size="sm" asChild>
                         <Link href={`/admin/courses/${course.id}`}>
-                            <ArrowLeft className="h-4 w-4 mr-1.5" />
+                            <ArrowLeft className="mr-1.5 h-4 w-4" />
                             Back to Details
                         </Link>
                     </Button>
@@ -76,44 +72,76 @@ export default function AdminCourseEdit({ course, programs = [] }: EditCoursePro
                         description="Modify course code, credit weighting, and affiliated program."
                         icon={BookOpen}
                     >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2">
                             <div className="space-y-1.5 md:col-span-2">
-                                <Label htmlFor="name" className="text-xs font-semibold">
-                                    Course Title <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="name"
+                                    className="text-xs font-semibold"
+                                >
+                                    Course Title{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="name"
                                     value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('name', e.target.value)
+                                    }
                                     className="text-xs"
                                     required
                                 />
-                                {errors.name && <p className="text-[11px] text-destructive">{errors.name}</p>}
+                                {errors.name && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.name}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="code" className="text-xs font-semibold">
-                                    Course Code <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="code"
+                                    className="text-xs font-semibold"
+                                >
+                                    Course Code{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="code"
                                     value={data.code}
-                                    onChange={(e) => setData('code', e.target.value.toUpperCase())}
-                                    className="text-xs font-mono uppercase"
+                                    onChange={(e) =>
+                                        setData(
+                                            'code',
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
+                                    className="font-mono text-xs uppercase"
                                     required
                                 />
-                                {errors.code && <p className="text-[11px] text-destructive">{errors.code}</p>}
+                                {errors.code && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.code}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="program_id" className="text-xs font-semibold">
-                                    Academic Program <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="program_id"
+                                    className="text-xs font-semibold"
+                                >
+                                    Academic Program{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="program_id"
-                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.program_id}
-                                    onChange={(e) => setData('program_id', parseInt(e.target.value))}
+                                    onChange={(e) =>
+                                        setData(
+                                            'program_id',
+                                            parseInt(e.target.value),
+                                        )
+                                    }
                                     required
                                 >
                                     {programs.map((prog) => (
@@ -122,12 +150,20 @@ export default function AdminCourseEdit({ course, programs = [] }: EditCoursePro
                                         </option>
                                     ))}
                                 </select>
-                                {errors.program_id && <p className="text-[11px] text-destructive">{errors.program_id}</p>}
+                                {errors.program_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.program_id}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="credit_hours" className="text-xs font-semibold">
-                                    Credit Hours <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="credit_hours"
+                                    className="text-xs font-semibold"
+                                >
+                                    Credit Hours{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="credit_hours"
@@ -135,22 +171,40 @@ export default function AdminCourseEdit({ course, programs = [] }: EditCoursePro
                                     min="1"
                                     max="10"
                                     value={data.credit_hours}
-                                    onChange={(e) => setData('credit_hours', parseInt(e.target.value) || 3)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'credit_hours',
+                                            parseInt(e.target.value) || 3,
+                                        )
+                                    }
                                     className="text-xs"
                                     required
                                 />
-                                {errors.credit_hours && <p className="text-[11px] text-destructive">{errors.credit_hours}</p>}
+                                {errors.credit_hours && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.credit_hours}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="semester" className="text-xs font-semibold">
-                                    Semester Term <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="semester"
+                                    className="text-xs font-semibold"
+                                >
+                                    Semester Term{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="semester"
-                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.semester}
-                                    onChange={(e) => setData('semester', parseInt(e.target.value) || 1)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'semester',
+                                            parseInt(e.target.value) || 1,
+                                        )
+                                    }
                                     required
                                 >
                                     {Array.from({ length: 8 }, (_, i) => (
@@ -159,68 +213,107 @@ export default function AdminCourseEdit({ course, programs = [] }: EditCoursePro
                                         </option>
                                     ))}
                                 </select>
-                                {errors.semester && <p className="text-[11px] text-destructive">{errors.semester}</p>}
+                                {errors.semester && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.semester}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="level" className="text-xs font-semibold">
-                                    Level <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="level"
+                                    className="text-xs font-semibold"
+                                >
+                                    Level{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="level"
-                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.level}
-                                    onChange={(e) => setData('level', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('level', e.target.value)
+                                    }
                                     required
                                 >
-                                    <option value="undergraduate">Undergraduate</option>
-                                    <option value="postgraduate">Postgraduate</option>
+                                    <option value="undergraduate">
+                                        Undergraduate
+                                    </option>
+                                    <option value="postgraduate">
+                                        Postgraduate
+                                    </option>
                                     <option value="doctorate">Doctorate</option>
                                     <option value="diploma">Diploma</option>
                                 </select>
-                                {errors.level && <p className="text-[11px] text-destructive">{errors.level}</p>}
+                                {errors.level && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.level}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="status" className="text-xs font-semibold">
-                                    Status <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="status"
+                                    className="text-xs font-semibold"
+                                >
+                                    Status{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="status"
-                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.status}
-                                    onChange={(e) => setData('status', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('status', e.target.value)
+                                    }
                                     required
                                 >
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                     <option value="archived">Archived</option>
                                 </select>
-                                {errors.status && <p className="text-[11px] text-destructive">{errors.status}</p>}
+                                {errors.status && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.status}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5 md:col-span-2">
-                                <Label htmlFor="description" className="text-xs font-semibold">
+                                <Label
+                                    htmlFor="description"
+                                    className="text-xs font-semibold"
+                                >
                                     Syllabus Description
                                 </Label>
                                 <Textarea
                                     id="description"
                                     rows={3}
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('description', e.target.value)
+                                    }
                                     className="text-xs"
                                 />
-                                {errors.description && <p className="text-[11px] text-destructive">{errors.description}</p>}
+                                {errors.description && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.description}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </UctPanelCard>
 
                     <div className="flex items-center justify-end gap-3">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/courses/${course.id}`}>Cancel</Link>
+                            <Link href={`/admin/courses/${course.id}`}>
+                                Cancel
+                            </Link>
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
-                            <Save className="h-4 w-4 mr-1.5" />
+                            <Save className="mr-1.5 h-4 w-4" />
                             {processing ? 'Saving...' : 'Update Course'}
                         </Button>
                     </div>

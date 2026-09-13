@@ -1,14 +1,14 @@
-import React from 'react';
-import type { ColumnDef } from '@tanstack/react-table';
 import { router } from '@inertiajs/react';
-import { AdmissionStatusBadge } from './admission-status-badge';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Eye, CheckSquare, UserPlus, Trash2 } from 'lucide-react';
+import React from 'react';
 import {
     DataTableRowActionsMenu,
     DataTableRowActionItem,
     DataTableRowActionItemDestructive,
 } from '@/components/tools/table/data-table-row-actions-menu';
 import type { Admission } from '@/types/admission';
-import { Eye, CheckSquare, UserPlus, Trash2 } from 'lucide-react';
+import { AdmissionStatusBadge } from './admission-status-badge';
 
 interface AdmissionColumnsOptions {
     onReview: (admission: Admission) => void;
@@ -27,7 +27,7 @@ export function getAdmissionColumns({
             header: 'App No',
             cell: ({ row }) => {
                 return (
-                    <span className="font-mono text-xs font-semibold text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/40">
+                    <span className="rounded border border-border/40 bg-muted/60 px-2 py-0.5 font-mono text-xs font-semibold text-foreground">
                         {row.original.application_no}
                     </span>
                 );
@@ -38,12 +38,14 @@ export function getAdmissionColumns({
             header: 'Applicant',
             cell: ({ row }) => {
                 const adm = row.original;
+
                 return (
                     <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-foreground truncate">
-                            {adm.full_name || `${adm.first_name} ${adm.last_name}`}
+                        <span className="truncate text-xs font-semibold text-foreground">
+                            {adm.full_name ||
+                                `${adm.first_name} ${adm.last_name}`}
                         </span>
-                        <span className="text-[11px] text-muted-foreground truncate">
+                        <span className="truncate text-[11px] text-muted-foreground">
                             {adm.email} {adm.phone ? `• ${adm.phone}` : ''}
                         </span>
                     </div>
@@ -55,9 +57,10 @@ export function getAdmissionColumns({
             header: 'Desired Program',
             cell: ({ row }) => {
                 const program = row.original.program;
+
                 return (
                     <div className="flex flex-col">
-                        <span className="text-xs font-medium text-foreground truncate max-w-[220px]">
+                        <span className="max-w-[220px] truncate text-xs font-medium text-foreground">
                             {program?.name ?? 'Unassigned'}
                         </span>
                         {row.original.entry_semester && (
@@ -74,13 +77,16 @@ export function getAdmissionColumns({
             header: 'Prior GPA',
             cell: ({ row }) => {
                 const gpa = row.original.previous_gpa;
+
                 return (
                     <div className="flex flex-col">
                         <span className="font-mono text-xs font-medium text-foreground">
-                            {gpa !== null && gpa !== undefined ? Number(gpa).toFixed(2) : '—'}
+                            {gpa !== null && gpa !== undefined
+                                ? Number(gpa).toFixed(2)
+                                : '—'}
                         </span>
                         {row.original.previous_qualification && (
-                            <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                            <span className="max-w-[120px] truncate text-[10px] text-muted-foreground">
                                 {row.original.previous_qualification}
                             </span>
                         )}
@@ -94,7 +100,11 @@ export function getAdmissionColumns({
             cell: ({ row }) => {
                 return (
                     <span className="text-xs text-muted-foreground">
-                        {row.original.application_date ? String(row.original.application_date).split('T')[0] : '—'}
+                        {row.original.application_date
+                            ? String(row.original.application_date).split(
+                                  'T',
+                              )[0]
+                            : '—'}
                     </span>
                 );
             },
@@ -114,28 +124,41 @@ export function getAdmissionColumns({
                 const isEnrolled = admission.status === 'enrolled';
 
                 return (
-                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="flex justify-end"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <DataTableRowActionsMenu trigger="default" align="end">
                             <DataTableRowActionItem
-                                onClick={() => router.visit(`/admin/admissions/${admission.id}`)}
+                                onClick={() =>
+                                    router.visit(
+                                        `/admin/admissions/${admission.id}`,
+                                    )
+                                }
                             >
-                                <Eye className="h-3.5 w-3.5 mr-2" />
+                                <Eye className="mr-2 h-3.5 w-3.5" />
                                 View Details
                             </DataTableRowActionItem>
                             {!isEnrolled && (
-                                <DataTableRowActionItem onClick={() => onReview(admission)}>
-                                    <CheckSquare className="h-3.5 w-3.5 mr-2" />
+                                <DataTableRowActionItem
+                                    onClick={() => onReview(admission)}
+                                >
+                                    <CheckSquare className="mr-2 h-3.5 w-3.5" />
                                     Review Status
                                 </DataTableRowActionItem>
                             )}
                             {!isEnrolled && admission.status === 'approved' && (
-                                <DataTableRowActionItem onClick={() => onConvert(admission)}>
-                                    <UserPlus className="h-3.5 w-3.5 mr-2 text-purple-600" />
+                                <DataTableRowActionItem
+                                    onClick={() => onConvert(admission)}
+                                >
+                                    <UserPlus className="mr-2 h-3.5 w-3.5 text-purple-600" />
                                     <span>Convert to Student</span>
                                 </DataTableRowActionItem>
                             )}
-                            <DataTableRowActionItemDestructive onClick={() => onDelete(admission)}>
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            <DataTableRowActionItemDestructive
+                                onClick={() => onDelete(admission)}
+                            >
+                                <Trash2 className="mr-2 h-3.5 w-3.5" />
                                 Delete
                             </DataTableRowActionItemDestructive>
                         </DataTableRowActionsMenu>

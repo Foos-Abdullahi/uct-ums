@@ -1,6 +1,6 @@
-import { useAppearance } from '@/hooks/use-appearance';
-import uctLogo from '@/components/images/uct-logo__white-02.svg';
 import uctLogoDark from '@/components/images/uct-logo__white-01.svg';
+import uctLogo from '@/components/images/uct-logo__white-02.svg';
+import { useAppearance } from '@/hooks/use-appearance';
 import type { AuthLayoutProps } from '@/types';
 
 export default function AuthSimpleLayout({
@@ -14,7 +14,7 @@ export default function AuthSimpleLayout({
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center bg-sidebar p-6 text-foreground md:p-10">
-            <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
+            <div className="w-full max-w-md animate-in duration-700 ease-out fade-in slide-in-from-bottom-8">
                 <div className="relative rounded-xl border border-primary/20 bg-card p-6 text-card-foreground shadow-lg transition-all duration-300 hover:border-primary/40 hover:shadow-xl md:p-10">
                     {/* Subtle primary accent line */}
                     <div className="absolute inset-x-10 top-0 h-px bg-primary/50" />

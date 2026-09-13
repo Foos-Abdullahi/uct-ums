@@ -55,9 +55,7 @@ export function DataTableFacetedFilter<TData, TValue>({
             return;
         }
 
-        column?.setFilterValue(
-            filterValues?.length ? filterValues : undefined,
-        );
+        column?.setFilterValue(filterValues?.length ? filterValues : undefined);
     };
 
     const handleSelect = (optionValue: string) => {

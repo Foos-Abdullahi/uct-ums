@@ -1,4 +1,4 @@
-import { ArrowDown, ChevronDown, } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,10 @@ export function DataTableRowActionsMenu({
     trigger = 'default',
 }: DataTableRowActionsMenuProps) {
     return (
-        <div className="flex justify-start" onClick={(e) => e.stopPropagation()}>
+        <div
+            className="flex justify-start"
+            onClick={(e) => e.stopPropagation()}
+        >
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     {trigger === 'chevron' ? (
@@ -41,7 +44,10 @@ export function DataTableRowActionsMenu({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className={cn(actionTriggerButtonClass, 'lowercase')}
+                            className={cn(
+                                actionTriggerButtonClass,
+                                'lowercase',
+                            )}
                         >
                             <ChevronDown className="size-3.5 opacity-80" />
                         </Button>
@@ -79,10 +85,20 @@ export function DataTableRowActionsMenu({
 const primaryActionItemClass =
     'cursor-pointer gap-2 text-primary focus:bg-primary/10 focus:text-primary [&_svg]:text-primary';
 
-type DataTableRowActionItemProps = React.ComponentProps<typeof DropdownMenuItem>;
+type DataTableRowActionItemProps = React.ComponentProps<
+    typeof DropdownMenuItem
+>;
 
-export function DataTableRowActionItem({ className, ...props }: DataTableRowActionItemProps) {
-    return <DropdownMenuItem className={cn(primaryActionItemClass, className)} {...props} />;
+export function DataTableRowActionItem({
+    className,
+    ...props
+}: DataTableRowActionItemProps) {
+    return (
+        <DropdownMenuItem
+            className={cn(primaryActionItemClass, className)}
+            {...props}
+        />
+    );
 }
 
 export function DataTableRowActionItemDestructive({

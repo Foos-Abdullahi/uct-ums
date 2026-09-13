@@ -1,13 +1,4 @@
-import React from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     Users,
@@ -16,8 +7,16 @@ import {
     GraduationCap,
     AlertCircle,
     Eye,
-    Calendar,
 } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
 
 export interface EnrollmentRecord {
     id: number;
@@ -106,7 +105,10 @@ export default function AdminEnrollmentsIndex({
             accessorKey: 'matric_no',
             header: 'Matric No',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.matric_no}
                 </Badge>
             ),
@@ -116,8 +118,12 @@ export default function AdminEnrollmentsIndex({
             header: 'Student Name',
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.user?.name || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{row.original.user?.email || '—'}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.user?.name || 'N/A'}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                        {row.original.user?.email || '—'}
+                    </p>
                 </div>
             ),
         },
@@ -126,11 +132,14 @@ export default function AdminEnrollmentsIndex({
             header: 'Academic Program',
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
-                    <span className="text-xs font-medium text-foreground truncate block">
+                    <span className="block truncate text-xs font-medium text-foreground">
                         {row.original.program?.name || 'Unassigned'}
                     </span>
                     {row.original.program?.code && (
-                        <Badge variant="secondary" className="font-mono text-[10px] uppercase mt-0.5">
+                        <Badge
+                            variant="secondary"
+                            className="mt-0.5 font-mono text-[10px] uppercase"
+                        >
                             {row.original.program.code}
                         </Badge>
                     )}
@@ -151,32 +160,32 @@ export default function AdminEnrollmentsIndex({
             header: 'Enrollment Status',
             cell: ({ row }) => {
                 const status = row.original.enrollment_status;
+
                 if (status === 'enrolled') {
                     return (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200">
+                        <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
                             Enrolled
                         </Badge>
                     );
                 }
+
                 if (status === 'pending') {
                     return (
-                        <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200">
+                        <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
                             Pending
                         </Badge>
                     );
                 }
+
                 if (status === 'graduated') {
                     return (
-                        <Badge className="bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 border-sky-200">
+                        <Badge className="border-sky-200 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20">
                             Graduated
                         </Badge>
                     );
                 }
-                return (
-                    <Badge variant="destructive">
-                        {status}
-                    </Badge>
-                );
+
+                return <Badge variant="destructive">{status}</Badge>;
             },
         },
         {
@@ -184,20 +193,23 @@ export default function AdminEnrollmentsIndex({
             header: 'Fee Status',
             cell: ({ row }) => {
                 const feeStatus = String(row.original.fee_status);
+
                 if (feeStatus === 'paid') {
                     return (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[11px]">
+                        <Badge className="border-emerald-200 bg-emerald-500/10 text-[11px] text-emerald-700">
                             Paid
                         </Badge>
                     );
                 }
+
                 if (feeStatus === 'partial') {
                     return (
-                        <Badge className="bg-amber-500/10 text-amber-700 border-amber-200 text-[11px]">
+                        <Badge className="border-amber-200 bg-amber-500/10 text-[11px] text-amber-700">
                             Partial
                         </Badge>
                     );
                 }
+
                 return (
                     <Badge variant="destructive" className="text-[11px]">
                         Unpaid
@@ -210,7 +222,9 @@ export default function AdminEnrollmentsIndex({
             header: 'Enrolled Date',
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
-                    {row.original.enrollment_date ? String(row.original.enrollment_date).split('T')[0] : '—'}
+                    {row.original.enrollment_date
+                        ? String(row.original.enrollment_date).split('T')[0]
+                        : '—'}
                 </span>
             ),
         },
@@ -219,7 +233,9 @@ export default function AdminEnrollmentsIndex({
             header: 'GPA',
             cell: ({ row }) => (
                 <span className="text-xs font-bold text-foreground">
-                    {row.original.gpa ? Number(row.original.gpa).toFixed(2) : '0.00'}
+                    {row.original.gpa
+                        ? Number(row.original.gpa).toFixed(2)
+                        : '0.00'}
                 </span>
             ),
         },
@@ -235,7 +251,7 @@ export default function AdminEnrollmentsIndex({
                         asChild
                     >
                         <Link href={`/admin/students/${row.original.id}`}>
-                            <Eye className="h-3.5 w-3.5 mr-1" />
+                            <Eye className="mr-1 h-3.5 w-3.5" />
                             Profile
                         </Link>
                     </Button>
@@ -299,28 +315,30 @@ export default function AdminEnrollmentsIndex({
         <>
             <Head title="Student Enrollments" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Student Enrollments
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Manage student academic registrations, program affiliations, cohort progressions, and matriculation standing.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Manage student academic registrations, program
+                            affiliations, cohort progressions, and matriculation
+                            standing.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/admissions">
-                                <Users className="h-4 w-4 mr-1.5" />
+                                <Users className="mr-1.5 h-4 w-4" />
                                 Admissions Funnel
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/students/create">
-                                <UserCheck className="h-4 w-4 mr-1.5" />
+                                <UserCheck className="mr-1.5 h-4 w-4" />
                                 Enroll Student
                             </Link>
                         </Button>
@@ -330,7 +348,7 @@ export default function AdminEnrollmentsIndex({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Enrolled"
                                 value={stats.total_enrolled}
@@ -368,7 +386,7 @@ export default function AdminEnrollmentsIndex({
                 {/* Enrollments Data Table */}
                 <Deferred data="enrollments" fallback={<TableSkeleton />}>
                     {enrollments && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Enrollment Roster"
                                 searchTitle="Search by matric no, student name, email..."
@@ -380,16 +398,36 @@ export default function AdminEnrollmentsIndex({
                                     per_page: enrollments.per_page,
                                     total: enrollments.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/enrollments', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/enrollments',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/students/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/students/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}

@@ -1,7 +1,6 @@
 import {
     BarChart3,
     BookOpen,
-    Building2,
     Calendar,
     ClipboardList,
     CreditCard,
@@ -45,8 +44,6 @@ export const adminNav: NavItem[] = [
         ],
     },
 
-
-    
     {
         title: 'Academic',
         icon: BookOpen,
@@ -96,13 +93,16 @@ export const adminNav: NavItem[] = [
         title: 'Settings',
         icon: Settings,
         items: [
-            
             {
                 title: 'General Settings',
                 href: '/admin/settings/system',
                 icon: Settings,
             },
-            { title: 'User Management', href: '/admin/settings/users', icon: Users },
+            {
+                title: 'User Management',
+                href: '/admin/settings/users',
+                icon: Users,
+            },
             {
                 title: 'Roles & Permissions',
                 href: '/admin/settings/roles',

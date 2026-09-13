@@ -1,15 +1,15 @@
-import React from 'react';
-import type { ColumnDef } from '@tanstack/react-table';
 import { router } from '@inertiajs/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LecturerStatusBadge } from './lecturer-status-badge';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Eye, Edit3, KeyRound, Ban, CheckCircle2, Trash2 } from 'lucide-react';
+import React from 'react';
 import {
     DataTableRowActionsMenu,
     DataTableRowActionItem,
     DataTableRowActionItemDestructive,
 } from '@/components/tools/table/data-table-row-actions-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { Lecturer } from '@/types/lecturer';
-import { Eye, Edit3, KeyRound, Ban, CheckCircle2, Trash2 } from 'lucide-react';
+import { LecturerStatusBadge } from './lecturer-status-badge';
 
 interface LecturerColumnsOptions {
     onDelete: (lecturer: Lecturer) => void;
@@ -44,11 +44,11 @@ export function getLecturerColumns({
                                 {initials || 'LEC'}
                             </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-semibold text-foreground truncate">
+                        <div className="flex min-w-0 flex-col">
+                            <span className="truncate text-sm font-semibold text-foreground">
                                 {name}
                             </span>
-                            <span className="text-xs text-muted-foreground truncate">
+                            <span className="truncate text-xs text-muted-foreground">
                                 {email}
                             </span>
                         </div>
@@ -61,7 +61,7 @@ export function getLecturerColumns({
             header: 'Lecturer No',
             cell: ({ row }) => {
                 return (
-                    <span className="font-mono text-xs font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/40">
+                    <span className="rounded border border-border/40 bg-muted/60 px-2 py-0.5 font-mono text-xs font-medium text-foreground">
                         {row.original.lecturer_no}
                     </span>
                 );
@@ -104,7 +104,11 @@ export function getLecturerColumns({
             accessorKey: 'employment_status',
             header: 'Status',
             cell: ({ row }) => {
-                return <LecturerStatusBadge status={row.original.employment_status} />;
+                return (
+                    <LecturerStatusBadge
+                        status={row.original.employment_status}
+                    />
+                );
             },
         },
         {
@@ -123,42 +127,61 @@ export function getLecturerColumns({
             header: () => <div className="text-right">Actions</div>,
             cell: ({ row }) => {
                 const lecturer = row.original;
-                const isInactive = lecturer.employment_status === 'inactive' || lecturer.employment_status === 'terminated';
+                const isInactive =
+                    lecturer.employment_status === 'inactive' ||
+                    lecturer.employment_status === 'terminated';
 
                 return (
-                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="flex justify-end"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <DataTableRowActionsMenu trigger="default" align="end">
                             <DataTableRowActionItem
-                                onClick={() => router.visit(`/admin/lecturers/${lecturer.id}`)}
+                                onClick={() =>
+                                    router.visit(
+                                        `/admin/lecturers/${lecturer.id}`,
+                                    )
+                                }
                             >
-                                <Eye className="h-3.5 w-3.5 mr-2" />
+                                <Eye className="mr-2 h-3.5 w-3.5" />
                                 View Profile
                             </DataTableRowActionItem>
                             <DataTableRowActionItem
-                                onClick={() => router.visit(`/admin/lecturers/${lecturer.id}/edit`)}
+                                onClick={() =>
+                                    router.visit(
+                                        `/admin/lecturers/${lecturer.id}/edit`,
+                                    )
+                                }
                             >
-                                <Edit3 className="h-3.5 w-3.5 mr-2" />
+                                <Edit3 className="mr-2 h-3.5 w-3.5" />
                                 Edit Lecturer
                             </DataTableRowActionItem>
-                            <DataTableRowActionItem onClick={() => onResetPassword(lecturer)}>
-                                <KeyRound className="h-3.5 w-3.5 mr-2" />
+                            <DataTableRowActionItem
+                                onClick={() => onResetPassword(lecturer)}
+                            >
+                                <KeyRound className="mr-2 h-3.5 w-3.5" />
                                 Reset Password
                             </DataTableRowActionItem>
-                            <DataTableRowActionItem onClick={() => onToggleStatus(lecturer)}>
+                            <DataTableRowActionItem
+                                onClick={() => onToggleStatus(lecturer)}
+                            >
                                 {isInactive ? (
                                     <>
-                                        <CheckCircle2 className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+                                        <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-emerald-600" />
                                         <span>Activate Account</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Ban className="h-3.5 w-3.5 mr-2 text-amber-600" />
+                                        <Ban className="mr-2 h-3.5 w-3.5 text-amber-600" />
                                         <span>Deactivate Account</span>
                                     </>
                                 )}
                             </DataTableRowActionItem>
-                            <DataTableRowActionItemDestructive onClick={() => onDelete(lecturer)}>
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            <DataTableRowActionItemDestructive
+                                onClick={() => onDelete(lecturer)}
+                            >
+                                <Trash2 className="mr-2 h-3.5 w-3.5" />
                                 Delete Record
                             </DataTableRowActionItemDestructive>
                         </DataTableRowActionsMenu>

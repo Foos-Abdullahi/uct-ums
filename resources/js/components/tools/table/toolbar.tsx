@@ -8,16 +8,13 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { DataTableFacetedFilter } from './faceted-filter';
-import type {
-    DataTableDateRangeFilter,
-    DataTableServerFilter,
-} from './types';
+import type { DataTableDateRangeFilter, DataTableServerFilter } from './types';
 import { DataTableViewOptions } from './view-options';
 
 interface DataTableToolbarProps<TData> {
@@ -30,10 +27,7 @@ interface DataTableToolbarProps<TData> {
     hideFilter?: boolean;
     showToolbarOnly?: boolean;
     serverFilters?: DataTableServerFilter[];
-    onServerFilterChange?: (
-        key: string,
-        values: string[] | undefined,
-    ) => void;
+    onServerFilterChange?: (key: string, values: string[] | undefined) => void;
     onServerFilterClear?: () => void;
     dateRangeFilter?: DataTableDateRangeFilter;
     onDateRangeChange?: (range: DataTableDateRangeFilter) => void;
@@ -91,8 +85,6 @@ export function DataTableToolbar<TData>({
                 return 'carrier_name';
             case 'Service Rates':
                 return 'shipment_method_name';
-            case 'Quotations':
-                return 'id';
             default: {
                 const availableColumns = table.getAllColumns();
                 const searchableColumns = [
@@ -129,21 +121,13 @@ export function DataTableToolbar<TData>({
         return (column?.getFilterValue() as string) ?? '';
     });
 
-    useEffect(() => {
-        const globalFilterValue =
-            (table.getState().globalFilter as string) ?? '';
-        setSearchInput(globalFilterValue);
-    }, [table.getState().globalFilter, table]);
-
     const selectedRows = table.getFilteredSelectedRowModel().rows;
     const hasSelectedRows = selectedRows.length > 0;
 
     const usesServerFilters = (serverFilters?.length ?? 0) > 0;
 
     const getColumnFilterOptions = (columnId: string) => {
-        const column = table
-            .getAllColumns()
-            .find((col) => col.id === columnId);
+        const column = table.getAllColumns().find((col) => col.id === columnId);
 
         if (!column) {
             return [];
@@ -159,9 +143,7 @@ export function DataTableToolbar<TData>({
             .map((value) => ({
                 label: String(value)
                     .replace(/_/g, ' ')
-                    .replace(/\b\w/g, (letter: string) =>
-                        letter.toUpperCase(),
-                    ),
+                    .replace(/\b\w/g, (letter: string) => letter.toUpperCase()),
                 value: String(value),
             }));
     };
@@ -318,7 +300,7 @@ export function DataTableToolbar<TData>({
                                 ) => {
                                     handleSearch(event.target.value);
                                 }}
-                                className="h-9 rounded-sm  pr-8 pl-8 text-lg text-foreground placeholder:text-xs"
+                                className="h-9 rounded-sm pr-8 pl-8 text-lg text-foreground placeholder:text-xs"
                             />
                             {searchInput && (
                                 <button
@@ -412,7 +394,9 @@ export function DataTableToolbar<TData>({
                                     }
                                     className="cursor-pointer bg-transparent text-foreground outline-none"
                                 />
-                                <span className="text-muted-foreground">to</span>
+                                <span className="text-muted-foreground">
+                                    to
+                                </span>
                                 <input
                                     type="date"
                                     value={dateRangeFilter.end_date ?? ''}

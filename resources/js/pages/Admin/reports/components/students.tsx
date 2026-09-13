@@ -1,12 +1,12 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Head } from '@inertiajs/react';
 import { Deferred } from '@inertiajs/react';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import type { BreadcrumbItem } from '@/types';
 import { Users, UserCheck, UserX, Clock, GraduationCap } from 'lucide-react';
+import React from 'react';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 
 // ... similar to overview, with student-specific stats and columns
 // I'll provide a concise version; you can expand as needed.
@@ -30,14 +30,15 @@ export default function StudentsReport({ stats, students }) {
     return (
         <>
             <Head title="Students Report" />
-            <div className="p-6 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div className="space-y-6 p-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Students Report
                         </h1>
                         <p className="text-xs text-muted-foreground">
-                            Detailed breakdown of student enrolment, demographics, and status.
+                            Detailed breakdown of student enrolment,
+                            demographics, and status.
                         </p>
                     </div>
                     {/* Filters and actions */}
@@ -45,17 +46,45 @@ export default function StudentsReport({ stats, students }) {
 
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
-                            <MetricCard title="Total Students" value={stats.total} icon={Users} color="primary" />
-                            <MetricCard title="Active" value={stats.active} icon={UserCheck} color="success" />
-                            <MetricCard title="Pending" value={stats.pending} icon={Clock} color="warning" />
-                            <MetricCard title="Suspended" value={stats.suspended} icon={UserX} color="destructive" />
-                            <MetricCard title="Graduated" value={stats.graduated} icon={GraduationCap} color="info" />
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
+                            <MetricCard
+                                title="Total Students"
+                                value={stats.total}
+                                icon={Users}
+                                color="primary"
+                            />
+                            <MetricCard
+                                title="Active"
+                                value={stats.active}
+                                icon={UserCheck}
+                                color="success"
+                            />
+                            <MetricCard
+                                title="Pending"
+                                value={stats.pending}
+                                icon={Clock}
+                                color="warning"
+                            />
+                            <MetricCard
+                                title="Suspended"
+                                value={stats.suspended}
+                                icon={UserX}
+                                color="destructive"
+                            />
+                            <MetricCard
+                                title="Graduated"
+                                value={stats.graduated}
+                                icon={GraduationCap}
+                                color="info"
+                            />
                         </div>
                     )}
                 </Deferred>
 
-                <Deferred data="students" fallback={<div>Loading table...</div>}>
+                <Deferred
+                    data="students"
+                    fallback={<div>Loading table...</div>}
+                >
                     {students && (
                         <DataTable
                             title="Student List"
@@ -71,4 +100,6 @@ export default function StudentsReport({ stats, students }) {
     );
 }
 
-StudentsReport.layout = (page: any) => <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
+StudentsReport.layout = (page: any) => (
+    <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>
+);
