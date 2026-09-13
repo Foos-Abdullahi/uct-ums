@@ -189,6 +189,8 @@ class Account extends Model
     /**
      * Record a lightweight account-history entry (created / updated / deactivated /
      * reactivated / imported) for the given actor.
+     *
+     * @param  array<string, mixed>  $changes
      */
     public function recordHistory(string $action, array $changes = [], ?int $actorId = null): AccountHistory
     {

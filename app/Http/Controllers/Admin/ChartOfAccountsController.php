@@ -65,8 +65,10 @@ class ChartOfAccountsController extends Controller
             ->groupBy('account_id')
             ->pluck('total', 'account_id');
 
-        $mapped = $categories->map(function (AccountCategory $category) use ($transactionCounts, $expenseTotals) {
-            return [
+        $mapped = [];
+
+        foreach ($categories as $category) {
+            $mapped[] = [
                 'type' => $category->type->value,
                 'name' => $category->type->label(),
                 'code_range' => "{$category->type->codeRangeStart()}–{$category->type->codeRangeEnd()}",
@@ -85,10 +87,14 @@ class ChartOfAccountsController extends Controller
                     'transaction_count' => (int) ($transactionCounts[$account->id] ?? 0),
                     'expense_count' => (int) ($transactionCounts[$account->id] ?? 0),
                     'total_amount' => (float) ($expenseTotals[$account->id] ?? 0),
-                ]),
+                ])->all(),
             ];
-        })->filter(fn ($item) => $item['accounts']->isNotEmpty() || ($search === '' && (! $group || $group === 'all')))
-            ->values();
+        }
+
+        $mapped = array_values(array_filter(
+            $mapped,
+            fn (array $item) => $item['accounts'] !== [] || ($search === '' && (! $group || $group === 'all'))
+        ));
 
         return Inertia::render('Admin/finance/chart-of-accounts', [
             'summary' => [
@@ -239,7 +245,7 @@ class ChartOfAccountsController extends Controller
                 'id' => $entry->id,
                 'action' => $entry->action,
                 'changes' => $entry->changes,
-                'actor' => $entry->actor?->name ?? 'System',
+                'actor' => optional($entry->actor)->name ?? 'System',
                 'created_at' => $entry->created_at->toDateTimeString(),
             ]);
 
@@ -284,7 +290,7 @@ class ChartOfAccountsController extends Controller
                     'title' => $expense->title,
                     'amount' => (float) $expense->amount,
                     'status' => $expense->status,
-                    'expense_date' => $expense->expense_date?->toDateString(),
+                    'expense_date' => $expense->expense_date->toDateString(),
                 ]),
             'history' => $history,
         ]);
@@ -395,7 +401,7 @@ class ChartOfAccountsController extends Controller
                 'description' => $description,
                 'group' => $category?->type->value ?? '',
                 'group_name' => $category?->type->label() ?? '',
-                'type' => $type?->value ?? '',
+                'type' => optional($type)->value ?? '',
                 'balance' => $balanceName,
                 'errors' => $errors,
                 'warnings' => $warnings,
@@ -495,9 +501,13 @@ class ChartOfAccountsController extends Controller
         ];
 
         if ($forUpdate) {
-            $account = (int) $request->route('account')->id;
+            $routeAccount = $request->route('account');
 
-            $rules['code'][] = Rule::unique('accounts', 'code')->ignore($account);
+            if (! $routeAccount instanceof Account) {
+                throw ValidationException::withMessages(['code' => ['Unable to resolve the account being updated.']]);
+            }
+
+            $rules['code'][] = Rule::unique('accounts', 'code')->ignore($routeAccount->id);
         } else {
             $rules['code'][] = Rule::unique('accounts', 'code');
         }

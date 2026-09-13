@@ -178,7 +178,7 @@ class Student extends Model
      * @param  Builder<self>  $query
      * @return Builder<self>
      */
-    public function scopeFilterProgram(Builder $query, $programId): Builder
+    public function scopeFilterProgram(Builder $query, string|int|null $programId): Builder
     {
         if (! $programId || $programId === 'all') {
             return $query;
@@ -191,7 +191,7 @@ class Student extends Model
      * @param  Builder<self>  $query
      * @return Builder<self>
      */
-    public function scopeFilterSemester(Builder $query, $semester): Builder
+    public function scopeFilterSemester(Builder $query, string|int|null $semester): Builder
     {
         if (! $semester || $semester === 'all') {
             return $query;

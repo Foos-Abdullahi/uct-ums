@@ -437,11 +437,10 @@ class FinanceController extends Controller
         foreach (array_keys(Expense::APPROVAL_LEVELS) as $level) {
             $alreadyAssigned = ExpenseApproval::where('expense_id', $expense->id)->pluck('approver_id');
 
-            $roles = match ($level) {
-                1 => ['finance'],
-                2 => ['super_admin', 'finance'],
-                3 => ['super_admin'],
-                default => ['finance'],
+            $roles = match (true) {
+                $level <= 1 => ['finance'],
+                $level === 2 => ['super_admin', 'finance'],
+                default => ['super_admin'],
             };
 
             $approver = User::query()

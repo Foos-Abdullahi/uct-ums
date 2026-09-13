@@ -81,7 +81,7 @@ class ReportController extends Controller
                 ->map(fn ($row) => [
                     'status' => $row->status,
                     'label' => ucwords(str_replace('_', ' ', $row->status)),
-                    'total' => (int) $row->total,
+                    'total' => (int) $row['total'],
                 ])
                 ->values()
                 ->all()
@@ -95,8 +95,8 @@ class ReportController extends Controller
                 ->map(fn ($row) => [
                     'method' => $row->payment_method ?? 'unknown',
                     'label' => ucwords(str_replace('_', ' ', $row->payment_method ?? 'Unknown')),
-                    'transactions' => (int) $row->transactions,
-                    'total' => (float) $row->total,
+                    'transactions' => (int) $row['transactions'],
+                    'total' => (float) $row['total'],
                 ])
                 ->values()
                 ->all()
@@ -109,7 +109,7 @@ class ReportController extends Controller
                 ->map(fn ($row) => [
                     'role' => $row->role,
                     'label' => ucwords(str_replace('_', ' ', $row->role)),
-                    'total' => (int) $row->total,
+                    'total' => (int) $row['total'],
                 ])
                 ->values()
                 ->all()
@@ -122,8 +122,8 @@ class ReportController extends Controller
                 ->orderBy('current_semester')
                 ->get()
                 ->map(fn ($row) => [
-                    'semester' => 'Semester '.$row->semester,
-                    'total' => (int) $row->total,
+                    'semester' => 'Semester '.$row['semester'],
+                    'total' => (int) $row['total'],
                 ])
                 ->values()
                 ->all()
@@ -160,8 +160,8 @@ class ReportController extends Controller
                     'name' => optional(optional($g->student)->user)->name ?? 'Unknown',
                     'matric_no' => optional($g->student)->matric_no ?? 'N/A',
                     'program' => optional(optional($g->student)->program)->name ?? 'N/A',
-                    'gpa' => (float) $g->gpa,
-                    'courses_taken' => (int) $g->courses_taken,
+                    'gpa' => (float) $g['gpa'],
+                    'courses_taken' => (int) $g['courses_taken'],
                 ])
                 ->values()
                 ->all()

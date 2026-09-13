@@ -83,7 +83,7 @@ class ExpenseController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $account = Account::findOrFail($validated['account_id']);
+        $account = Account::findOrFail((int) $validated['account_id']);
 
         if (! $account->isExpenseAccount()) {
             return back()->withErrors(['account_id' => 'Please choose an expense account from the chart of accounts.'])->withInput();
@@ -145,7 +145,7 @@ class ExpenseController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $account = Account::findOrFail($validated['account_id']);
+        $account = Account::findOrFail((int) $validated['account_id']);
 
         if (! $account->isExpenseAccount()) {
             return back()->withErrors(['account_id' => 'Please choose an expense account from the chart of accounts.'])->withInput();

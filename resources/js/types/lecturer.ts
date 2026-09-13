@@ -25,11 +25,7 @@ export interface Lecturer {
     address: string | null;
     hire_date: string | null;
     employment_status:
-        | 'active'
-        | 'on_leave'
-        | 'sabbatical'
-        | 'inactive'
-        | 'terminated';
+        'active' | 'on_leave' | 'sabbatical' | 'inactive' | 'terminated';
     contract_type: 'full_time' | 'part_time' | 'adjunct' | 'visiting';
     office_location: string | null;
     bio: string | null;

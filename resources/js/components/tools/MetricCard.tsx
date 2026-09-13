@@ -12,12 +12,7 @@ export interface Stat {
     description?: string;
     className?: string;
     color?:
-        | 'primary'
-        | 'info'
-        | 'success'
-        | 'warning'
-        | 'destructive'
-        | 'accent';
+        'primary' | 'info' | 'success' | 'warning' | 'destructive' | 'accent';
     variant?: keyof typeof colorStyles | 'default';
 }
 

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\ExpenseApprovalFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ExpenseApproval extends Model
 {
+    /** @use HasFactory<ExpenseApprovalFactory> */
     use HasFactory;
 
     /**

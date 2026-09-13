@@ -324,7 +324,10 @@ export default function AdminStudentsEdit({
                                 <Select
                                     value={data.enrollment_status}
                                     onValueChange={(val) =>
-                                        setData('enrollment_status', val as EnrollmentStatus)
+                                        setData(
+                                            'enrollment_status',
+                                            val as EnrollmentStatus,
+                                        )
                                     }
                                 >
                                     <SelectTrigger
@@ -441,7 +444,10 @@ export default function AdminStudentsEdit({
                                 <Select
                                     value={data.fee_status}
                                     onValueChange={(val) =>
-                                        setData('fee_status', val as StudentFeeStatus)
+                                        setData(
+                                            'fee_status',
+                                            val as StudentFeeStatus,
+                                        )
                                     }
                                 >
                                     <SelectTrigger

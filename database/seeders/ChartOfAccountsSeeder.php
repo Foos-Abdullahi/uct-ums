@@ -173,7 +173,7 @@ class ChartOfAccountsSeeder extends Seeder
         $map = [];
 
         foreach ($codes as $type => $code) {
-            $map[$type] = $code !== null ? Account::where('code', $code)->first() : null;
+            $map[$type] = Account::where('code', $code)->first();
         }
 
         return $map;
