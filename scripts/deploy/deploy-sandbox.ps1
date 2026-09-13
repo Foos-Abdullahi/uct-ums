@@ -286,30 +286,19 @@ foreach ($file in @(
 }
 
 Write-Host '[6/8] Packaging archive...'
-$workTar = Join-Path $work 'deploy.tar'
 $workGz = Join-Path $work 'deploy.tar.gz'
 Push-Location $work
 try {
-    tar -cf $workTar -C $work ums public_html
-    if ($LASTEXITCODE -ne 0) { throw 'tar failed' }
+    tar -zcf $workGz -C $work ums public_html
+    if ($LASTEXITCODE -ne 0) { throw 'tar gzip failed' }
 } finally {
     Pop-Location
-}
-$source = [IO.File]::OpenRead($workTar)
-$destination = [IO.File]::Create($workGz)
-try {
-    $gzip = [IO.Compression.GzipStream]::new($destination, [IO.Compression.CompressionLevel]::Optimal)
-    $source.CopyTo($gzip)
-    $gzip.Dispose()
-} finally {
-    $source.Dispose()
-    $destination.Dispose()
 }
 
 $ftpUrl = "ftp://$FtpHost"
 
 function Invoke-FtpUpload([string]$Local, [string]$Remote) {
-    curl.exe -s -o NUL --ftp-create-dirs -u "${FtpUser}:${FtpPassword}" -T $Local "$ftpUrl/$Remote"
+    curl.exe -s -m 1800 -o NUL --ftp-create-dirs -u "${FtpUser}:${FtpPassword}" -T $Local "$ftpUrl/$Remote"
     if ($LASTEXITCODE -ne 0) { throw "FTP upload failed: $Remote" }
 }
 
