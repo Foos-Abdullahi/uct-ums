@@ -254,6 +254,29 @@ jobs:
               echo "[ok]\n\n";
           }
 
+          echo "\n--- self check ---\n";
+
+          try {
+              $request = Illuminate\Http\Request::create('/', 'GET');
+              $response = $app->handleRequest($request);
+
+              echo 'BOOT_STATUS='.$response->getStatusCode()."\n";
+
+              if ($response->getStatusCode() >= 400) {
+                  $log = $base.'/storage/logs/laravel.log';
+
+                  if (is_file($log)) {
+                      $home = dirname($base);
+                      @copy($log, $home.'/public_html/_deploy/_boot_error.log');
+                      echo "copied laravel.log for review\n";
+                  }
+              }
+          } catch (Throwable $e) {
+              echo 'BOOT ERROR: '.$e->getMessage()."\n".$e->getTraceAsString();
+              http_response_code(500);
+              exit;
+          }
+
           echo 'DONE';
           PHP
 
@@ -289,8 +312,17 @@ jobs:
           ftp_upload "$DEPLOY_DIR/deploy.tar.gz" "ums_deploy.tar.gz"
 
           EXTRACT="$(curl -sfL "https://${FTP_HOST}/_deploy/ums_extract.php?token=${DEPLOY_TOKEN}" -m 600)"
-          curl -sfL "https://${FTP_HOST}/_deploy/ums_run.php?token=${DEPLOY_TOKEN}" -m 900
+          curl -sfL "https://${FTP_HOST}/_deploy/ums_run.php?token=${DEPLOY_TOKEN}" -m 900 || true
 
+          if curl -sfL -o - -m 60 "https://${FTP_HOST}/_deploy/_boot_error.log"; then
+            echo
+            echo "BOOT_ERROR_LOG_BEGIN"
+            echo "BOOT_ERROR_LOG_END"
+          else
+            echo "no boot error log (self check passed)"
+          fi
+
+          ftp_delete "DELE public_html/_deploy/_boot_error.log" || true
           ftp_delete "DELE public_html/_deploy/ums_extract.php" || true
           ftp_delete "DELE public_html/_deploy/ums_run.php" || true
           ftp_delete "DELE public_html/_deploy/error_log" || true
