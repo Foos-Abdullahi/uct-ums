@@ -133,6 +133,10 @@
 }
 
 @layer base {
+    html {
+        font-size: 18px;
+    }
+
     * {
         @apply border-border;
     }
