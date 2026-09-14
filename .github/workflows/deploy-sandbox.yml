@@ -19,20 +19,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
         with:
           ref: sandbox
           fetch-depth: 1
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45 # v2
+        uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, mysql, pdo_mysql
           tools: composer:v2
           coverage: none
 
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
@@ -45,6 +46,7 @@ jobs:
 
       - name: Stage and package application
         env:
+          APP_KEY: ${{ secrets.APP_KEY }}
           APP_URL: ${{ secrets.APP_URL }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -63,29 +65,41 @@ jobs:
             --exclude=.git --exclude=node_modules .
           tar -xf "$RUNNER_TEMP/base.tar" -C "$DEPLOY_DIR/ums"
 
-          rm -rf "$DEPLOY_DIR/ums/storage/logs"/*
-          rm -rf "$DEPLOY_DIR/ums/storage/framework/cache/data"/*
-          rm -rf "$DEPLOY_DIR/ums/storage/framework/sessions"/*
-          rm -rf "$DEPLOY_DIR/ums/storage/framework/views"/*
+          mkdir -p "$DEPLOY_DIR/ums/storage/logs" "$DEPLOY_DIR/ums/storage/framework/cache/data" "$DEPLOY_DIR/ums/storage/framework/sessions" "$DEPLOY_DIR/ums/storage/framework/views"
+          touch "$DEPLOY_DIR/ums/storage/logs/laravel.log"
+          chmod -R 777 "$DEPLOY_DIR/ums/storage" "$DEPLOY_DIR/ums/bootstrap/cache"
 
-          APP_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
-
-          sed -e 's|^APP_NAME=.*|APP_NAME="UCT Online"|' \
-            -e 's|^APP_ENV=.*|APP_ENV=production|' \
-            -e 's|^APP_DEBUG=.*|APP_DEBUG=false|' \
-            -e "s|^APP_URL=.*|APP_URL=${APP_URL}|" \
-            -e "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" \
-            -e 's|^DB_CONNECTION=.*|DB_CONNECTION=mysql|' \
-            -e 's|^# DB_HOST=.*|DB_HOST=localhost|' \
-            -e 's|^# DB_PORT=.*|DB_PORT=3306|' \
-            -e "s|^# DB_DATABASE=.*|DB_DATABASE=${DB_NAME}|" \
-            -e "s|^# DB_USERNAME=.*|DB_USERNAME=${DB_USER}|" \
-            -e "s|^# DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|" \
-            -e 's|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=sync|' \
-            -e 's|^CACHE_STORE=.*|CACHE_STORE=file|' \
-            -e 's|^MAIL_MAILER=.*|MAIL_MAILER=log|' \
-            -e 's|^LOG_LEVEL=.*|LOG_LEVEL=error|' \
-            "$GITHUB_WORKSPACE/.env.example" > "$DEPLOY_DIR/ums/.env"
+          export DEPLOY_DIR APP_URL
+          php -r '
+            $env = file_get_contents(getenv("GITHUB_WORKSPACE") . "/.env.example");
+            $appKey = getenv("APP_KEY") ?: ("base64:" . base64_encode(random_bytes(32)));
+            $replacements = [
+              "APP_NAME" => "\"UCT Online\"",
+              "APP_ENV" => "production",
+              "APP_DEBUG" => "true",
+              "APP_URL" => getenv("APP_URL") ?: "https://local.uct.so",
+              "APP_KEY" => $appKey,
+              "DB_CONNECTION" => "mysql",
+              "DB_HOST" => "127.0.0.1",
+              "DB_PORT" => "3306",
+              "DB_DATABASE" => getenv("DB_NAME"),
+              "DB_USERNAME" => getenv("DB_USER"),
+              "DB_PASSWORD" => getenv("DB_PASSWORD"),
+              "SESSION_DRIVER" => "file",
+              "QUEUE_CONNECTION" => "sync",
+              "CACHE_STORE" => "file",
+              "MAIL_MAILER" => "log",
+              "LOG_LEVEL" => "debug",
+            ];
+            foreach ($replacements as $key => $val) {
+              if (preg_match("/^#?\s*{$key}=.*/m", $env)) {
+                $env = preg_replace("/^#?\s*{$key}=.*/m", "{$key}={$val}", $env);
+              } else {
+                $env .= "\n{$key}={$val}";
+              }
+            }
+            file_put_contents(getenv("DEPLOY_DIR") . "/ums/.env", $env);
+          '
 
           cp -r "$DEPLOY_DIR/ums/public/." "$DEPLOY_DIR/public_html/"
           rm -f "$DEPLOY_DIR/public_html/index.php" "$DEPLOY_DIR/public_html/.htaccess"
@@ -101,6 +115,11 @@ jobs:
 
           cat > "$DEPLOY_DIR/public_html/.htaccess" <<'EOF'
           # Use PHP 8.4 for this application (Laravel 13 requires PHP >= 8.4.1).
+          <IfModule mime_module>
+              AddHandler application/x-httpd-ea-php84 .php .php8 .phtml
+              AddHandler application/x-httpd-php84 .php
+          </IfModule>
+          AddHandler application/x-httpd-ea-php84 .php .php8 .phtml
           AddHandler application/x-httpd-php84 .php
 
           <IfModule mod_rewrite.c>
@@ -230,7 +249,7 @@ jobs:
 
           $console = $app->make(Kernel::class);
 
-          $commands = ['config:clear', 'migrate --force', 'db:seed --class=AdminSeeder --force', 'db:seed --class=RolePermissionSeeder --force', 'db:seed --class=ChartOfAccountsSeeder --force', 'config:cache', 'view:cache'];
+          $commands = ['config:clear', 'cache:clear', 'view:clear', 'migrate --force', 'db:seed --class=AdminSeeder --force', 'db:seed --class=RolePermissionSeeder --force', 'db:seed --class=ChartOfAccountsSeeder --force', 'config:cache', 'view:cache'];
 
           foreach ($commands as $command) {
               echo ">>> {$command}\n\n";
@@ -331,5 +350,6 @@ jobs:
           ftp_delete "RMD public_html/_deploy" || true
           ftp_delete "DELE ums_deploy.tar.gz" || true
 
-          curl -sf -o /dev/null -m 30 "$APP_URL/"
+          curl -sf -o /dev/null -m 30 "$APP_URL/up"
+          curl -sf -o /dev/null -m 30 "$APP_URL/" || curl -sf -o /dev/null -m 30 "$APP_URL/login"
           echo "Deploy complete: $APP_URL"
