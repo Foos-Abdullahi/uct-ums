@@ -1,6 +1,6 @@
+import { ChevronDown } from 'lucide-react';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronDown } from 'lucide-react';
 
 export interface UctPanelCardProps {
     title?: React.ReactNode;
@@ -59,7 +59,7 @@ export function UctPanelCard({
                     <div
                         className={cn(
                             'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border shadow-xs transition-colors',
-                            iconStyles[type] || iconStyles.default
+                            iconStyles[type] || iconStyles.default,
                         )}
                     >
                         <Icon className="h-5 w-5" />
@@ -82,7 +82,7 @@ export function UctPanelCard({
                     )}
 
                     {description && (
-                        <p className="text-xs text-muted-foreground/80 leading-relaxed">
+                        <p className="text-xs leading-relaxed text-muted-foreground/80">
                             {description}
                         </p>
                     )}
@@ -103,9 +103,9 @@ export function UctPanelCard({
     return (
         <div
             className={cn(
-                'group relative rounded-lg border border-border/60 shadow-xs transition-all duration-200 overflow-hidden',
+                'group relative overflow-hidden rounded-lg border border-border/60 shadow-xs transition-all duration-200',
                 typeStyles[type] || typeStyles.default,
-                className
+                className,
             )}
         >
             {/* Top subtle UCT gradient strip */}
@@ -115,9 +115,10 @@ export function UctPanelCard({
             {(title || subtitle || description || Icon || actions) && (
                 <div
                     className={cn(
-                        'flex items-center justify-between p-5 border-b border-border/40',
-                        collapsible && 'cursor-pointer select-none hover:bg-muted/40 transition-colors',
-                        headerClassName
+                        'flex items-center justify-between border-b border-border/40 p-5',
+                        collapsible &&
+                            'cursor-pointer transition-colors select-none hover:bg-muted/40',
+                        headerClassName,
                     )}
                     onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
                 >
@@ -126,13 +127,17 @@ export function UctPanelCard({
                     {collapsible && (
                         <button
                             type="button"
-                            className="ml-3 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-transform duration-200"
-                            aria-label={isCollapsed ? 'Expand section' : 'Collapse section'}
+                            className="ml-3 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-transform duration-200 hover:bg-accent hover:text-foreground"
+                            aria-label={
+                                isCollapsed
+                                    ? 'Expand section'
+                                    : 'Collapse section'
+                            }
                         >
                             <ChevronDown
                                 className={cn(
                                     'h-4 w-4 transition-transform duration-200',
-                                    isCollapsed ? '-rotate-90' : 'rotate-0'
+                                    isCollapsed ? '-rotate-90' : 'rotate-0',
                                 )}
                             />
                         </button>
@@ -142,7 +147,7 @@ export function UctPanelCard({
 
             {/* Card Body */}
             {children && !isCollapsed && (
-                <div className={cn('p-5 space-y-4', contentClassName)}>
+                <div className={cn('space-y-4 p-5', contentClassName)}>
                     {children}
                 </div>
             )}

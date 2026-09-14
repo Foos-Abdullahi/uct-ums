@@ -23,7 +23,7 @@ class CourseFactory extends Factory
         return [
             'program_id' => Program::factory(),
             'code' => fake()->unique()->randomElement($prefixes).fake()->unique()->numerify('###'),
-            'name' => fake()->words(3, true).' '.fake()->randomElement(['Fundamentals', 'Advanced', 'Architecture', 'Systems', 'Design', 'Practicum']),
+            'name' => fake()->sentence(3).' '.fake()->randomElement(['Fundamentals', 'Advanced', 'Architecture', 'Systems', 'Design', 'Practicum']),
             'credit_hours' => fake()->randomElement([2, 3, 4]),
             'semester' => fake()->numberBetween(1, 8),
             'level' => 'undergraduate',

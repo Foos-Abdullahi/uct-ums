@@ -1,10 +1,11 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { Award, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -18,8 +19,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Award, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface GenerateCertificateModalProps {
     open: boolean;
@@ -66,7 +65,8 @@ export function GenerateCertificateModal({
                                     Issue Student Certificate
                                 </DialogTitle>
                                 <p className="text-xs text-muted-foreground">
-                                    Generate an official university certificate or award.
+                                    Generate an official university certificate
+                                    or award.
                                 </p>
                             </div>
                         </div>
@@ -74,15 +74,23 @@ export function GenerateCertificateModal({
 
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="cert_title">Certificate Title</Label>
+                            <Label htmlFor="cert_title">
+                                Certificate Title
+                            </Label>
                             <Input
                                 id="cert_title"
                                 placeholder="e.g. Bachelor of Science in Software Engineering"
                                 value={data.title}
-                                onChange={(e) => setData('title', e.target.value)}
+                                onChange={(e) =>
+                                    setData('title', e.target.value)
+                                }
                                 required
                             />
-                            {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
+                            {errors.title && (
+                                <p className="text-xs text-destructive">
+                                    {errors.title}
+                                </p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -90,20 +98,36 @@ export function GenerateCertificateModal({
                                 <Label htmlFor="cert_type">Type</Label>
                                 <Select
                                     value={data.type}
-                                    onValueChange={(val) => setData('type', val)}
+                                    onValueChange={(val) =>
+                                        setData('type', val)
+                                    }
                                 >
                                     <SelectTrigger id="cert_type">
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="degree">Degree</SelectItem>
-                                        <SelectItem value="diploma">Diploma</SelectItem>
-                                        <SelectItem value="completion">Completion</SelectItem>
-                                        <SelectItem value="honor">Honor / Award</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
+                                        <SelectItem value="degree">
+                                            Degree
+                                        </SelectItem>
+                                        <SelectItem value="diploma">
+                                            Diploma
+                                        </SelectItem>
+                                        <SelectItem value="completion">
+                                            Completion
+                                        </SelectItem>
+                                        <SelectItem value="honor">
+                                            Honor / Award
+                                        </SelectItem>
+                                        <SelectItem value="other">
+                                            Other
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                {errors.type && <p className="text-xs text-destructive">{errors.type}</p>}
+                                {errors.type && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.type}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid gap-2">
@@ -112,11 +136,15 @@ export function GenerateCertificateModal({
                                     id="issue_date"
                                     type="date"
                                     value={data.issue_date}
-                                    onChange={(e) => setData('issue_date', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('issue_date', e.target.value)
+                                    }
                                     required
                                 />
                                 {errors.issue_date && (
-                                    <p className="text-xs text-destructive">{errors.issue_date}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.issue_date}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -133,7 +161,9 @@ export function GenerateCertificateModal({
                             Cancel
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Issue Certificate
                         </Button>
                     </DialogFooter>

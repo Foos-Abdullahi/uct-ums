@@ -1,16 +1,16 @@
-import React from 'react';
-import type { ColumnDef } from '@tanstack/react-table';
 import { router } from '@inertiajs/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { StudentStatusBadge } from './student-status-badge';
-import { StudentFeeBadge } from './student-fee-badge';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Eye, Edit3, KeyRound, Ban, CheckCircle2, Trash2 } from 'lucide-react';
+import React from 'react';
 import {
     DataTableRowActionsMenu,
     DataTableRowActionItem,
     DataTableRowActionItemDestructive,
 } from '@/components/tools/table/data-table-row-actions-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { Student } from '@/types/student';
-import { Eye, Edit3, KeyRound, Ban, CheckCircle2, Trash2 } from 'lucide-react';
+import { StudentFeeBadge } from './student-fee-badge';
+import { StudentStatusBadge } from './student-status-badge';
 
 interface StudentColumnsOptions {
     onDelete: (student: Student) => void;
@@ -45,11 +45,11 @@ export function getStudentColumns({
                                 {initials || 'ST'}
                             </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-semibold text-foreground truncate">
+                        <div className="flex min-w-0 flex-col">
+                            <span className="truncate text-sm font-semibold text-foreground">
                                 {name}
                             </span>
-                            <span className="text-xs text-muted-foreground truncate">
+                            <span className="truncate text-xs text-muted-foreground">
                                 {email}
                             </span>
                         </div>
@@ -62,7 +62,7 @@ export function getStudentColumns({
             header: 'Matric No',
             cell: ({ row }) => {
                 return (
-                    <span className="font-mono text-xs font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/40">
+                    <span className="rounded border border-border/40 bg-muted/60 px-2 py-0.5 font-mono text-xs font-medium text-foreground">
                         {row.original.matric_no}
                     </span>
                 );
@@ -73,13 +73,14 @@ export function getStudentColumns({
             header: 'Program',
             cell: ({ row }) => {
                 const program = row.original.program;
+
                 return (
                     <div className="flex flex-col">
-                        <span className="text-xs font-medium text-foreground truncate max-w-[200px]">
+                        <span className="max-w-[200px] truncate text-xs font-medium text-foreground">
                             {program?.name ?? 'Unassigned'}
                         </span>
                         {program?.degree_level && (
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                            <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
                                 {program.degree_level}
                             </span>
                         )}
@@ -102,7 +103,11 @@ export function getStudentColumns({
             accessorKey: 'enrollment_status',
             header: 'Status',
             cell: ({ row }) => {
-                return <StudentStatusBadge status={row.original.enrollment_status} />;
+                return (
+                    <StudentStatusBadge
+                        status={row.original.enrollment_status}
+                    />
+                );
             },
         },
         {
@@ -117,9 +122,12 @@ export function getStudentColumns({
             header: 'GPA',
             cell: ({ row }) => {
                 const gpa = row.original.gpa;
+
                 return (
                     <span className="font-mono text-xs font-medium text-foreground">
-                        {gpa !== null && gpa !== undefined ? Number(gpa).toFixed(2) : '-'}
+                        {gpa !== null && gpa !== undefined
+                            ? Number(gpa).toFixed(2)
+                            : '-'}
                     </span>
                 );
             },
@@ -132,39 +140,56 @@ export function getStudentColumns({
                 const isSuspended = student.enrollment_status === 'suspended';
 
                 return (
-                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="flex justify-end"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <DataTableRowActionsMenu trigger="default" align="end">
                             <DataTableRowActionItem
-                                onClick={() => router.visit(`/admin/students/${student.id}`)}
+                                onClick={() =>
+                                    router.visit(
+                                        `/admin/students/${student.id}`,
+                                    )
+                                }
                             >
-                                <Eye className="h-3.5 w-3.5 mr-2" />
+                                <Eye className="mr-2 h-3.5 w-3.5" />
                                 View Profile
                             </DataTableRowActionItem>
                             <DataTableRowActionItem
-                                onClick={() => router.visit(`/admin/students/${student.id}/edit`)}
+                                onClick={() =>
+                                    router.visit(
+                                        `/admin/students/${student.id}/edit`,
+                                    )
+                                }
                             >
-                                <Edit3 className="h-3.5 w-3.5 mr-2" />
+                                <Edit3 className="mr-2 h-3.5 w-3.5" />
                                 Edit Student
                             </DataTableRowActionItem>
-                            <DataTableRowActionItem onClick={() => onResetPassword(student)}>
-                                <KeyRound className="h-3.5 w-3.5 mr-2" />
+                            <DataTableRowActionItem
+                                onClick={() => onResetPassword(student)}
+                            >
+                                <KeyRound className="mr-2 h-3.5 w-3.5" />
                                 Reset Password
                             </DataTableRowActionItem>
-                            <DataTableRowActionItem onClick={() => onToggleStatus(student)}>
+                            <DataTableRowActionItem
+                                onClick={() => onToggleStatus(student)}
+                            >
                                 {isSuspended ? (
                                     <>
-                                        <CheckCircle2 className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+                                        <CheckCircle2 className="mr-2 h-3.5 w-3.5 text-emerald-600" />
                                         <span>Activate Account</span>
                                     </>
                                 ) : (
                                     <>
-                                        <Ban className="h-3.5 w-3.5 mr-2 text-amber-600" />
+                                        <Ban className="mr-2 h-3.5 w-3.5 text-amber-600" />
                                         <span>Suspend Account</span>
                                     </>
                                 )}
                             </DataTableRowActionItem>
-                            <DataTableRowActionItemDestructive onClick={() => onDelete(student)}>
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            <DataTableRowActionItemDestructive
+                                onClick={() => onDelete(student)}
+                            >
+                                <Trash2 className="mr-2 h-3.5 w-3.5" />
                                 Delete Record
                             </DataTableRowActionItemDestructive>
                         </DataTableRowActionsMenu>

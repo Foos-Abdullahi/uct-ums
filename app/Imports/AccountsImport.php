@@ -51,7 +51,7 @@ class AccountsImport implements ToArray, WithHeadingRow
             foreach ($aliases as $alias) {
                 $sourceKey = $keys[$alias] ?? null;
 
-                if ($sourceKey !== null && isset($row[$sourceKey]) && $row[$sourceKey] !== null) {
+                if ($sourceKey !== null && isset($row[$sourceKey])) {
                     return $row[$sourceKey];
                 }
             }

@@ -1,3 +1,4 @@
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,7 +9,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertTriangle, Loader2 } from 'lucide-react';
 
 interface ConfirmDeleteDialogProps {
     open: boolean;
@@ -42,7 +42,9 @@ export function ConfirmDeleteDialog({
                             <AlertTriangle className="h-5 w-5" />
                         </div>
                         <div>
-                            <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
+                            <DialogTitle className="text-base font-semibold">
+                                {title}
+                            </DialogTitle>
                             {itemName && (
                                 <p className="mt-0.5 text-xs font-medium text-destructive">
                                     {itemName}
@@ -50,7 +52,7 @@ export function ConfirmDeleteDialog({
                             )}
                         </div>
                     </div>
-                    <DialogDescription className="text-xs text-muted-foreground pt-1">
+                    <DialogDescription className="pt-1 text-xs text-muted-foreground">
                         {description}
                     </DialogDescription>
                 </DialogHeader>
@@ -71,7 +73,9 @@ export function ConfirmDeleteDialog({
                         disabled={loading}
                         onClick={onConfirm}
                     >
-                        {loading && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                        {loading && (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        )}
                         {confirmText}
                     </Button>
                 </DialogFooter>

@@ -1,5 +1,7 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { KeyRound, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -11,8 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 export interface ResetPasswordModalProps {
     open: boolean;
@@ -42,21 +42,26 @@ export function ResetPasswordModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!resetUrl) return;
+
+        if (!resetUrl) {
+            return;
+        }
 
         post(resetUrl, {
             onSuccess: () => {
                 toast.success(
                     userName
                         ? `Password reset successfully for ${userName}.`
-                        : 'Password reset successfully.'
+                        : 'Password reset successfully.',
                 );
                 reset();
                 onOpenChange(false);
                 onSuccess?.();
             },
             onError: () => {
-                toast.error('Failed to reset password. Please check the form errors.');
+                toast.error(
+                    'Failed to reset password. Please check the form errors.',
+                );
             },
         });
     };
@@ -67,7 +72,7 @@ export function ResetPasswordModal({
                 <form onSubmit={handleSubmit}>
                     <DialogHeader className="gap-2">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary">
                                 <KeyRound className="h-5 w-5" />
                             </div>
                             <div>
@@ -76,12 +81,15 @@ export function ResetPasswordModal({
                                 </DialogTitle>
                                 {(userName || userIdentifier) && (
                                     <p className="text-xs text-muted-foreground">
-                                        For {userName} {userIdentifier ? `(${userIdentifier})` : ''}
+                                        For {userName}{' '}
+                                        {userIdentifier
+                                            ? `(${userIdentifier})`
+                                            : ''}
                                     </p>
                                 )}
                             </div>
                         </div>
-                        <DialogDescription className="text-xs text-muted-foreground pt-1">
+                        <DialogDescription className="pt-1 text-xs text-muted-foreground">
                             {description}
                         </DialogDescription>
                     </DialogHeader>
@@ -94,26 +102,39 @@ export function ResetPasswordModal({
                                 type="password"
                                 placeholder="Enter at least 8 characters"
                                 value={data.password}
-                                onChange={(e) => setData('password', e.target.value)}
+                                onChange={(e) =>
+                                    setData('password', e.target.value)
+                                }
                                 required
                             />
                             {errors.password && (
-                                <p className="text-xs text-destructive">{errors.password}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.password}
+                                </p>
                             )}
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password_confirmation">Confirm Password</Label>
+                            <Label htmlFor="password_confirmation">
+                                Confirm Password
+                            </Label>
                             <Input
                                 id="password_confirmation"
                                 type="password"
                                 placeholder="Repeat new password"
                                 value={data.password_confirmation}
-                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                onChange={(e) =>
+                                    setData(
+                                        'password_confirmation',
+                                        e.target.value,
+                                    )
+                                }
                                 required
                             />
                             {errors.password_confirmation && (
-                                <p className="text-xs text-destructive">{errors.password_confirmation}</p>
+                                <p className="text-xs text-destructive">
+                                    {errors.password_confirmation}
+                                </p>
                             )}
                         </div>
                     </div>

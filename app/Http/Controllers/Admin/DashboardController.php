@@ -109,8 +109,8 @@ class DashboardController extends Controller
                         'application_no' => $a->application_no,
                         'name' => $a->full_name,
                         'email' => $a->email,
-                        'program' => $a->program?->name ?? 'General Studies',
-                        'program_code' => $a->program?->code ?? ('PRG-'.str_pad((string) ($a->program?->id ?? 1), 3, '0', STR_PAD_LEFT)),
+                        'program' => optional($a->program)->name ?? 'General Studies',
+                        'program_code' => optional($a->program)->code ?? ('PRG-'.str_pad((string) (optional($a->program)->id ?? 1), 3, '0', STR_PAD_LEFT)),
                         'status' => $a->status,
                         'created_at' => $a->created_at?->diffForHumans() ?? 'Recently',
                         'date' => $a->created_at?->format('M d, Y') ?? 'N/A',
@@ -126,12 +126,12 @@ class DashboardController extends Controller
                     ->map(fn (StudentPayment $p) => [
                         'id' => $p->id,
                         'transaction_no' => $p->transaction_no,
-                        'student_name' => $p->student?->user?->name ?? 'Student #'.$p->student_id,
-                        'matric_no' => $p->student?->matric_no ?? 'N/A',
+                        'student_name' => $p->student->user->name ?? 'Student #'.$p->student_id,
+                        'matric_no' => $p->student->matric_no ?? 'N/A',
                         'amount' => (float) $p->amount,
                         'payment_method' => str_replace('_', ' ', ucfirst($p->payment_method)),
                         'status' => $p->status,
-                        'date' => $p->payment_date ? $p->payment_date->format('M d, Y') : ($p->created_at?->format('M d, Y') ?? 'N/A'),
+                        'date' => $p->payment_date->format('M d, Y'),
                     ]);
             }),
 
@@ -143,10 +143,10 @@ class DashboardController extends Controller
                     ->get()
                     ->map(fn (CourseAssignment $ca) => [
                         'id' => $ca->id,
-                        'course_code' => $ca->course?->code ?? 'N/A',
-                        'course_name' => $ca->course?->name ?? 'Course Title',
-                        'lecturer_name' => $ca->lecturer?->user?->name ?? 'Lecturer #'.$ca->lecturer_id,
-                        'department' => $ca->lecturer?->department ?? 'Faculty',
+                        'course_code' => $ca->course->code ?? 'N/A',
+                        'course_name' => $ca->course->name ?? 'Course Title',
+                        'lecturer_name' => $ca->lecturer->user->name ?? 'Lecturer #'.$ca->lecturer_id,
+                        'department' => $ca->lecturer->department ?? 'Faculty',
                         'schedule' => ($ca->schedule_day ? $ca->schedule_day.' ' : '').($ca->schedule_time ?? 'TBA'),
                         'room' => $ca->room ?? 'Main Campus',
                         'status' => $ca->status,
@@ -161,12 +161,12 @@ class DashboardController extends Controller
                     ->get()
                     ->map(fn (Student $s) => [
                         'id' => $s->id,
-                        'name' => $s->user?->name ?? 'Student',
-                        'email' => $s->user?->email ?? '',
+                        'name' => $s->user->name ?? 'Student',
+                        'email' => $s->user->email ?? '',
                         'matric_no' => $s->matric_no,
-                        'program' => $s->program?->name ?? 'General Program',
+                        'program' => optional($s->program)->name ?? 'General Program',
                         'enrollment_status' => $s->enrollment_status ?? 'enrolled',
-                        'fee_status' => is_object($s->fee_status) ? $s->fee_status->value : ($s->fee_status ?? 'unpaid'),
+                        'fee_status' => $s->fee_status->value,
                         'current_semester' => $s->current_semester ?? 1,
                         'created_at' => $s->created_at?->format('M d, Y') ?? 'Recently',
                     ]);
@@ -180,8 +180,8 @@ class DashboardController extends Controller
                     ->orderBy('current_semester')
                     ->get()
                     ->map(fn ($row) => [
-                        'semester' => 'Semester '.(int) $row->current_semester,
-                        'total' => (int) $row->total,
+                        'semester' => 'Semester '.(int) $row['current_semester'],
+                        'total' => (int) $row['total'],
                     ]);
             }),
         ]);

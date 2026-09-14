@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router, useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { MetricCard } from '@/components/tools/MetricCard';
+import type { ColumnDef } from '@tanstack/react-table';
+import {
+    CreditCard,
+    DollarSign,
+    CheckCircle2,
+    Clock,
+    Plus,
+    Check,
+    X,
+    Eye,
+    Save,
+} from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -16,22 +28,9 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { BreadcrumbItem } from '@/types';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
-import type { ColumnDef } from '@tanstack/react-table';
-import {
-    CreditCard,
-    DollarSign,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Plus,
-    Check,
-    X,
-    Eye,
-    Save,
-} from 'lucide-react';
-import { toast } from 'sonner';
 
 export interface PaymentItem {
     id: number;
@@ -98,7 +97,8 @@ export default function AdminFinancePayments({
     filters,
 }: AdminFinancePaymentsProps) {
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const formatCurrency = (val: number) => `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const formatCurrency = (val: number) =>
+        `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         student_id: '',
@@ -138,11 +138,19 @@ export default function AdminFinancePayments({
         });
     };
 
-    const handleStatusChange = (paymentId: number, newStatus: 'paid' | 'rejected') => {
-        router.patch(`/admin/finance/payments/${paymentId}/status`, { status: newStatus }, {
-            preserveScroll: true,
-            onSuccess: () => toast.success(`Payment marked as ${newStatus}.`),
-        });
+    const handleStatusChange = (
+        paymentId: number,
+        newStatus: 'paid' | 'rejected',
+    ) => {
+        router.patch(
+            `/admin/finance/payments/${paymentId}/status`,
+            { status: newStatus },
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(`Payment marked as ${newStatus}.`),
+            },
+        );
     };
 
     const columns: ColumnDef<PaymentItem>[] = [
@@ -150,7 +158,10 @@ export default function AdminFinancePayments({
             accessorKey: 'transaction_no',
             header: 'Transaction ID',
             cell: ({ row }) => (
-                <Badge variant="outline" className="font-mono text-xs font-semibold uppercase">
+                <Badge
+                    variant="outline"
+                    className="font-mono text-xs font-semibold uppercase"
+                >
                     {row.original.transaction_no}
                 </Badge>
             ),
@@ -160,8 +171,12 @@ export default function AdminFinancePayments({
             header: 'Student',
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
-                    <p className="font-medium text-foreground truncate text-sm">{row.original.student?.user?.name || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{row.original.student?.matric_no}</p>
+                    <p className="truncate text-sm font-medium text-foreground">
+                        {row.original.student?.user?.name || 'N/A'}
+                    </p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                        {row.original.student?.matric_no}
+                    </p>
                 </div>
             ),
         },
@@ -178,7 +193,7 @@ export default function AdminFinancePayments({
             accessorKey: 'payment_method',
             header: 'Method',
             cell: ({ row }) => (
-                <Badge variant="secondary" className="capitalize text-[11px]">
+                <Badge variant="secondary" className="text-[11px] capitalize">
                     {row.original.payment_method.replace('_', ' ')}
                 </Badge>
             ),
@@ -197,25 +212,24 @@ export default function AdminFinancePayments({
             header: 'Status',
             cell: ({ row }) => {
                 const status = row.original.status;
+
                 if (status === 'paid') {
                     return (
-                        <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-200">
+                        <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
                             Verified / Paid
                         </Badge>
                     );
                 }
+
                 if (status === 'pending') {
                     return (
-                        <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border-amber-200">
+                        <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
                             Pending Review
                         </Badge>
                     );
                 }
-                return (
-                    <Badge variant="destructive">
-                        Rejected
-                    </Badge>
-                );
+
+                return <Badge variant="destructive">Rejected</Badge>;
             },
         },
         {
@@ -223,6 +237,7 @@ export default function AdminFinancePayments({
             header: () => <span className="sr-only">Actions</span>,
             cell: ({ row }) => {
                 const pmt = row.original;
+
                 return (
                     <div className="flex items-center justify-end gap-1">
                         {pmt.status === 'pending' && (
@@ -230,19 +245,23 @@ export default function AdminFinancePayments({
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                    onClick={() => handleStatusChange(pmt.id, 'paid')}
+                                    className="h-7 px-2 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                    onClick={() =>
+                                        handleStatusChange(pmt.id, 'paid')
+                                    }
                                 >
-                                    <Check className="h-3.5 w-3.5 mr-1" />
+                                    <Check className="mr-1 h-3.5 w-3.5" />
                                     Approve
                                 </Button>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                                    onClick={() => handleStatusChange(pmt.id, 'rejected')}
+                                    onClick={() =>
+                                        handleStatusChange(pmt.id, 'rejected')
+                                    }
                                 >
-                                    <X className="h-3.5 w-3.5 mr-1" />
+                                    <X className="mr-1 h-3.5 w-3.5" />
                                     Reject
                                 </Button>
                             </>
@@ -253,8 +272,10 @@ export default function AdminFinancePayments({
                             className="h-7 px-2 text-xs"
                             asChild
                         >
-                            <Link href={`/admin/students/${pmt.student_id}?tab=finance`}>
-                                <Eye className="h-3.5 w-3.5 mr-1" />
+                            <Link
+                                href={`/admin/students/${pmt.student_id}?tab=finance`}
+                            >
+                                <Eye className="mr-1 h-3.5 w-3.5" />
                                 Details
                             </Link>
                         </Button>
@@ -296,26 +317,29 @@ export default function AdminFinancePayments({
         <>
             <Head title="Student Payments & Transactions" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Student Payments & Transactions
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Audit incoming tuition receipts, mobile money payments (EVC/Zaad), bank slips, and verification queue.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Audit incoming tuition receipts, mobile money
+                            payments (EVC/Zaad), bank slips, and verification
+                            queue.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/invoices">
-                                Invoices
-                            </Link>
+                            <Link href="/admin/finance/invoices">Invoices</Link>
                         </Button>
-                        <Button size="sm" onClick={() => setCreateModalOpen(true)}>
-                            <Plus className="h-4 w-4 mr-1.5" />
+                        <Button
+                            size="sm"
+                            onClick={() => setCreateModalOpen(true)}
+                        >
+                            <Plus className="mr-1.5 h-4 w-4" />
                             Record Payment
                         </Button>
                     </div>
@@ -324,7 +348,7 @@ export default function AdminFinancePayments({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
                                 title="Total Collected"
                                 value={formatCurrency(stats.total_collected)}
@@ -356,7 +380,7 @@ export default function AdminFinancePayments({
                 {/* Payments Data Table */}
                 <Deferred data="payments" fallback={<TableSkeleton />}>
                     {payments && (
-                        <div className="border border-border/60 rounded-md bg-card p-4">
+                        <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
                                 title="Payment Transactions Roster"
                                 searchTitle="Search by transaction no, matric no, student name..."
@@ -368,41 +392,76 @@ export default function AdminFinancePayments({
                                     per_page: payments.per_page,
                                     total: payments.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/finance/payments', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/finance/payments',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/students/${row.original.student_id}?tab=finance`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/students/${row.original.student_id}?tab=finance`,
+                                    )
+                                }
                             />
                         </div>
                     )}
                 </Deferred>
 
                 {/* Record Payment Modal */}
-                <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+                <Dialog
+                    open={createModalOpen}
+                    onOpenChange={setCreateModalOpen}
+                >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle className="text-base font-semibold">Record Student Payment</DialogTitle>
+                            <DialogTitle className="text-base font-semibold">
+                                Record Student Payment
+                            </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Enter payment transaction details received from student.
+                                Enter payment transaction details received from
+                                student.
                             </DialogDescription>
                         </DialogHeader>
 
-                        <form onSubmit={handleRecordPayment} className="space-y-4 py-2">
+                        <form
+                            onSubmit={handleRecordPayment}
+                            className="space-y-4 py-2"
+                        >
                             <div className="space-y-1.5">
-                                <Label htmlFor="student_id" className="text-xs font-semibold">
-                                    Student <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="student_id"
+                                    className="text-xs font-semibold"
+                                >
+                                    Student{' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <select
                                     id="student_id"
-                                    className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.student_id}
-                                    onChange={(e) => setData('student_id', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('student_id', e.target.value)
+                                    }
                                     required
                                 >
                                     <option value="">Select Student</option>
@@ -412,12 +471,20 @@ export default function AdminFinancePayments({
                                         </option>
                                     ))}
                                 </select>
-                                {errors.student_id && <p className="text-[11px] text-destructive">{errors.student_id}</p>}
+                                {errors.student_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.student_id}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="amount" className="text-xs font-semibold">
-                                    Payment Amount ($) <span className="text-destructive">*</span>
+                                <Label
+                                    htmlFor="amount"
+                                    className="text-xs font-semibold"
+                                >
+                                    Payment Amount ($){' '}
+                                    <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="amount"
@@ -425,43 +492,79 @@ export default function AdminFinancePayments({
                                     step="0.01"
                                     placeholder="e.g. 450.00"
                                     value={data.amount}
-                                    onChange={(e) => setData('amount', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('amount', e.target.value)
+                                    }
                                     className="text-xs"
                                     required
                                 />
-                                {errors.amount && <p className="text-[11px] text-destructive">{errors.amount}</p>}
+                                {errors.amount && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.amount}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="payment_method" className="text-xs font-semibold">
-                                        Method <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="payment_method"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Method{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <select
                                         id="payment_method"
-                                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                         value={data.payment_method}
-                                        onChange={(e) => setData('payment_method', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'payment_method',
+                                                e.target.value,
+                                            )
+                                        }
                                         required
                                     >
-                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="bank_transfer">
+                                            Bank Transfer
+                                        </option>
                                         <option value="cash">Cash</option>
-                                        <option value="evc_plus">EVC Plus</option>
-                                        <option value="zaad">Zaad Service</option>
+                                        <option value="evc_plus">
+                                            EVC Plus
+                                        </option>
+                                        <option value="zaad">
+                                            Zaad Service
+                                        </option>
                                         <option value="sahay">Sahay</option>
-                                        <option value="credit_card">Credit / Debit Card</option>
+                                        <option value="credit_card">
+                                            Credit / Debit Card
+                                        </option>
                                     </select>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="payment_date" className="text-xs font-semibold">
-                                        Payment Date <span className="text-destructive">*</span>
+                                    <Label
+                                        htmlFor="payment_date"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Payment Date{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </Label>
                                     <Input
                                         id="payment_date"
                                         type="date"
                                         value={data.payment_date}
-                                        onChange={(e) => setData('payment_date', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'payment_date',
+                                                e.target.value,
+                                            )
+                                        }
                                         className="text-xs"
                                         required
                                     />
@@ -469,25 +572,41 @@ export default function AdminFinancePayments({
                             </div>
 
                             <div className="space-y-1.5">
-                                <Label htmlFor="notes" className="text-xs font-semibold">
+                                <Label
+                                    htmlFor="notes"
+                                    className="text-xs font-semibold"
+                                >
                                     Receipt / Reference Note
                                 </Label>
                                 <Input
                                     id="notes"
                                     placeholder="e.g. Bank slip #98234, Semester 1 tuition fee"
                                     value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('notes', e.target.value)
+                                    }
                                     className="text-xs"
                                 />
                             </div>
 
                             <DialogFooter className="pt-2">
-                                <Button type="button" variant="outline" size="sm" onClick={() => setCreateModalOpen(false)}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCreateModalOpen(false)}
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" size="sm" disabled={processing}>
-                                    <Save className="h-4 w-4 mr-1.5" />
-                                    {processing ? 'Saving...' : 'Record Payment'}
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={processing}
+                                >
+                                    <Save className="mr-1.5 h-4 w-4" />
+                                    {processing
+                                        ? 'Saving...'
+                                        : 'Record Payment'}
                                 </Button>
                             </DialogFooter>
                         </form>

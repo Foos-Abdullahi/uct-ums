@@ -21,7 +21,7 @@ class StudentInvoiceItemFactory extends Factory
 
         return [
             'invoice_id' => StudentInvoice::factory(),
-            'description' => fake()->catchPhrase(),
+            'description' => fake()->sentence(3),
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'amount' => round($unitPrice * $quantity, 2),

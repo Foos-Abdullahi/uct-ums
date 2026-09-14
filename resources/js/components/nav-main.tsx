@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     Collapsible,
     CollapsibleContent,
@@ -27,14 +27,13 @@ function NavGroupItem({ item }: { item: NavItem }) {
     );
     const [open, setOpen] = useState(isActive);
 
-    useEffect(() => {
-        if (isActive) {
-            setOpen(true);
-        }
-    }, [isActive]);
-
     return (
-        <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
+        <Collapsible
+            key={String(isActive)}
+            open={open}
+            onOpenChange={setOpen}
+            className="group/collapsible"
+        >
             <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
                     <SidebarMenuButton tooltip={{ children: item.title }}>

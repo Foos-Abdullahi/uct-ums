@@ -63,7 +63,7 @@ class StudentInvoiceFactory extends Factory
                 $lineTotal = round($unitPrice * $quantity, 2);
 
                 $items[] = [
-                    'description' => fake()->catchPhrase(),
+                    'description' => fake()->sentence(3),
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
                     'amount' => $lineTotal,

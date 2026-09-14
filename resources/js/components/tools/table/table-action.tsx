@@ -69,8 +69,8 @@ export function ManageActions<TData>({
 
     const handleView = () => {
         if (!row) {
-return;
-}
+            return;
+        }
 
         setViewOpen(true);
     };

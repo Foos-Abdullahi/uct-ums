@@ -15,8 +15,7 @@ import { usePortalNavigation } from '@/hooks/use-portal-navigation';
 
 export function AppSidebar() {
     const mainNavItems = usePortalNavigation();
-    const dashboardHref =
-        mainNavItems[0]?.href ?? '/admin/dashboard';
+    const dashboardHref = mainNavItems[0]?.href ?? '/admin/dashboard';
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -32,7 +31,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <SidebarContent className="no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 

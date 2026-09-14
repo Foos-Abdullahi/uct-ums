@@ -1,14 +1,4 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { getAssignmentColumns } from './components/assignment-columns';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { BreadcrumbItem } from '@/types';
-import type { CourseAssignment, AssignmentStats, PaginatedData } from './components/assignment';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import {
     ClipboardList,
     CheckCircle2,
@@ -16,8 +6,22 @@ import {
     XCircle,
     Plus,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Button } from '@/components/ui/button';
+import type { BreadcrumbItem } from '@/types';
+import type {
+    CourseAssignment,
+    AssignmentStats,
+    PaginatedData,
+} from './components/assignment';
+import { getAssignmentColumns } from './components/assignment-columns';
 
 interface AdminAssignmentsIndexProps {
     stats?: AssignmentStats;
@@ -47,7 +51,8 @@ export default function AdminAssignmentsIndex({
     courses = [],
     filters,
 }: AdminAssignmentsIndexProps) {
-    const [selectedAssignment, setSelectedAssignment] = useState<CourseAssignment | null>(null);
+    const [selectedAssignment, setSelectedAssignment] =
+        useState<CourseAssignment | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
@@ -76,7 +81,10 @@ export default function AdminAssignmentsIndex({
     };
 
     const confirmDelete = () => {
-        if (!selectedAssignment) return;
+        if (!selectedAssignment) {
+            return;
+        }
+
         setDeleteProcessing(true);
 
         router.delete(`/admin/assignments/${selectedAssignment.id}`, {
@@ -95,7 +103,8 @@ export default function AdminAssignmentsIndex({
 
     const columns = getAssignmentColumns({
         onDelete: handleDelete,
-        onEdit: (assignment) => router.visit(`/admin/assignments/${assignment.id}/edit`),
+        onEdit: (assignment) =>
+            router.visit(`/admin/assignments/${assignment.id}/edit`),
     });
 
     const serverFilters: DataTableServerFilter[] = [
@@ -167,22 +176,23 @@ export default function AdminAssignmentsIndex({
         <>
             <Head title="Course Assignments" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Course Assignments
                         </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Manage which lecturers are assigned to which courses, roles, and schedules.
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Manage which lecturers are assigned to which
+                            courses, roles, and schedules.
                         </p>
                     </div>
 
                     {/* Use Link for full-page creation */}
                     <Button size="sm" asChild>
                         <Link href="/admin/assignments/create">
-                            <Plus className="h-4 w-4 mr-1.5" />
+                            <Plus className="mr-1.5 h-4 w-4" />
                             New Assignment
                         </Link>
                     </Button>
@@ -191,7 +201,7 @@ export default function AdminAssignmentsIndex({
                 {/* Summary Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-1000 ease-in-out">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Assignments"
                                 value={stats.total_assignments}
@@ -229,7 +239,7 @@ export default function AdminAssignmentsIndex({
                 {/* Main DataTable */}
                 <Deferred data="assignments" fallback={<TableSkeleton />}>
                     {assignments && (
-                        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 ease-in-out">
+                        <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
                                 title="Assignments List"
                                 searchTitle="Search by course code, lecturer name, or section..."
@@ -241,16 +251,36 @@ export default function AdminAssignmentsIndex({
                                     per_page: assignments.per_page,
                                     total: assignments.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ ...filters, page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({
+                                        ...filters,
+                                        page,
+                                    } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/assignments', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/assignments',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/assignments/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/assignments/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}

@@ -1,17 +1,4 @@
-import React, { useState } from 'react';
 import { Deferred, Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { MetricCard } from '@/components/tools/MetricCard';
-import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
-import { DataTable } from '@/components/tools/table/main-table';
-import { TableSkeleton } from '@/components/tools/table-skeleton';
-import { getLecturerColumns } from './components/lecturer-columns';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import { ResetPasswordModal } from '@/components/tools/reset-password-modal';
-import type { BreadcrumbItem } from '@/types';
-import type { PaginatedData, Lecturer, LecturerStats } from '@/types/lecturer';
-import type { DataTableServerFilter } from '@/components/tools/table/types';
 import {
     Users,
     UserCheck,
@@ -20,7 +7,20 @@ import {
     Briefcase,
     Plus,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
+import { MetricCard } from '@/components/tools/MetricCard';
+import { ResetPasswordModal } from '@/components/tools/reset-password-modal';
+import { DataTable } from '@/components/tools/table/main-table';
+import type { DataTableServerFilter } from '@/components/tools/table/types';
+import { TableSkeleton } from '@/components/tools/table-skeleton';
+import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
+import type { PaginatedData, Lecturer, LecturerStats } from '@/types/lecturer';
+import { getLecturerColumns } from './components/lecturer-columns';
 
 interface AdminLecturersIndexProps {
     stats?: LecturerStats;
@@ -46,31 +46,36 @@ export default function AdminLecturersIndex({
     stats,
     lecturers,
     departments = [],
-    faculties = [],
     filters,
 }: AdminLecturersIndexProps) {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedLecturerForDelete, setSelectedLecturerForDelete] = useState<Lecturer | null>(null);
+    const [selectedLecturerForDelete, setSelectedLecturerForDelete] =
+        useState<Lecturer | null>(null);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-    const [selectedLecturerForPassword, setSelectedLecturerForPassword] = useState<Lecturer | null>(null);
+    const [selectedLecturerForPassword, setSelectedLecturerForPassword] =
+        useState<Lecturer | null>(null);
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         router.get(
             '/admin/lecturers',
             { ...filters, ...newFilters },
-            { preserveState: true, preserveScroll: true, replace: true }
+            { preserveState: true, preserveScroll: true, replace: true },
         );
     };
 
     const confirmDelete = () => {
-        if (!selectedLecturerForDelete) return;
+        if (!selectedLecturerForDelete) {
+            return;
+        }
 
         setDeleteProcessing(true);
         router.delete(`/admin/lecturers/${selectedLecturerForDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Lecturer ${selectedLecturerForDelete.user?.name} deleted successfully.`);
+                toast.success(
+                    `Lecturer ${selectedLecturerForDelete.user?.name} deleted successfully.`,
+                );
                 setDeleteModalOpen(false);
                 setSelectedLecturerForDelete(null);
                 setDeleteProcessing(false);
@@ -83,11 +88,16 @@ export default function AdminLecturersIndex({
     };
 
     const handleToggleStatus = (lecturer: Lecturer) => {
-        router.post(`/admin/lecturers/${lecturer.id}/toggle-status`, {}, {
-            preserveScroll: true,
-            onSuccess: () => toast.success('Lecturer status updated successfully.'),
-            onError: () => toast.error('Failed to update lecturer status.'),
-        });
+        router.post(
+            `/admin/lecturers/${lecturer.id}/toggle-status`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success('Lecturer status updated successfully.'),
+                onError: () => toast.error('Failed to update lecturer status.'),
+            },
+        );
     };
 
     const columns = getLecturerColumns({
@@ -105,31 +115,32 @@ export default function AdminLecturersIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'employment_status',
-            label: 'Status',
+            title: 'Status',
             options: [
                 { label: 'Active', value: 'active' },
                 { label: 'On Leave', value: 'on_leave' },
                 { label: 'Sabbatical', value: 'sabbatical' },
+                { label: 'Inactive', value: 'inactive' },
                 { label: 'Terminated', value: 'terminated' },
             ],
-            defaultValue: filters.employment_status || 'all',
+            value: filters.employment_status || undefined,
         },
         {
             key: 'department',
-            label: 'Department',
+            title: 'Department',
             options: departments.map((d) => ({ label: d, value: d })),
-            defaultValue: filters.department || 'all',
+            value: filters.department || undefined,
         },
         {
             key: 'contract_type',
-            label: 'Contract',
+            title: 'Contract',
             options: [
                 { label: 'Full Time', value: 'full_time' },
                 { label: 'Part Time', value: 'part_time' },
                 { label: 'Adjunct', value: 'adjunct' },
                 { label: 'Visiting', value: 'visiting' },
             ],
-            defaultValue: filters.contract_type || 'all',
+            value: filters.contract_type || undefined,
         },
     ];
 
@@ -137,22 +148,23 @@ export default function AdminLecturersIndex({
         <>
             <Head title="Lecturers Management" />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-lg font-semibold text-foreground tracking-tight">
+                        <h1 className="text-lg font-semibold tracking-tight text-foreground">
                             Lecturers Directory
                         </h1>
                         <p className="text-xs text-muted-foreground">
-                            Manage university faculty members, designations, department appointments, and teaching loads.
+                            Manage university faculty members, designations,
+                            department appointments, and teaching loads.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <Button size="sm" asChild>
                             <Link href="/admin/lecturers/create">
-                                <Plus className="h-4 w-4 mr-1.5" />
+                                <Plus className="mr-1.5 h-4 w-4" />
                                 Add Lecturer
                             </Link>
                         </Button>
@@ -165,7 +177,7 @@ export default function AdminLecturersIndex({
                     fallback={<MetricCardsSkeleton count={5} />}
                 >
                     {stats && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:gap-4 lg:grid-cols-5 animate-in fade-in slide-in-from-top-6 duration-700">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-700 fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
                                 title="Total Faculty"
                                 value={stats.total_lecturers}
@@ -208,11 +220,15 @@ export default function AdminLecturersIndex({
                 {/* Deferred Data Table */}
                 <Deferred
                     data="lecturers"
-                    fallback={<TableSkeleton columns={6} rows={6} filterCount={3} />}
+                    fallback={
+                        <TableSkeleton columns={6} rows={6} filterCount={3} />
+                    }
                 >
                     {lecturers && (
-                        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        <div className="animate-in duration-700 fade-in slide-in-from-bottom-6">
                             <DataTable
+                                title="Lecturers"
+                                searchTitle="Search by name, lecturer number, department, faculty, or designation..."
                                 columns={columns}
                                 data={lecturers.data}
                                 pagination={{
@@ -221,16 +237,33 @@ export default function AdminLecturersIndex({
                                     per_page: lecturers.per_page,
                                     total: lecturers.total,
                                 }}
-                                onPageChange={(page) => handleFilterUpdate({ page } as any)}
-                                onPageSizeChange={(per_page) => handleFilterUpdate({ per_page, page: 1 } as any)}
+                                onPageChange={(page) =>
+                                    handleFilterUpdate({ page } as any)
+                                }
+                                onPageSizeChange={(per_page) =>
+                                    handleFilterUpdate({
+                                        per_page,
+                                        page: 1,
+                                    } as any)
+                                }
                                 serverFilters={serverFilters}
                                 onServerFilterChange={(key, values) => {
-                                    handleFilterUpdate({ [key]: values?.[0] ?? 'all' });
+                                    handleFilterUpdate({
+                                        [key]: values?.[0] ?? 'all',
+                                    });
                                 }}
                                 onServerFilterClear={() => {
-                                    router.get('/admin/lecturers', {}, { preserveState: true });
+                                    router.get(
+                                        '/admin/lecturers',
+                                        {},
+                                        { preserveState: true },
+                                    );
                                 }}
-                                onRowClick={(row) => router.visit(`/admin/lecturers/${row.original.id}`)}
+                                onRowClick={(row) =>
+                                    router.visit(
+                                        `/admin/lecturers/${row.original.id}`,
+                                    )
+                                }
                             />
                         </div>
                     )}

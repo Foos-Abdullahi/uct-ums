@@ -447,7 +447,7 @@ class StudentController extends Controller
             ]);
 
             if (! empty($validated['invoice_id']) && $status === 'approved') {
-                $invoice = StudentInvoice::find($validated['invoice_id']);
+                $invoice = StudentInvoice::find((int) $validated['invoice_id']);
                 if ($invoice) {
                     $newPaidAmount = (float) $invoice->paid_amount + (float) $validated['amount'];
                     $invoice->update([

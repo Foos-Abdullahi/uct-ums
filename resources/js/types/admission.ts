@@ -1,6 +1,7 @@
 import type { Program, Student } from './student';
 
-export type AdmissionStatus = 'pending' | 'under_review' | 'approved' | 'rejected' | 'enrolled';
+export type AdmissionStatus =
+    'pending' | 'under_review' | 'approved' | 'rejected' | 'enrolled';
 
 export interface Admission {
     id: number;

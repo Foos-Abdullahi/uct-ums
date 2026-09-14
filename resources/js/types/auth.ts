@@ -1,10 +1,5 @@
 export type UserRole =
-    | 'super_admin'
-    | 'registrar'
-    | 'finance'
-    | 'hr'
-    | 'lecturer'
-    | 'student';
+    'super_admin' | 'registrar' | 'finance' | 'hr' | 'lecturer' | 'student';
 
 export type User = {
     id: number;

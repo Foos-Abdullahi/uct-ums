@@ -1,35 +1,8 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { AssignmentStatusBadge } from './components/assignment-status-badge';
-import { AssignmentRoleBadge } from './components/assignment-role-badge';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { CourseAssignment } from './components/assignment';
-import {
-    ArrowLeft,
     Edit3,
     Trash2,
-    User,
     BookOpen,
-    Calendar,
     Clock,
     MapPin,
     FileText,
@@ -37,13 +10,23 @@ import {
     XCircle,
     RefreshCw,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { CourseAssignment } from './components/assignment';
+import { AssignmentRoleBadge } from './components/assignment-role-badge';
+import { AssignmentStatusBadge } from './components/assignment-status-badge';
 
 interface AdminAssignmentsShowProps {
     assignment: CourseAssignment;
 }
 
-export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsShowProps) {
+export default function AdminAssignmentsShow({
+    assignment,
+}: AdminAssignmentsShowProps) {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
     const [statusUpdating, setStatusUpdating] = useState(false);
@@ -67,7 +50,7 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                     toast.error('Failed to update status.');
                     setStatusUpdating(false);
                 },
-            }
+            },
         );
     };
 
@@ -90,29 +73,38 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
         <>
             <Head title={`Assignment - ${courseCode} / ${lecturerName}`} />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header Banner */}
                 <UctPanelCard
                     type="default"
                     className="overflow-hidden"
                     title={
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 border border-primary/20">
+                        <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:items-center">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                                 <BookOpen className="h-7 w-7" />
                             </div>
                             <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-lg font-bold text-foreground tracking-tight">
+                                    <span className="text-lg font-bold tracking-tight text-foreground">
                                         {courseCode}
                                     </span>
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {courseName}
                                     </span>
-                                    <AssignmentStatusBadge status={assignment.status} />
-                                    <AssignmentRoleBadge role={assignment.role} />
+                                    <AssignmentStatusBadge
+                                        status={assignment.status}
+                                    />
+                                    <AssignmentRoleBadge
+                                        role={assignment.role}
+                                    />
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Lecturer: <strong className="text-foreground font-semibold">{lecturerName}</strong> • {assignment.academic_year} ({assignment.semester})
+                                    Lecturer:{' '}
+                                    <strong className="font-semibold text-foreground">
+                                        {lecturerName}
+                                    </strong>{' '}
+                                    • {assignment.academic_year} (
+                                    {assignment.semester})
                                 </p>
                             </div>
                         </div>
@@ -120,8 +112,10 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Button size="sm" asChild>
-                                <Link href={`/admin/assignments/${assignment.id}/edit`}>
-                                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                                <Link
+                                    href={`/admin/assignments/${assignment.id}/edit`}
+                                >
+                                    <Edit3 className="mr-1.5 h-3.5 w-3.5" />
                                     Edit Assignment
                                 </Link>
                             </Button>
@@ -131,7 +125,7 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                                 variant="destructive"
                                 onClick={() => setDeleteModalOpen(true)}
                             >
-                                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                                 Delete
                             </Button>
                         </div>
@@ -140,15 +134,21 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
 
                 {/* Tabs */}
                 <Tabs defaultValue="details" className="space-y-4">
-                    <TabsList className="bg-muted/60 p-1 rounded-sm border border-border/40 flex-wrap h-auto">
-                        <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
-                        <TabsTrigger value="schedule" className="text-xs">Schedule</TabsTrigger>
-                        <TabsTrigger value="notes" className="text-xs">Notes</TabsTrigger>
+                    <TabsList className="h-auto flex-wrap rounded-sm border border-border/40 bg-muted/60 p-1">
+                        <TabsTrigger value="details" className="text-xs">
+                            Details
+                        </TabsTrigger>
+                        <TabsTrigger value="schedule" className="text-xs">
+                            Schedule
+                        </TabsTrigger>
+                        <TabsTrigger value="notes" className="text-xs">
+                            Notes
+                        </TabsTrigger>
                     </TabsList>
 
                     {/* Tab 1: Details */}
                     <TabsContent value="details" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <UctPanelCard
                                 title="Assignment Information"
                                 description="Core assignment data."
@@ -157,40 +157,77 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                             >
                                 <div className="divide-y divide-border/30 text-xs">
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Course</span>
-                                        <span className="font-medium text-foreground">{courseCode} – {courseName}</span>
+                                        <span className="text-muted-foreground">
+                                            Course
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {courseCode} – {courseName}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Lecturer</span>
-                                        <span className="font-medium text-foreground">{lecturerName}</span>
+                                        <span className="text-muted-foreground">
+                                            Lecturer
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {lecturerName}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Staff ID</span>
-                                        <span className="font-mono font-medium text-foreground">{assignment.lecturer?.lecturer_no || '—'}</span>
+                                        <span className="text-muted-foreground">
+                                            Staff ID
+                                        </span>
+                                        <span className="font-mono font-medium text-foreground">
+                                            {assignment.lecturer?.lecturer_no ||
+                                                '—'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Role</span>
-                                        <AssignmentRoleBadge role={assignment.role} />
+                                        <span className="text-muted-foreground">
+                                            Role
+                                        </span>
+                                        <AssignmentRoleBadge
+                                            role={assignment.role}
+                                        />
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Status</span>
-                                        <AssignmentStatusBadge status={assignment.status} />
+                                        <span className="text-muted-foreground">
+                                            Status
+                                        </span>
+                                        <AssignmentStatusBadge
+                                            status={assignment.status}
+                                        />
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Workload Hours</span>
-                                        <span className="font-medium text-foreground">{assignment.workload_hours}</span>
+                                        <span className="text-muted-foreground">
+                                            Workload Hours
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {assignment.workload_hours}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Academic Year</span>
-                                        <span className="font-medium text-foreground">{assignment.academic_year}</span>
+                                        <span className="text-muted-foreground">
+                                            Academic Year
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {assignment.academic_year}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Semester</span>
-                                        <span className="font-medium text-foreground">{assignment.semester}</span>
+                                        <span className="text-muted-foreground">
+                                            Semester
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {assignment.semester}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between py-2">
-                                        <span className="text-muted-foreground">Section</span>
-                                        <span className="font-medium text-foreground">{assignment.section}</span>
+                                        <span className="text-muted-foreground">
+                                            Section
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {assignment.section}
+                                        </span>
                                     </div>
                                 </div>
                             </UctPanelCard>
@@ -203,46 +240,78 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                                     type="default"
                                 >
                                     <div className="space-y-3">
-                                        <p className="text-xs text-muted-foreground">Change Assignment Status</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Change Assignment Status
+                                        </p>
                                         <div className="flex flex-wrap gap-2">
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 className="text-xs"
-                                                onClick={() => handleStatusChange('active')}
-                                                disabled={statusUpdating || assignment.status === 'active'}
+                                                onClick={() =>
+                                                    handleStatusChange('active')
+                                                }
+                                                disabled={
+                                                    statusUpdating ||
+                                                    assignment.status ===
+                                                        'active'
+                                                }
                                             >
-                                                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                                                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
                                                 Activate
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 className="text-xs"
-                                                onClick={() => handleStatusChange('completed')}
-                                                disabled={statusUpdating || assignment.status === 'completed'}
+                                                onClick={() =>
+                                                    handleStatusChange(
+                                                        'completed',
+                                                    )
+                                                }
+                                                disabled={
+                                                    statusUpdating ||
+                                                    assignment.status ===
+                                                        'completed'
+                                                }
                                             >
-                                                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+                                                <CheckCircle2 className="mr-1.5 h-3.5 w-3.5 text-blue-600" />
                                                 Complete
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 className="text-xs"
-                                                onClick={() => handleStatusChange('cancelled')}
-                                                disabled={statusUpdating || assignment.status === 'cancelled'}
+                                                onClick={() =>
+                                                    handleStatusChange(
+                                                        'cancelled',
+                                                    )
+                                                }
+                                                disabled={
+                                                    statusUpdating ||
+                                                    assignment.status ===
+                                                        'cancelled'
+                                                }
                                             >
-                                                <XCircle className="h-3.5 w-3.5 mr-1.5 text-destructive" />
+                                                <XCircle className="mr-1.5 h-3.5 w-3.5 text-destructive" />
                                                 Cancel
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 className="text-xs"
-                                                onClick={() => handleStatusChange('assigned')}
-                                                disabled={statusUpdating || assignment.status === 'assigned'}
+                                                onClick={() =>
+                                                    handleStatusChange(
+                                                        'assigned',
+                                                    )
+                                                }
+                                                disabled={
+                                                    statusUpdating ||
+                                                    assignment.status ===
+                                                        'assigned'
+                                                }
                                             >
-                                                <RefreshCw className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                                                <RefreshCw className="mr-1.5 h-3.5 w-3.5 text-amber-600" />
                                                 Reset to Assigned
                                             </Button>
                                         </div>
@@ -260,18 +329,32 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                             icon={MapPin}
                             type="default"
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                            <div className="grid grid-cols-1 gap-6 text-xs md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Room / Venue</p>
-                                    <p className="font-medium">{assignment.room || 'Not specified'}</p>
+                                    <p className="text-muted-foreground">
+                                        Room / Venue
+                                    </p>
+                                    <p className="font-medium">
+                                        {assignment.room || 'Not specified'}
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Schedule Day</p>
-                                    <p className="font-medium">{assignment.schedule_day || 'Not specified'}</p>
+                                    <p className="text-muted-foreground">
+                                        Schedule Day
+                                    </p>
+                                    <p className="font-medium">
+                                        {assignment.schedule_day ||
+                                            'Not specified'}
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-muted-foreground">Schedule Time</p>
-                                    <p className="font-medium">{assignment.schedule_time || 'Not specified'}</p>
+                                    <p className="text-muted-foreground">
+                                        Schedule Time
+                                    </p>
+                                    <p className="font-medium">
+                                        {assignment.schedule_time ||
+                                            'Not specified'}
+                                    </p>
                                 </div>
                             </div>
                         </UctPanelCard>
@@ -286,9 +369,14 @@ export default function AdminAssignmentsShow({ assignment }: AdminAssignmentsSho
                             type="default"
                         >
                             {assignment.notes ? (
-                                <p className="text-xs text-foreground whitespace-pre-wrap">{assignment.notes}</p>
+                                <p className="text-xs whitespace-pre-wrap text-foreground">
+                                    {assignment.notes}
+                                </p>
                             ) : (
-                                <p className="text-xs text-muted-foreground">No notes have been added for this assignment.</p>
+                                <p className="text-xs text-muted-foreground">
+                                    No notes have been added for this
+                                    assignment.
+                                </p>
                             )}
                         </UctPanelCard>
                     </TabsContent>

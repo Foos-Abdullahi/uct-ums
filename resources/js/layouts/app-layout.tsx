@@ -11,7 +11,8 @@ export default function AppLayout({
 }) {
     const resolvedBreadcrumbs =
         breadcrumbs ??
-        (React.isValidElement(children) && (children.type as any)?.layout?.breadcrumbs) ??
+        (React.isValidElement(children) &&
+            (children.type as any)?.layout?.breadcrumbs) ??
         [];
 
     return (

@@ -2,7 +2,6 @@
 
 namespace App\Http\Responses;
 
-use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +13,7 @@ class LoginResponse implements LoginResponseContract
     {
         $user = $request->user();
 
-        $route = $user instanceof User && $user->role instanceof UserRole
+        $route = $user instanceof User
             ? $user->role->dashboardRoute()
             : 'admin.dashboard';
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\FeeStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\Program;
@@ -141,7 +142,7 @@ class FinanceController extends Controller
         $students = Student::with('user')->get()->map(fn ($s) => [
             'id' => $s->id,
             'matric_no' => $s->matric_no,
-            'name' => $s->user?->name ?? 'Unknown',
+            'name' => $s->user->name ?? 'Unknown',
         ]);
 
         return Inertia::render('Admin/finance/payments', [
@@ -198,7 +199,7 @@ class FinanceController extends Controller
         }
 
         // Refresh student overall fee status
-        $student = Student::find($validated['student_id']);
+        $student = Student::find((int) $validated['student_id']);
         if ($student) {
             $totalBilled = (float) $student->invoices()->sum('amount');
             $totalPaid = (float) $student->invoices()->sum('paid_amount');
@@ -282,7 +283,7 @@ class FinanceController extends Controller
         $students = Student::with('user')->get()->map(fn ($s) => [
             'id' => $s->id,
             'matric_no' => $s->matric_no,
-            'name' => $s->user?->name ?? 'Unknown',
+            'name' => $s->user->name ?? 'Unknown',
         ]);
 
         return Inertia::render('Admin/finance/invoices', [
@@ -348,20 +349,28 @@ class FinanceController extends Controller
 
         // Create line items if provided
         if (! empty($validated['items'])) {
-            $items = collect($validated['items'])->map(fn ($item) => [
-                'description' => $item['description'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'amount' => $item['amount'],
-            ])->all();
+            $items = [];
+
+            foreach ($validated['items'] as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+
+                $items[] = [
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'amount' => $item['amount'],
+                ];
+            }
 
             $invoice->items()->createMany($items);
         }
 
         // Update student fee status to unpaid or partial
-        $student = Student::find($validated['student_id']);
-        if ($student && $student->fee_status === 'paid') {
-            $student->update(['fee_status' => 'partial']);
+        $student = Student::find((int) $validated['student_id']);
+        if ($student && $student->fee_status === FeeStatus::Paid) {
+            $student->update(['fee_status' => FeeStatus::Partial]);
         }
 
         return back()->with('success', "Invoice {$invoiceNo} for \${$invoice->amount} issued successfully.");
@@ -421,7 +430,16 @@ class FinanceController extends Controller
 
         // Sync line items: update existing, delete missing, create new
         if (array_key_exists('items', $validated)) {
-            $existingIds = collect($validated['items'])->pluck('id')->filter();
+            $existingIds = [];
+
+            foreach ($validated['items'] as $item) {
+                if (! is_array($item) || empty($item['id'])) {
+                    continue;
+                }
+
+                $existingIds[] = $item['id'];
+            }
+
             $invoice->items()->whereNotIn('id', $existingIds)->delete();
 
             foreach ($validated['items'] as $item) {

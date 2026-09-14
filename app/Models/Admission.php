@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\AdmissionFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Admission extends Model
 {
+    /** @use HasFactory<AdmissionFactory> */
     use HasFactory, SoftDeletes;
 
     /**
@@ -111,7 +113,7 @@ class Admission extends Model
      * @param  Builder<self>  $query
      * @return Builder<self>
      */
-    public function scopeFilterProgram(Builder $query, $programId): Builder
+    public function scopeFilterProgram(Builder $query, string|int|null $programId): Builder
     {
         if (! $programId || $programId === 'all') {
             return $query;

@@ -1,10 +1,4 @@
-import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
-import type { BreadcrumbItem } from '@/types';
 import {
     ArrowLeft,
     Shield,
@@ -13,10 +7,14 @@ import {
     Users,
     KeyRound,
     Lock,
-    UserCheck,
     CheckCircle2,
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { UctPanelCard } from '@/components/tools/uct-panel-card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface PermissionItem {
     id: number;
@@ -67,12 +65,6 @@ export default function AdminRoleShow({
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Roles', href: '/admin/settings/roles' },
-        { title: role.name, href: `/admin/settings/roles/${role.id}` },
-    ];
-
     const handleDelete = () => {
         setDeleteProcessing(true);
         router.delete(`/admin/settings/roles/${role.id}`, {
@@ -89,27 +81,27 @@ export default function AdminRoleShow({
         <>
             <Head title={`${role.name} - Role Details`} />
 
-            <div className="p-6 space-y-6">
+            <div className="space-y-6 p-6">
                 {/* Header UctPanelCard */}
                 <UctPanelCard
                     title={role.name}
                     subtitle={
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 font-mono">
+                        <div className="mt-0.5 flex items-center gap-2 font-mono text-xs text-muted-foreground">
                             <span>Slug: {role.slug}</span>
-                            <span>· {role.permissions_count} Granted Permissions</span>
+                            <span>
+                                · {role.permissions_count} Granted Permissions
+                            </span>
                         </div>
                     }
                     icon={Shield}
                     badge={
                         <div className="flex items-center gap-1.5">
                             {role.is_system ? (
-                                <Badge className="bg-primary/10 text-primary border-primary/20">
+                                <Badge className="border-primary/20 bg-primary/10 text-primary">
                                     Core System Role
                                 </Badge>
                             ) : (
-                                <Badge variant="outline">
-                                    Custom Role
-                                </Badge>
+                                <Badge variant="outline">Custom Role</Badge>
                             )}
                             <Badge variant="secondary">
                                 {role.users_count} Users
@@ -120,13 +112,15 @@ export default function AdminRoleShow({
                         <div className="flex items-center gap-2">
                             <Button variant="outline" size="sm" asChild>
                                 <Link href="/admin/settings/roles">
-                                    <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
                                     Back
                                 </Link>
                             </Button>
                             <Button size="sm" asChild>
-                                <Link href={`/admin/settings/roles/${role.id}/edit`}>
-                                    <Edit3 className="h-3.5 w-3.5 mr-1.5" />
+                                <Link
+                                    href={`/admin/settings/roles/${role.id}/edit`}
+                                >
+                                    <Edit3 className="mr-1.5 h-3.5 w-3.5" />
                                     Edit Role
                                 </Link>
                             </Button>
@@ -136,7 +130,7 @@ export default function AdminRoleShow({
                                     size="sm"
                                     onClick={() => setDeleteModalOpen(true)}
                                 >
-                                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                                     Delete
                                 </Button>
                             )}
@@ -145,7 +139,7 @@ export default function AdminRoleShow({
                 />
 
                 {/* Main 2-Column Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Left Col: Role Summary & Metadata */}
                     <div className="space-y-6">
                         <UctPanelCard
@@ -153,24 +147,40 @@ export default function AdminRoleShow({
                             description="Access level and scope details."
                             icon={Lock}
                         >
-                            <div className="divide-y divide-border/30 text-xs pt-1">
+                            <div className="divide-y divide-border/30 pt-1 text-xs">
                                 <div className="flex justify-between py-2">
-                                    <span className="text-muted-foreground">Role Type</span>
+                                    <span className="text-muted-foreground">
+                                        Role Type
+                                    </span>
                                     <span className="font-semibold text-foreground">
-                                        {role.is_system ? 'System Native' : 'User Defined'}
+                                        {role.is_system
+                                            ? 'System Native'
+                                            : 'User Defined'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-2">
-                                    <span className="text-muted-foreground">Machine Identifier</span>
-                                    <span className="font-mono text-foreground">{role.slug}</span>
+                                    <span className="text-muted-foreground">
+                                        Machine Identifier
+                                    </span>
+                                    <span className="font-mono text-foreground">
+                                        {role.slug}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between py-2">
-                                    <span className="text-muted-foreground">Assigned Accounts</span>
-                                    <span className="font-semibold text-foreground">{role.users_count} users</span>
+                                    <span className="text-muted-foreground">
+                                        Assigned Accounts
+                                    </span>
+                                    <span className="font-semibold text-foreground">
+                                        {role.users_count} users
+                                    </span>
                                 </div>
                                 <div className="flex justify-between py-2">
-                                    <span className="text-muted-foreground">Granted Capabilities</span>
-                                    <span className="font-semibold text-foreground">{role.permissions_count} privileges</span>
+                                    <span className="text-muted-foreground">
+                                        Granted Capabilities
+                                    </span>
+                                    <span className="font-semibold text-foreground">
+                                        {role.permissions_count} privileges
+                                    </span>
                                 </div>
                             </div>
                         </UctPanelCard>
@@ -180,7 +190,7 @@ export default function AdminRoleShow({
                                 title="Role Scope Description"
                                 icon={Shield}
                             >
-                                <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                                <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
                                     {role.description}
                                 </p>
                             </UctPanelCard>
@@ -192,33 +202,49 @@ export default function AdminRoleShow({
                             description={`Active accounts holding ${role.name} credentials.`}
                             icon={Users}
                             actions={
-                                <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
-                                    <Link href={`/admin/settings/users?role=${role.slug}`}>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    asChild
+                                >
+                                    <Link
+                                        href={`/admin/settings/users?role=${role.slug}`}
+                                    >
                                         Manage
                                     </Link>
                                 </Button>
                             }
                         >
                             {users.data.length === 0 ? (
-                                <p className="text-xs text-muted-foreground italic py-4 text-center">
+                                <p className="py-4 text-center text-xs text-muted-foreground italic">
                                     No accounts currently assigned to this role.
                                 </p>
                             ) : (
-                                <div className="divide-y divide-border/40 text-xs pt-1">
+                                <div className="divide-y divide-border/40 pt-1 text-xs">
                                     {users.data.map((u) => (
-                                        <div key={u.id} className="flex items-center justify-between py-2">
+                                        <div
+                                            key={u.id}
+                                            className="flex items-center justify-between py-2"
+                                        >
                                             <div>
-                                                <p className="font-semibold text-foreground">{u.name}</p>
-                                                <p className="text-[11px] text-muted-foreground">{u.email}</p>
+                                                <p className="font-semibold text-foreground">
+                                                    {u.name}
+                                                </p>
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    {u.email}
+                                                </p>
                                             </div>
                                             <Badge
                                                 className={
                                                     u.is_active
-                                                        ? 'bg-emerald-500/10 text-emerald-700 text-[10px]'
-                                                        : 'bg-muted text-muted-foreground text-[10px]'
+                                                        ? 'bg-emerald-500/10 text-[10px] text-emerald-700'
+                                                        : 'bg-muted text-[10px] text-muted-foreground'
                                                 }
                                             >
-                                                {u.is_active ? 'Active' : 'Inactive'}
+                                                {u.is_active
+                                                    ? 'Active'
+                                                    : 'Inactive'}
                                             </Badge>
                                         </div>
                                     ))}
@@ -228,49 +254,62 @@ export default function AdminRoleShow({
                     </div>
 
                     {/* Right 2 Cols: Granted Permissions by Module */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="space-y-4 lg:col-span-2">
                         <UctPanelCard
                             title="Granted Permission Matrix"
                             description="Privileges enabled for this institutional role."
                             icon={KeyRound}
                         >
                             {Object.keys(permissions_by_module).length === 0 ? (
-                                <p className="text-xs text-muted-foreground italic py-6 text-center">
+                                <p className="py-6 text-center text-xs text-muted-foreground italic">
                                     No permissions assigned to this role.
                                 </p>
                             ) : (
                                 <div className="space-y-4 pt-2">
-                                    {Object.entries(permissions_by_module).map(([moduleName, permissions]) => (
-                                        <div key={moduleName} className="rounded border border-border/50 bg-card p-3 space-y-2">
-                                            <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
-                                                <span className="font-bold text-xs text-foreground uppercase tracking-wide">
-                                                    {moduleName} Module
-                                                </span>
-                                                <Badge variant="secondary" className="text-[10px]">
-                                                    {permissions.length} Enabled
-                                                </Badge>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                                                {permissions.map((p) => (
-                                                    <div
-                                                        key={p.id}
-                                                        className="flex items-start gap-2 p-2 rounded bg-muted/20 border border-border/40 text-xs"
+                                    {Object.entries(permissions_by_module).map(
+                                        ([moduleName, permissions]) => (
+                                            <div
+                                                key={moduleName}
+                                                className="space-y-2 rounded border border-border/50 bg-card p-3"
+                                            >
+                                                <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
+                                                    <span className="text-xs font-bold tracking-wide text-foreground uppercase">
+                                                        {moduleName} Module
+                                                    </span>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="text-[10px]"
                                                     >
-                                                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                                                        <div>
-                                                            <p className="font-semibold text-foreground leading-tight">{p.name}</p>
-                                                            {p.description && (
-                                                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                                                                    {p.description}
+                                                        {permissions.length}{' '}
+                                                        Enabled
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+                                                    {permissions.map((p) => (
+                                                        <div
+                                                            key={p.id}
+                                                            className="flex items-start gap-2 rounded border border-border/40 bg-muted/20 p-2 text-xs"
+                                                        >
+                                                            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                                            <div>
+                                                                <p className="leading-tight font-semibold text-foreground">
+                                                                    {p.name}
                                                                 </p>
-                                                            )}
+                                                                {p.description && (
+                                                                    <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                                                                        {
+                                                                            p.description
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ),
+                                    )}
                                 </div>
                             )}
                         </UctPanelCard>

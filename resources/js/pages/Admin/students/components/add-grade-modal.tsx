@@ -1,10 +1,11 @@
-import React from 'react';
 import { useForm } from '@inertiajs/react';
+import { BookOpen, Loader2 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -18,8 +19,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { BookOpen, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface AddGradeModalProps {
     open: boolean;
@@ -45,16 +44,16 @@ export function AddGradeModal({
     });
 
     const gradeMap: Record<string, string> = {
-        'A': '4.00',
+        A: '4.00',
         'A-': '3.67',
         'B+': '3.33',
-        'B': '3.00',
+        B: '3.00',
         'B-': '2.67',
         'C+': '2.33',
-        'C': '2.00',
+        C: '2.00',
         'C-': '1.67',
-        'D': '1.00',
-        'F': '0.00',
+        D: '1.00',
+        F: '0.00',
     };
 
     const handleGradeChange = (grade: string) => {
@@ -96,7 +95,8 @@ export function AddGradeModal({
                                     Record Course Grade
                                 </DialogTitle>
                                 <p className="text-xs text-muted-foreground">
-                                    Add academic course results to student transcript.
+                                    Add academic course results to student
+                                    transcript.
                                 </p>
                             </div>
                         </div>
@@ -110,11 +110,18 @@ export function AddGradeModal({
                                     id="course_code"
                                     placeholder="e.g. CS201"
                                     value={data.course_code}
-                                    onChange={(e) => setData('course_code', e.target.value.toUpperCase())}
+                                    onChange={(e) =>
+                                        setData(
+                                            'course_code',
+                                            e.target.value.toUpperCase(),
+                                        )
+                                    }
                                     required
                                 />
                                 {errors.course_code && (
-                                    <p className="text-xs text-destructive">{errors.course_code}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.course_code}
+                                    </p>
                                 )}
                             </div>
 
@@ -124,11 +131,15 @@ export function AddGradeModal({
                                     id="course_name"
                                     placeholder="e.g. Data Structures & Algorithms"
                                     value={data.course_name}
-                                    onChange={(e) => setData('course_name', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('course_name', e.target.value)
+                                    }
                                     required
                                 />
                                 {errors.course_name && (
-                                    <p className="text-xs text-destructive">{errors.course_name}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.course_name}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -142,11 +153,18 @@ export function AddGradeModal({
                                     min="1"
                                     max="12"
                                     value={data.semester}
-                                    onChange={(e) => setData('semester', parseInt(e.target.value) || 1)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'semester',
+                                            parseInt(e.target.value) || 1,
+                                        )
+                                    }
                                     required
                                 />
                                 {errors.semester && (
-                                    <p className="text-xs text-destructive">{errors.semester}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.semester}
+                                    </p>
                                 )}
                             </div>
 
@@ -158,11 +176,18 @@ export function AddGradeModal({
                                     min="1"
                                     max="6"
                                     value={data.credits}
-                                    onChange={(e) => setData('credits', parseInt(e.target.value) || 3)}
+                                    onChange={(e) =>
+                                        setData(
+                                            'credits',
+                                            parseInt(e.target.value) || 3,
+                                        )
+                                    }
                                     required
                                 />
                                 {errors.credits && (
-                                    <p className="text-xs text-destructive">{errors.credits}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.credits}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -186,7 +211,9 @@ export function AddGradeModal({
                                     </SelectContent>
                                 </Select>
                                 {errors.grade && (
-                                    <p className="text-xs text-destructive">{errors.grade}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.grade}
+                                    </p>
                                 )}
                             </div>
 
@@ -197,11 +224,15 @@ export function AddGradeModal({
                                     type="number"
                                     step="0.01"
                                     value={data.grade_point}
-                                    onChange={(e) => setData('grade_point', e.target.value)}
+                                    onChange={(e) =>
+                                        setData('grade_point', e.target.value)
+                                    }
                                     required
                                 />
                                 {errors.grade_point && (
-                                    <p className="text-xs text-destructive">{errors.grade_point}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.grade_point}
+                                    </p>
                                 )}
                             </div>
 
@@ -209,19 +240,29 @@ export function AddGradeModal({
                                 <Label htmlFor="status">Result Status</Label>
                                 <Select
                                     value={data.status}
-                                    onValueChange={(val: any) => setData('status', val)}
+                                    onValueChange={(val: any) =>
+                                        setData('status', val)
+                                    }
                                 >
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="passed">Passed</SelectItem>
-                                        <SelectItem value="failed">Failed</SelectItem>
-                                        <SelectItem value="in_progress">In Progress</SelectItem>
+                                        <SelectItem value="passed">
+                                            Passed
+                                        </SelectItem>
+                                        <SelectItem value="failed">
+                                            Failed
+                                        </SelectItem>
+                                        <SelectItem value="in_progress">
+                                            In Progress
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {errors.status && (
-                                    <p className="text-xs text-destructive">{errors.status}</p>
+                                    <p className="text-xs text-destructive">
+                                        {errors.status}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -238,7 +279,9 @@ export function AddGradeModal({
                             Cancel
                         </Button>
                         <Button type="submit" size="sm" disabled={processing}>
-                            {processing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            {processing && (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            )}
                             Record Grade
                         </Button>
                     </DialogFooter>

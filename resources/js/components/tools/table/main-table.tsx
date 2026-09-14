@@ -30,10 +30,7 @@ import {
 import { cn } from '@/lib/utils';
 import { DataTablePagination } from './pagination';
 import { DataTableToolbar } from './toolbar';
-import type {
-    DataTableDateRangeFilter,
-    DataTableServerFilter,
-} from './types';
+import type { DataTableDateRangeFilter, DataTableServerFilter } from './types';
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -66,10 +63,7 @@ interface DataTableProps<TData, TValue> {
     onPageChange?: (page: number) => void;
     onPageSizeChange?: (pageSize: number) => void;
     serverFilters?: DataTableServerFilter[];
-    onServerFilterChange?: (
-        key: string,
-        values: string[] | undefined,
-    ) => void;
+    onServerFilterChange?: (key: string, values: string[] | undefined) => void;
     onServerFilterClear?: () => void;
     dateRangeFilter?: DataTableDateRangeFilter;
     onDateRangeChange?: (range: DataTableDateRangeFilter) => void;
@@ -233,12 +227,9 @@ export function DataTable<TData, TValue>({
                 }
             >
                 <Table className={cn(tableClassName)}>
-                    <TableHeader className="sticky top-0 z-10 h-fit border-b border-border bg-card dark:bg-muted backdrop-blur-sm dark:border-border/60">
+                    <TableHeader className="sticky top-0 z-10 h-fit border-b border-border bg-card backdrop-blur-sm dark:border-border/60 dark:bg-muted">
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow
-                                className=""
-                                key={headerGroup.id}
-                            >
+                            <TableRow className="" key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
                                         <TableHead
