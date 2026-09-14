@@ -36,7 +36,9 @@ param(
     [int]$StatusTimeoutSeconds = 1200
 )
 
-$ErrorActionPreference = 'Stop'
+# EAP=Continue ensures native stderr (e.g. 'git fetch' progress) is not raised as
+# a terminating error. API failures are handled explicitly via try/catch.
+$ErrorActionPreference = 'Continue'
 
 function Get-Token {
     if ($env:GH_PAT) { return $env:GH_PAT }
@@ -61,7 +63,13 @@ function Invoke-GhApi {
         $params.Body = ($Body | ConvertTo-Json -Compress -Depth 6)
         $params.ContentType = 'application/json'
     }
-    return Invoke-RestMethod @params
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Stop'
+    try {
+        return Invoke-RestMethod @params
+    } finally {
+        $ErrorActionPreference = $previous
+    }
 }
 
 $token = Get-Token
