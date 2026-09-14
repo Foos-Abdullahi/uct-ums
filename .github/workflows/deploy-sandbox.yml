@@ -257,8 +257,12 @@ jobs:
           echo "\n--- self check ---\n";
 
           try {
+              ob_start();
+
               $request = Illuminate\Http\Request::create('/', 'GET');
               $response = $app->handleRequest($request);
+
+              ob_end_clean();
 
               echo 'BOOT_STATUS='.$response->getStatusCode()."\n";
 
