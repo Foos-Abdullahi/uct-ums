@@ -256,29 +256,27 @@ jobs:
 
           echo "\n--- self check ---\n";
 
-          try {
-              ob_start();
+          $selfUrl = 'https://'.($_SERVER['HTTP_HOST'] ?? 'local.uct.so').'/';
+          $ch = curl_init($selfUrl);
+          curl_setopt_array($ch, [
+              CURLOPT_RETURNTRANSFER => true,
+              CURLOPT_SSL_VERIFYPEER => false,
+              CURLOPT_TIMEOUT => 30,
+          ]);
+          $body = curl_exec($ch);
+          $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+          curl_close($ch);
 
-              $request = Illuminate\Http\Request::create('/', 'GET');
-              $response = $app->handleRequest($request);
+          echo 'BOOT_STATUS='.$code."\n";
 
-              ob_end_clean();
+          if ($code >= 400) {
+              $log = $base.'/storage/logs/laravel.log';
 
-              echo 'BOOT_STATUS='.$response->getStatusCode()."\n";
-
-              if ($response->getStatusCode() >= 400) {
-                  $log = $base.'/storage/logs/laravel.log';
-
-                  if (is_file($log)) {
-                      $home = dirname($base);
-                      @copy($log, $home.'/public_html/_deploy/_boot_error.log');
-                      echo "copied laravel.log for review\n";
-                  }
+              if (is_file($log)) {
+                  $home = dirname($base);
+                  @copy($log, $home.'/public_html/_deploy/_boot_error.log');
+                  echo "copied laravel.log for review\n";
               }
-          } catch (Throwable $e) {
-              echo 'BOOT ERROR: '.$e->getMessage()."\n".$e->getTraceAsString();
-              http_response_code(500);
-              exit;
           }
 
           echo 'DONE';
