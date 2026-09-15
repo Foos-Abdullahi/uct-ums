@@ -65,6 +65,14 @@ class Lecturer extends Model
     }
 
     /**
+     * @return HasMany<CourseMaterial, $this>
+     */
+    public function materials(): HasMany
+    {
+        return $this->hasMany(CourseMaterial::class, 'lecturer_id');
+    }
+
+    /**
      * Scope a query to search by name, email, lecturer_no, or specialization.
      *
      * @param  Builder<Lecturer>  $query

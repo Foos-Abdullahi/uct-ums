@@ -12,6 +12,7 @@ class StudentAttendance extends Model
      */
     protected $fillable = [
         'student_id',
+        'course_id',
         'course_name',
         'date',
         'status',
@@ -34,5 +35,13 @@ class StudentAttendance extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    /**
+     * @return BelongsTo<Course, $this>
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 }

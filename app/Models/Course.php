@@ -57,6 +57,30 @@ class Course extends Model
     }
 
     /**
+     * @return HasMany<CourseMaterial, $this>
+     */
+    public function materials(): HasMany
+    {
+        return $this->hasMany(CourseMaterial::class);
+    }
+
+    /**
+     * @return HasMany<StudentGrade, $this>
+     */
+    public function grades(): HasMany
+    {
+        return $this->hasMany(StudentGrade::class);
+    }
+
+    /**
+     * @return HasMany<StudentAttendance, $this>
+     */
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(StudentAttendance::class);
+    }
+
+    /**
      * Scope a query to search by course code, name, or description.
      *
      * @param  Builder<Course>  $query

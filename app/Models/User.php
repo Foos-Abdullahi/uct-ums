@@ -67,4 +67,12 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasOne(Staff::class);
     }
+
+    /**
+     * @return HasOne<Lecturer, $this>
+     */
+    public function lecturer(): HasOne
+    {
+        return $this->hasOne(Lecturer::class);
+    }
 }

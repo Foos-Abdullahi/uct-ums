@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -87,9 +87,24 @@ function NavLinkItem({ item }: { item: NavItem }) {
 }
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
+    const { auth } = usePage().props;
+    const { url } = usePage();
+    const role = auth?.user?.role;
+
+    let portalLabel = 'Admin Portal';
+    if (url.startsWith('/lecturer') || role === 'lecturer') {
+        portalLabel = 'Lecturer Portal';
+    } else if (url.startsWith('/student') || role === 'student') {
+        portalLabel = 'Student Portal';
+    } else if (url.startsWith('/finance') || role === 'finance') {
+        portalLabel = 'Finance Portal';
+    } else {
+        portalLabel = 'Admin Portal';
+    }
+
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel>{portalLabel}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) =>
                     item.items?.length ? (
