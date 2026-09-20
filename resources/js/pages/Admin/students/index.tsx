@@ -362,6 +362,7 @@ export default function AdminStudentsIndex({
                 <ImportStudentsDialog
                     open={importDialogOpen}
                     onOpenChange={setImportDialogOpen}
+                    programs={programs}
                     onImported={() => {
                         router.reload({ only: ['students', 'stats'] });
                     }}

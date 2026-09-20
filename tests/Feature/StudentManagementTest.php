@@ -43,6 +43,31 @@ function makeStudentImportFile(array $rows): UploadedFile
     return UploadedFile::fake()->createWithContent('students.xlsx', $content);
 }
 
+/**
+ * Build an in-memory .xlsx file matching the legacy MPU list layout:
+ * title rows on top, then a Number/ID/Full Names header.
+ */
+function makeLegacyStudentImportFile(array $rows): UploadedFile
+{
+    $spreadsheet = new Spreadsheet;
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $sheet->setCellValue('A1', 'MPU University');
+    $sheet->setCellValue('B2', '2015-DONE-Department List');
+    $sheet->fromArray([null, 'Number', 'ID', 'Full Names'], null, 'A3');
+
+    foreach ($rows as $index => $row) {
+        $sheet->fromArray([null, $index + 1, $row['id'], $row['name']], null, 'A'.($index + 4));
+    }
+
+    $writer = new Xlsx($spreadsheet);
+    ob_start();
+    $writer->save('php://output');
+    $content = ob_get_clean();
+
+    return UploadedFile::fake()->createWithContent('legacy_students.xlsx', $content);
+}
+
 // ─── Import ───────────────────────────────────────────────────────────────────
 
 test('admin can import students from an excel file', function () {
@@ -138,6 +163,71 @@ test('student role users cannot import students', function () {
     $response = $this->post(route('admin.students.import'), []);
 
     $response->assertForbidden();
+});
+
+test('admin can import legacy MPU list files when a program is selected', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create(['name' => 'Bsc Network Engineering']);
+
+    $rows = [
+        ['id' => '10076', 'name' => 'Abdulkadir Mohamed Hassan'],
+        ['id' => '10077', 'name' => 'Omar Ibrahim'],
+    ];
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile($rows),
+        'program' => $program->name,
+    ]);
+
+    $response->assertOk()
+        ->assertJson(['imported' => 2, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '10076',
+        'program_id' => $program->id,
+    ]);
+    $this->assertDatabaseHas('users', ['email' => 'abdulkadir.hassan@uct.edu']);
+    $this->assertDatabaseHas('users', ['email' => 'omar.ibrahim@uct.edu']);
+});
+
+test('legacy MPU list files require a program selection', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '10076', 'name' => 'Abdulkadir Mohamed Hassan'],
+        ]),
+    ]);
+
+    $response->assertOk()->assertJson([
+        'imported' => 0,
+        'failed' => 0,
+        'errors' => ['This file does not include a Program column. Select a program and try again.'],
+    ]);
+
+    $this->assertDatabaseCount('students', 0);
+});
+
+test('legacy MPU list files with an unknown program are rejected', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '10076', 'name' => 'Abdulkadir Mohamed Hassan'],
+        ]),
+        'program' => 'Unknown Program',
+    ]);
+
+    $response->assertOk()->assertJson([
+        'imported' => 0,
+        'failed' => 0,
+        'errors' => ["Program 'Unknown Program' was not found in the system."],
+    ]);
+
+    $this->assertDatabaseCount('students', 0);
 });
 
 // ─── Index ────────────────────────────────────────────────────────────────────

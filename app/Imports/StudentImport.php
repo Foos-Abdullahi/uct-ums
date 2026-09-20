@@ -7,32 +7,93 @@ use App\Enums\UserRole;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\User;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Concerns\Import;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\ToArray;
 use Throwable;
 
-class StudentImport implements Import, WithHeadingRow
+class StudentImport implements ToArray
 {
     /**
-     * Process all rows of the uploaded spreadsheet and create user/student records.
+     * Recognised header aliases mapped to the canonical import field.
      *
-     * @param  Collection<int, Collection<array-key, mixed>>  $rows
+     * @var array<string, list<string>>
+     */
+    private const COLUMN_ALIASES = [
+        'name' => ['name', 'full name', 'full names', 'student name'],
+        'email' => ['email', 'e-mail', 'email address'],
+        'password' => ['password'],
+        'matric_no' => ['matric no', 'matric number', 'matric no.', 'student id', 'id', 'id no', 'id number'],
+        'program' => ['program', 'program name', 'course', 'course of study'],
+        'current_semester' => ['current semester', 'semester'],
+        'phone' => ['phone', 'telephone', 'mobile', 'contact'],
+        'gender' => ['gender', 'sex'],
+        'date_of_birth' => ['date of birth', 'dob', 'birth date', 'birthday'],
+        'address' => ['address', 'residential address', 'house address'],
+        'fee_status' => ['fee status', 'fee'],
+        'enrollment_status' => ['enrollment status', 'status'],
+        'enrollment_date' => ['enrollment date', 'admission date'],
+        'gpa' => ['gpa', 'cgpa', 'grade point average'],
+        'graduation_date' => ['graduation date', 'graduated date'],
+    ];
+
+    private const EMAIL_DOMAIN = 'uct.edu';
+
+    /**
+     * @var array<string, true>
+     */
+    private array $seenEmails = [];
+
+    /**
+     * No-op hook required by the ToArray concern; rows are processed in processRows().
+     */
+    public function array(array $rows): void {}
+
+    /**
+     * Process raw sheet rows (template or legacy MPU list layout) and create
+     * user/student records. A hidden program override fills the program when the
+     * file has no Program column of its own.
+     *
+     * @param  list<list<mixed>>  $rows
      * @return array{imported: int, failed: int, errors: list<string>}
      */
-    public function processRows(Collection $rows): array
+    public function processRows(array $rows, ?string $programOverride = null): array
     {
+        $headerIndex = $this->locateHeaderRow($rows);
+        if ($headerIndex === null) {
+            return ['imported' => 0, 'failed' => 0, 'errors' => ['Could not detect a header row in this workbook.']];
+        }
+
+        $columns = $this->buildColumnMap($rows[$headerIndex]);
+
+        if (! isset($columns['name'])) {
+            return ['imported' => 0, 'failed' => 0, 'errors' => ['Could not find a student name column in this workbook.']];
+        }
+
+        if (isset($columns['program'])) {
+            $programName = null;
+        } elseif ($programOverride === null || $programOverride === '') {
+            return ['imported' => 0, 'failed' => 0, 'errors' => ['This file does not include a Program column. Select a program and try again.']];
+        } else {
+            $programName = trim($programOverride);
+            if (! $this->programExists($programName)) {
+                return ['imported' => 0, 'failed' => 0, 'errors' => ["Program '{$programName}' was not found in the system."]];
+            }
+        }
+
+        $this->seenEmails = [];
         $imported = 0;
         $failed = 0;
         $errors = [];
 
-        foreach ($rows as $index => $row) {
-            $rowNumber = (int) $index + 2; // sheet rows are 1-based and row 1 is the heading row
+        foreach (array_slice($rows, $headerIndex + 1) as $offset => $row) {
+            $rowNumber = $headerIndex + 2 + $offset; // sheet rows are 1-based
+            $data = $this->normaliseRow($row, $columns, $programName);
 
-            $data = $this->normaliseRow($row);
+            if ($data['name'] === '' && $this->rowIsEmpty($row, $columns)) {
+                continue;
+            }
 
             $validationError = $this->validateRow($data);
             if ($validationError !== null) {
@@ -67,19 +128,131 @@ class StudentImport implements Import, WithHeadingRow
     /**
      * Map a spreadsheet row to a clean keyed array with string values.
      *
+     * @param  list<mixed>  $row
+     * @param  array<string, int>  $columns
      * @return array<string, string>
      */
-    private function normaliseRow(mixed $row): array
+    private function normaliseRow(array $row, array $columns, ?string $programOverride): array
     {
-        $values = $row instanceof Collection ? $row->toArray() : (array) $row;
+        $data = [];
 
-        return collect([
-            'name', 'email', 'password', 'matric_no', 'program', 'current_semester',
-            'phone', 'gender', 'date_of_birth', 'address', 'fee_status',
-            'enrollment_status', 'enrollment_date', 'gpa', 'graduation_date',
-        ])->mapWithKeys(fn (string $key): array => [
-            $key => trim((string) ($values[$key] ?? '')),
-        ])->toArray();
+        foreach (self::COLUMN_ALIASES as $field => $aliases) {
+            $index = $columns[$field] ?? null;
+            $data[$field] = $index !== null && isset($row[$index])
+                ? trim((string) $row[$index])
+                : '';
+        }
+
+        // Legacy MPU lists only carry a full name; derive an email account.
+        if ($data['email'] === '' && $data['name'] !== '') {
+            $data['email'] = $this->generateEmail($data['name'], $data['matric_no']);
+        }
+
+        if ($data['program'] === '') {
+            $data['program'] = (string) $programOverride;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Detect the header row as the row with the most recognised column headers.
+     *
+     * @param  list<list<mixed>>  $rows
+     */
+    private function locateHeaderRow(array $rows): ?int
+    {
+        $bestIndex = null;
+        $bestScore = 0;
+
+        foreach ($rows as $index => $row) {
+            $score = $this->countRecognisedHeaders($row);
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestIndex = $index;
+
+                if ($score >= 3) {
+                    break;
+                }
+            }
+        }
+
+        return $bestScore >= 2 ? $bestIndex : null;
+    }
+
+    /**
+     * @param  list<mixed>  $row
+     */
+    private function countRecognisedHeaders(array $row): int
+    {
+        $aliases = $this->aliasLookup();
+
+        return collect($row)
+            ->map(fn (mixed $cell): string => $this->normaliseHeader((string) $cell))
+            ->filter(fn (string $header): bool => $header !== '' && isset($aliases[$header]))
+            ->count();
+    }
+
+    /**
+     * @param  list<mixed>  $headerRow
+     * @return array<string, int>
+     */
+    private function buildColumnMap(array $headerRow): array
+    {
+        $aliases = $this->aliasLookup();
+        $columns = [];
+
+        foreach ($headerRow as $index => $cell) {
+            $header = $this->normaliseHeader((string) $cell);
+
+            if ($header !== '' && isset($aliases[$header]) && ! isset($columns[$aliases[$header]])) {
+                $columns[$aliases[$header]] = $index;
+            }
+        }
+
+        return $columns;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function aliasLookup(): array
+    {
+        $lookup = [];
+
+        foreach (self::COLUMN_ALIASES as $field => $aliases) {
+            foreach ($aliases as $alias) {
+                $lookup[$this->normaliseHeader($alias)] = $field;
+            }
+        }
+
+        return $lookup;
+    }
+
+    private function normaliseHeader(string $header): string
+    {
+        $header = mb_strtolower($header);
+        $header = preg_replace('/[^a-z0-9]+/', ' ', $header);
+        $header = trim((string) $header);
+        $header = preg_replace('/\s+/', ' ', $header);
+
+        return (string) $header;
+    }
+
+    /**
+     * @param  list<mixed>  $row
+     * @param  array<string, int>  $columns
+     */
+    private function rowIsEmpty(array $row, array $columns): bool
+    {
+        foreach ($columns as $index) {
+            if (isset($row[$index]) && trim((string) $row[$index]) !== '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -114,9 +287,40 @@ class StudentImport implements Import, WithHeadingRow
         return null;
     }
 
+    private function programExists(string $programName): bool
+    {
+        return Program::whereRaw('LOWER(name) = ?', [mb_strtolower($programName)])->exists();
+    }
+
     private function resolveProgram(string $programName): ?Program
     {
         return Program::whereRaw('LOWER(name) = ?', [mb_strtolower($programName)])->first();
+    }
+
+    /**
+     * Derive a deterministic login email for legacy lists that have no email column.
+     */
+    private function generateEmail(string $name, string $matricNo): string
+    {
+        $words = preg_split('/\s+/', trim($name));
+        $first = $this->slugify($words[0] ?? 'student');
+        $last = $this->slugify(end($words));
+        $email = "{$first}.{$last}@".self::EMAIL_DOMAIN;
+
+        if ($this->seenEmails[$email] ?? false) {
+            $email = "{$first}.{$last}.{$this->slugify($matricNo)}@".self::EMAIL_DOMAIN;
+        }
+
+        $this->seenEmails[$email] = true;
+
+        return $email;
+    }
+
+    private function slugify(string $value): string
+    {
+        $value = (string) preg_replace('/[^a-z0-9]/i', '', $value);
+
+        return mb_strtolower($value === '' ? 'student' : $value);
     }
 
     /**
