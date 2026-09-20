@@ -170,11 +170,13 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
+            'program' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
-            $rows = ExcelFacade::toCollection(new StudentImport, $validated['file'])->first() ?? collect();
-            $result = (new StudentImport)->processRows($rows);
+            $sheets = ExcelFacade::toArray(new StudentImport, $validated['file']);
+            $rows = reset($sheets) ?: [];
+            $result = (new StudentImport)->processRows($rows, $validated['program'] ?? null);
         } catch (Throwable $e) {
             return response()->json([
                 'imported' => 0,
