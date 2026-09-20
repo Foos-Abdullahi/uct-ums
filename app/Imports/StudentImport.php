@@ -53,14 +53,18 @@ class StudentImport implements ToArray
 
     /**
      * Process raw sheet rows (template or legacy MPU list layout) and create
-     * user/student records. A hidden program override fills the program when the
-     * file has no Program column of its own.
+     * user/student records. Hidden overrides fill the program, academic year and
+     * enrollment status when the file has no corresponding column of its own.
      *
      * @param  list<list<mixed>>  $rows
      * @return array{imported: int, failed: int, errors: list<string>}
      */
-    public function processRows(array $rows, ?string $programOverride = null, ?string $academicYearOverride = null): array
-    {
+    public function processRows(
+        array $rows,
+        ?string $programOverride = null,
+        ?string $academicYearOverride = null,
+        ?string $enrollmentStatusOverride = null,
+    ): array {
         $headerIndex = $this->locateHeaderRow($rows);
         if ($headerIndex === null) {
             return ['imported' => 0, 'failed' => 0, 'errors' => ['Could not detect a header row in this workbook.']];
@@ -90,7 +94,7 @@ class StudentImport implements ToArray
 
         foreach (array_slice($rows, $headerIndex + 1) as $offset => $row) {
             $rowNumber = $headerIndex + 2 + $offset; // sheet rows are 1-based
-            $data = $this->normaliseRow($row, $columns, $programName, $academicYearOverride);
+            $data = $this->normaliseRow($row, $columns, $programName, $academicYearOverride, $enrollmentStatusOverride);
 
             if ($data['name'] === '' && $this->rowIsEmpty($row, $columns)) {
                 continue;
@@ -133,7 +137,7 @@ class StudentImport implements ToArray
      * @param  array<string, int>  $columns
      * @return array<string, string>
      */
-    private function normaliseRow(array $row, array $columns, ?string $programOverride, ?string $academicYearOverride): array
+    private function normaliseRow(array $row, array $columns, ?string $programOverride, ?string $academicYearOverride, ?string $enrollmentStatusOverride): array
     {
         $data = [];
 
@@ -155,6 +159,10 @@ class StudentImport implements ToArray
 
         if ($data['academic_year'] === '') {
             $data['academic_year'] = (string) $academicYearOverride;
+        }
+
+        if ($data['enrollment_status'] === '') {
+            $data['enrollment_status'] = (string) $enrollmentStatusOverride;
         }
 
         return $data;
@@ -305,6 +313,9 @@ class StudentImport implements ToArray
 
     /**
      * Derive a deterministic login email for legacy lists that have no email column.
+     *
+     * When a candidate email is already used in the current file or by an existing
+     * account, the matric number is appended so the row still imports.
      */
     private function generateEmail(string $name, string $matricNo): string
     {
@@ -313,7 +324,7 @@ class StudentImport implements ToArray
         $last = $this->slugify(end($words));
         $email = "{$first}.{$last}@".self::EMAIL_DOMAIN;
 
-        if ($this->seenEmails[$email] ?? false) {
+        if (($this->seenEmails[$email] ?? false) || User::where('email', $email)->exists()) {
             $email = "{$first}.{$last}.{$this->slugify($matricNo)}@".self::EMAIL_DOMAIN;
         }
 
