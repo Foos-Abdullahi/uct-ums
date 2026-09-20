@@ -174,6 +174,7 @@ class StudentController extends Controller
             'file' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
             'program' => ['nullable', 'string', 'max:255'],
             'academic_year' => ['nullable', 'string', 'max:20'],
+            'enrollment_status' => ['nullable', 'string', 'in:enrolled,pending,suspended,graduated,withdrawn'],
         ]);
 
         $academicYear = $validated['academic_year'] ?? null;
@@ -189,7 +190,12 @@ class StudentController extends Controller
         try {
             $sheets = ExcelFacade::toArray(new StudentImport, $validated['file']);
             $rows = reset($sheets) ?: [];
-            $result = (new StudentImport)->processRows($rows, $validated['program'] ?? null, $academicYear);
+            $result = (new StudentImport)->processRows(
+                $rows,
+                $validated['program'] ?? null,
+                $academicYear,
+                $validated['enrollment_status'] ?? null,
+            );
         } catch (Throwable $e) {
             return response()->json([
                 'imported' => 0,

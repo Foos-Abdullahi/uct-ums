@@ -272,6 +272,52 @@ test('import auto-detects the year from the file name', function () {
     ]);
 });
 
+test('import stamps the enrollment status when provided', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Network Engineering']);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '100907', 'name' => 'Abas Hassan Elmi'],
+        ]),
+        'program' => 'Bsc Network Engineering',
+        'academic_year' => '2026',
+        'enrollment_status' => 'graduated',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '100907',
+        'academic_year' => '2026',
+        'enrollment_status' => 'graduated',
+    ]);
+});
+
+test('import suffixes the email when the account already exists', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Software Engineering']);
+    User::factory()->create([
+        'name' => 'Abdirahman Mohamed',
+        'email' => 'abdirahman.mohamed@uct.edu.so',
+    ]);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '100643', 'name' => 'Abdirahman Mohamed'],
+        ]),
+        'program' => 'Bsc Software Engineering',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'abdirahman.mohamed.100643@uct.edu.so',
+    ]);
+});
+
 // ─── Index ────────────────────────────────────────────────────────────────────
 
 test('admin can view the students index page', function () {
