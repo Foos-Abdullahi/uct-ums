@@ -38,7 +38,7 @@ class StudentImport implements ToArray
         'graduation_date' => ['graduation date', 'graduated date'],
     ];
 
-    private const EMAIL_DOMAIN = 'uct.edu';
+    private const EMAIL_DOMAIN = 'uct.edu.so';
 
     /**
      * @var array<string, true>

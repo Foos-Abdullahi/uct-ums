@@ -187,8 +187,8 @@ test('admin can import legacy MPU list files when a program is selected', functi
         'matric_no' => '10076',
         'program_id' => $program->id,
     ]);
-    $this->assertDatabaseHas('users', ['email' => 'abdulkadir.hassan@uct.edu']);
-    $this->assertDatabaseHas('users', ['email' => 'omar.ibrahim@uct.edu']);
+    $this->assertDatabaseHas('users', ['email' => 'abdulkadir.hassan@uct.edu.so']);
+    $this->assertDatabaseHas('users', ['email' => 'omar.ibrahim@uct.edu.so']);
 });
 
 test('legacy MPU list files require a program selection', function () {
