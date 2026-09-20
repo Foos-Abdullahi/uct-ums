@@ -26,6 +26,7 @@ class StudentImport implements ToArray
         'password' => ['password'],
         'matric_no' => ['matric no', 'matric number', 'matric no.', 'student id', 'id', 'id no', 'id number'],
         'program' => ['program', 'program name', 'course', 'course of study'],
+        'academic_year' => ['academic year', 'academic_year', 'year', 'cohort', 'admission year'],
         'current_semester' => ['current semester', 'semester'],
         'phone' => ['phone', 'telephone', 'mobile', 'contact'],
         'gender' => ['gender', 'sex'],
@@ -58,7 +59,7 @@ class StudentImport implements ToArray
      * @param  list<list<mixed>>  $rows
      * @return array{imported: int, failed: int, errors: list<string>}
      */
-    public function processRows(array $rows, ?string $programOverride = null): array
+    public function processRows(array $rows, ?string $programOverride = null, ?string $academicYearOverride = null): array
     {
         $headerIndex = $this->locateHeaderRow($rows);
         if ($headerIndex === null) {
@@ -89,7 +90,7 @@ class StudentImport implements ToArray
 
         foreach (array_slice($rows, $headerIndex + 1) as $offset => $row) {
             $rowNumber = $headerIndex + 2 + $offset; // sheet rows are 1-based
-            $data = $this->normaliseRow($row, $columns, $programName);
+            $data = $this->normaliseRow($row, $columns, $programName, $academicYearOverride);
 
             if ($data['name'] === '' && $this->rowIsEmpty($row, $columns)) {
                 continue;
@@ -132,7 +133,7 @@ class StudentImport implements ToArray
      * @param  array<string, int>  $columns
      * @return array<string, string>
      */
-    private function normaliseRow(array $row, array $columns, ?string $programOverride): array
+    private function normaliseRow(array $row, array $columns, ?string $programOverride, ?string $academicYearOverride): array
     {
         $data = [];
 
@@ -150,6 +151,10 @@ class StudentImport implements ToArray
 
         if ($data['program'] === '') {
             $data['program'] = (string) $programOverride;
+        }
+
+        if ($data['academic_year'] === '') {
+            $data['academic_year'] = (string) $academicYearOverride;
         }
 
         return $data;
@@ -268,6 +273,7 @@ class StudentImport implements ToArray
             'password' => ['nullable', 'string', 'min:8'],
             'matric_no' => ['nullable', 'string', 'max:50', 'unique:students,matric_no'],
             'program' => ['required', 'string'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
             'current_semester' => ['nullable', 'integer', 'min:1', 'max:12'],
             'phone' => ['nullable', 'string', 'max:30'],
             'gender' => ['nullable', 'string', 'in:Male,Female,Other'],
@@ -346,6 +352,7 @@ class StudentImport implements ToArray
             'user_id' => $user->id,
             'matric_no' => $data['matric_no'] !== '' ? $data['matric_no'] : $this->nextMatricNo(),
             'program_id' => $data['program_id'],
+            'academic_year' => $data['academic_year'] !== '' ? $data['academic_year'] : null,
             'current_semester' => $data['current_semester'] !== '' ? (int) $data['current_semester'] : 1,
             'phone' => $data['phone'] !== '' ? $data['phone'] : null,
             'gender' => $data['gender'] !== '' ? $data['gender'] : null,
