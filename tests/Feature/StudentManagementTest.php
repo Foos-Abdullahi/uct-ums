@@ -47,13 +47,13 @@ function makeStudentImportFile(array $rows): UploadedFile
  * Build an in-memory .xlsx file matching the legacy MPU list layout:
  * title rows on top, then a Number/ID/Full Names header.
  */
-function makeLegacyStudentImportFile(array $rows): UploadedFile
+function makeLegacyStudentImportFile(array $rows, string $fileName = 'legacy_students.xlsx'): UploadedFile
 {
     $spreadsheet = new Spreadsheet;
     $sheet = $spreadsheet->getActiveSheet();
 
     $sheet->setCellValue('A1', 'MPU University');
-    $sheet->setCellValue('B2', '2015-DONE-Department List');
+    $sheet->setCellValue('B2', 'Department List');
     $sheet->fromArray([null, 'Number', 'ID', 'Full Names'], null, 'A3');
 
     foreach ($rows as $index => $row) {
@@ -65,7 +65,7 @@ function makeLegacyStudentImportFile(array $rows): UploadedFile
     $writer->save('php://output');
     $content = ob_get_clean();
 
-    return UploadedFile::fake()->createWithContent('legacy_students.xlsx', $content);
+    return UploadedFile::fake()->createWithContent($fileName, $content);
 }
 
 // ─── Import ───────────────────────────────────────────────────────────────────
@@ -230,6 +230,48 @@ test('legacy MPU list files with an unknown program are rejected', function () {
     $this->assertDatabaseCount('students', 0);
 });
 
+test('import stamps the academic year when provided', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Network Engineering']);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '100320', 'name' => 'Abdulahi Hussein Mohamed'],
+        ]),
+        'program' => 'Bsc Network Engineering',
+        'academic_year' => '2016',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '100320',
+        'academic_year' => '2016',
+    ]);
+});
+
+test('import auto-detects the year from the file name', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Software Engineering']);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile(
+            [['id' => '100115', 'name' => 'Abdiaziiz Ali Nuur']],
+            '2016F-DOSE-Dpartment of Software Engineering_List.xlsx'
+        ),
+        'program' => 'Bsc Software Engineering',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '100115',
+        'academic_year' => '2016',
+    ]);
+});
+
 // ─── Index ────────────────────────────────────────────────────────────────────
 
 test('admin can view the students index page', function () {
@@ -279,6 +321,7 @@ test('admin can create a new student with auto-generated matric number', functio
         'name' => 'Fatima Ali',
         'email' => 'fatima.ali@example.com',
         'program_id' => $program->id,
+        'academic_year' => '2016',
         'current_semester' => 1,
         'gender' => 'Female',
         'date_of_birth' => '2001-03-10',
@@ -294,7 +337,8 @@ test('admin can create a new student with auto-generated matric number', functio
 
     $student = Student::where('user_id', $user->id)->first();
     expect($student)->not->toBeNull()
-        ->and($student->matric_no)->toStartWith('UCT-');
+        ->and($student->matric_no)->toStartWith('UCT-')
+        ->and($student->academic_year)->toBe('2016');
 });
 
 test('student creation validates required fields', function () {
