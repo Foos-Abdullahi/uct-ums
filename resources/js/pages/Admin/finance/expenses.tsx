@@ -16,6 +16,7 @@ import {
     HandCoins,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -122,18 +123,13 @@ interface AdminFinanceExpensesProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Finance', href: '/admin/finance' },
-    { title: 'Expenses', href: '/admin/expenses' },
-];
-
 export default function AdminFinanceExpenses({
     stats,
     expenses,
     expense_accounts = [],
     filters,
 }: AdminFinanceExpensesProps) {
+    const { t } = useTranslation();
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [selectedForDelete, setSelectedForDelete] =
         useState<ExpenseItem | null>(null);
@@ -143,6 +139,12 @@ export default function AdminFinanceExpenses({
     const [rejectComment, setRejectComment] = useState('');
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectProcessing, setRejectProcessing] = useState(false);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard_breadcrumb'), href: '/admin/dashboard' },
+        { title: t('finance_breadcrumb'), href: '/admin/finance' },
+        { title: t('breadcrumb_expenses'), href: '/admin/expenses' },
+    ];
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -198,14 +200,14 @@ export default function AdminFinanceExpenses({
         router.delete(`/admin/expenses/${selectedForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    `Expense ${selectedForDelete.expense_no} deleted.`,
+                    t('expense_deleted', { expense_no: selectedForDelete.expense_no }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
                 setDeleteProcessing(false);
             },
             onError: () => {
-                toast.error('Failed to delete expense.');
+                toast.error(t('failed_delete_expense'));
                 setDeleteProcessing(false);
             },
         });
@@ -217,9 +219,9 @@ export default function AdminFinanceExpenses({
             {},
             {
                 onSuccess: () =>
-                    toast.success(`Expense ${expense.expense_no} approved.`),
+                    toast.success(t('expense_approved', { expense_no: expense.expense_no })),
                 onError: (errs) => {
-                    const msg = Object.values(errs)[0] ?? 'Approval failed.';
+                    const msg = Object.values(errs)[0] ?? t('approval_failed');
                     toast.error(String(msg));
                 },
             },
@@ -233,9 +235,9 @@ export default function AdminFinanceExpenses({
             {
                 onSuccess: () =>
                     toast.success(
-                        `Expense ${expense.expense_no} marked as paid.`,
+                        t('expense_marked_paid', { expense_no: expense.expense_no }),
                     ),
-                onError: () => toast.error('Failed to mark expense as paid.'),
+                onError: () => toast.error(t('failed_mark_paid')),
             },
         );
     };
@@ -253,7 +255,7 @@ export default function AdminFinanceExpenses({
             {
                 onSuccess: () => {
                     toast.success(
-                        `Expense ${rejectTarget.expense_no} rejected.`,
+                        t('expense_rejected', { expense_no: rejectTarget.expense_no }),
                     );
                     setRejectModalOpen(false);
                     setRejectTarget(null);
@@ -261,7 +263,7 @@ export default function AdminFinanceExpenses({
                     setRejectProcessing(false);
                 },
                 onError: () => {
-                    toast.error('Failed to reject expense.');
+                    toast.error(t('failed_reject_expense'));
                     setRejectProcessing(false);
                 },
             },
@@ -300,7 +302,7 @@ export default function AdminFinanceExpenses({
     const columns: ColumnDef<ExpenseItem>[] = [
         {
             accessorKey: 'expense_no',
-            header: 'Expense No',
+            header: t('expense_no_column'),
             cell: ({ row }) => (
                 <Badge
                     variant="outline"
@@ -312,7 +314,7 @@ export default function AdminFinanceExpenses({
         },
         {
             accessorKey: 'title',
-            header: 'Expense',
+            header: t('expense_column'),
             cell: ({ row }) => (
                 <div className="max-w-[240px]">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -328,7 +330,7 @@ export default function AdminFinanceExpenses({
         },
         {
             accessorKey: 'account',
-            header: 'Account',
+            header: t('account_column'),
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
                     <div className="flex items-center gap-1.5">
@@ -353,7 +355,7 @@ export default function AdminFinanceExpenses({
         },
         {
             accessorKey: 'amount',
-            header: 'Amount',
+            header: t('amount_column'),
             cell: ({ row }) => (
                 <span className="text-xs font-semibold text-foreground">
                     {formatCurrency(row.original.amount)}
@@ -362,7 +364,7 @@ export default function AdminFinanceExpenses({
         },
         {
             accessorKey: 'expense_date',
-            header: 'Date',
+            header: t('date_column'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
                     {formatDate(row.original.expense_date)}
@@ -371,7 +373,7 @@ export default function AdminFinanceExpenses({
         },
         {
             accessorKey: 'budget_line',
-            header: 'Budget Line',
+            header: t('budget_line_column'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
                     {row.original.budget_line || '—'}
@@ -380,12 +382,12 @@ export default function AdminFinanceExpenses({
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('status_column'),
             cell: ({ row }) => getStatusBadge(row.original.status),
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions_column')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     {row.original.status === 'approved' && (
@@ -399,7 +401,7 @@ export default function AdminFinanceExpenses({
                             }}
                         >
                             <HandCoins className="mr-1 h-3.5 w-3.5" />
-                            Mark Paid
+                            {t('mark_paid')}
                         </Button>
                     )}
                     {row.original.status === 'pending_approval' && (
@@ -413,7 +415,7 @@ export default function AdminFinanceExpenses({
                             }}
                         >
                             <Check className="mr-1 h-3.5 w-3.5" />
-                            Approve
+                            {t('approve_expense')}
                         </Button>
                     )}
                     {row.original.status === 'pending_approval' && (
@@ -428,7 +430,7 @@ export default function AdminFinanceExpenses({
                             }}
                         >
                             <X className="mr-1 h-3.5 w-3.5" />
-                            Reject
+                            {t('reject_expense')}
                         </Button>
                     )}
                     <Button
@@ -439,7 +441,7 @@ export default function AdminFinanceExpenses({
                     >
                         <Link href={`/admin/expenses/${row.original.id}`}>
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            View
+                            {t('view_expense')}
                         </Link>
                     </Button>
                     {[
@@ -469,23 +471,23 @@ export default function AdminFinanceExpenses({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('status_column'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Draft', value: 'draft' },
-                { label: 'Pending Approval', value: 'pending_approval' },
-                { label: 'Approved', value: 'approved' },
-                { label: 'Paid', value: 'paid' },
-                { label: 'Rejected', value: 'rejected' },
-                { label: 'Cancelled', value: 'cancelled' },
+                { label: t('all_statuses_filter'), value: 'all' },
+                { label: t('draft_status'), value: 'draft' },
+                { label: t('pending_approval_status'), value: 'pending_approval' },
+                { label: t('approved_status'), value: 'approved' },
+                { label: t('paid_status'), value: 'paid' },
+                { label: t('rejected_status'), value: 'rejected' },
+                { label: t('cancelled_status'), value: 'cancelled' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'account_id',
-            title: 'Account',
+            title: t('account_column'),
             options: [
-                { label: 'All Accounts', value: 'all' },
+                { label: t('all_accounts_filter'), value: 'all' },
                 ...expense_accounts.map((a) => ({
                     label: `${a.code} · ${a.name}`,
                     value: String(a.id),
@@ -500,31 +502,30 @@ export default function AdminFinanceExpenses({
 
     return (
         <>
-            <Head title="University Expenses" />
+            <Head title={t('university_expense_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            University Expense Management
+                            {t('university_expense_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Track operational and academic expenses against the
-                            UCT chart of accounts with multi-level approval.
+                            {t('university_expense_description')}
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance">Finance Overview</Link>
+                            <Link href="/admin/finance">{t('finance_overview')}</Link>
                         </Button>
                         <Button
                             size="sm"
                             onClick={() => setCreateModalOpen(true)}
                         >
                             <Plus className="mr-1.5 h-4 w-4" />
-                            Record Expense
+                            {t('record_expense')}
                         </Button>
                     </div>
                 </div>
@@ -534,31 +535,31 @@ export default function AdminFinanceExpenses({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Expense"
+                                title={t('total_expense')}
                                 value={formatCurrency(stats.total_spent)}
                                 icon={DollarSign}
                                 color="destructive"
                             />
                             <MetricCard
-                                title="Pending Approval"
+                                title={t('pending_approval_expenses')}
                                 value={`${stats.pending_approval} items`}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="This Month"
+                                title={t('this_month_expenses')}
                                 value={formatCurrency(stats.month_expenses)}
                                 icon={Wallet}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Total Vouchers"
+                                title={t('total_vouchers')}
                                 value={`${stats.total_expenses} items`}
                                 icon={Receipt}
                                 color="accent"
                             />
                             <MetricCard
-                                title="Rejected"
+                                title={t('rejected_expenses')}
                                 value={`${stats.rejected_count} items`}
                                 icon={AlertCircle}
                                 color="destructive"
@@ -572,8 +573,8 @@ export default function AdminFinanceExpenses({
                     {expenses && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Expense Vouchers"
-                                searchTitle="Search by expense no, title, vendor, budget line, or account..."
+                                title={t('expense_vouchers')}
+                                searchTitle={t('search_expenses_description')}
                                 columns={columns}
                                 data={expenses.data}
                                 pagination={{
@@ -625,11 +626,10 @@ export default function AdminFinanceExpenses({
                     <DialogContent className="sm:max-w-lg">
                         <DialogHeader>
                             <DialogTitle className="text-base font-semibold">
-                                Record University Expense
+                                {t('record_university_expense')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Submit an expense voucher. Submitted expenses
-                                enter the multi-level approval chain.
+                                {t('record_expense_description')}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -642,12 +642,12 @@ export default function AdminFinanceExpenses({
                                     htmlFor="title"
                                     className="text-xs font-semibold"
                                 >
-                                    Expense Title{' '}
+                                    {t('expense_title')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
                                     id="title"
-                                    placeholder="e.g. Electricity bill for main campus"
+                                    placeholder={t('expense_title_placeholder')}
                                     value={data.title}
                                     onChange={(e) =>
                                         setData('title', e.target.value)
@@ -668,7 +668,7 @@ export default function AdminFinanceExpenses({
                                         htmlFor="account_id"
                                         className="text-xs font-semibold"
                                     >
-                                        Account{' '}
+                                        {t('account_select')}{' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -684,7 +684,7 @@ export default function AdminFinanceExpenses({
                                             id="account_id"
                                             className="h-9 text-xs"
                                         >
-                                            <SelectValue placeholder="Select account..." />
+                                            <SelectValue placeholder={t('select_account')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {Array.from(
@@ -731,7 +731,7 @@ export default function AdminFinanceExpenses({
                                         htmlFor="amount"
                                         className="text-xs font-semibold"
                                     >
-                                        Amount ($){' '}
+                                        {t('amount_dollar')}{' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -740,7 +740,7 @@ export default function AdminFinanceExpenses({
                                         id="amount"
                                         type="number"
                                         step="0.01"
-                                        placeholder="1500.00"
+                                        placeholder={t('amount_placeholder')}
                                         value={data.amount}
                                         onChange={(e) =>
                                             setData('amount', e.target.value)
@@ -757,7 +757,7 @@ export default function AdminFinanceExpenses({
                                         htmlFor="expense_date"
                                         className="text-xs font-semibold"
                                     >
-                                        Expense Date{' '}
+                                        {t('expense_date_label')}{' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -768,7 +768,7 @@ export default function AdminFinanceExpenses({
                                         onChange={(val) =>
                                             setData('expense_date', val)
                                         }
-                                        placeholder="Pick a date"
+                                        placeholder={t('pick_date')}
                                         maxDate={new Date()}
                                     />
                                     {errors.expense_date && (
@@ -782,11 +782,11 @@ export default function AdminFinanceExpenses({
                                         htmlFor="vendor"
                                         className="text-xs font-semibold"
                                     >
-                                        Vendor / Payee
+                                        {t('vendor_payee')}
                                     </Label>
                                     <Input
                                         id="vendor"
-                                        placeholder="e.g. Golis Electric"
+                                        placeholder={t('vendor_placeholder')}
                                         value={data.vendor}
                                         onChange={(e) =>
                                             setData('vendor', e.target.value)
@@ -802,11 +802,11 @@ export default function AdminFinanceExpenses({
                                         htmlFor="budget_line"
                                         className="text-xs font-semibold"
                                     >
-                                        Budget Line
+                                        {t('budget_line_label')}
                                     </Label>
                                     <Input
                                         id="budget_line"
-                                        placeholder="e.g. Operations"
+                                        placeholder={t('budget_line_placeholder')}
                                         value={data.budget_line}
                                         onChange={(e) =>
                                             setData(
@@ -822,7 +822,7 @@ export default function AdminFinanceExpenses({
                                         htmlFor="status"
                                         className="text-xs font-semibold"
                                     >
-                                        Status
+                                        {t('expense_status_label')}
                                     </Label>
                                     <Select
                                         value={data.status}
@@ -841,13 +841,13 @@ export default function AdminFinanceExpenses({
                                                 value="pending_approval"
                                                 className="text-xs"
                                             >
-                                                Submit for Approval
+                                                {t('submit_for_approval')}
                                             </SelectItem>
                                             <SelectItem
                                                 value="draft"
                                                 className="text-xs"
                                             >
-                                                Save as Draft
+                                                {t('save_as_draft')}
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -859,12 +859,12 @@ export default function AdminFinanceExpenses({
                                     htmlFor="description"
                                     className="text-xs font-semibold"
                                 >
-                                    Description
+                                    {t('description_label')}
                                 </Label>
                                 <Textarea
                                     id="description"
                                     className="min-h-[70px] text-xs"
-                                    placeholder="Details about this expense..."
+                                    placeholder={t('description_placeholder')}
                                     value={data.description}
                                     onChange={(e) =>
                                         setData('description', e.target.value)
@@ -879,7 +879,7 @@ export default function AdminFinanceExpenses({
                                     size="sm"
                                     onClick={() => setCreateModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('cancel_button')}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -888,8 +888,8 @@ export default function AdminFinanceExpenses({
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing
-                                        ? 'Saving...'
-                                        : 'Record Expense'}
+                                        ? t('saving')
+                                        : t('record_expense_button')}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -904,12 +904,10 @@ export default function AdminFinanceExpenses({
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-base font-semibold">
-                                Reject Expense
+                                {t('reject_expense_title')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Provide a reason for rejecting{' '}
-                                {rejectTarget?.expense_no}. Rejection requires a
-                                comment.
+                                {t('reject_expense_description', { expense_no: rejectTarget?.expense_no })}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -919,13 +917,13 @@ export default function AdminFinanceExpenses({
                                     htmlFor="reject_comment"
                                     className="text-xs font-semibold"
                                 >
-                                    Rejection Reason{' '}
+                                    {t('rejection_reason')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <Textarea
                                     id="reject_comment"
                                     className="min-h-[90px] text-xs"
-                                    placeholder="Explain why this expense is being rejected..."
+                                    placeholder={t('rejection_reason_placeholder')}
                                     value={rejectComment}
                                     onChange={(e) =>
                                         setRejectComment(e.target.value)
@@ -940,7 +938,7 @@ export default function AdminFinanceExpenses({
                                     size="sm"
                                     onClick={() => setRejectModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('cancel_button')}
                                 </Button>
                                 <Button
                                     type="button"
@@ -954,8 +952,8 @@ export default function AdminFinanceExpenses({
                                 >
                                     <X className="mr-1.5 h-4 w-4" />
                                     {rejectProcessing
-                                        ? 'Rejecting...'
-                                        : 'Confirm Reject'}
+                                        ? t('saving')
+                                        : t('confirm_reject')}
                                 </Button>
                             </DialogFooter>
                         </div>
@@ -966,8 +964,8 @@ export default function AdminFinanceExpenses({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Expense"
-                    description="Are you sure you want to delete this expense voucher? Only draft, rejected, cancelled or pending expenses can be deleted."
+                    title={t('delete_expense')}
+                    description={t('delete_expense_description')}
                     itemName={
                         selectedForDelete
                             ? `${selectedForDelete.expense_no} (${selectedForDelete.title})`
@@ -981,4 +979,4 @@ export default function AdminFinanceExpenses({
     );
 }
 
-AdminFinanceExpenses.layout = { breadcrumbs };
+AdminFinanceExpenses.layout = { breadcrumbs: [{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Finance', href: '/admin/finance' }, { title: 'Expenses', href: '/admin/expenses' }] };

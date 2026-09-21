@@ -22,6 +22,7 @@ import {
     Compass,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { Badge } from '@/components/ui/badge';
@@ -145,13 +146,15 @@ export default function AdminDashboard({
     recent_assignments = [],
     semester_distribution = [],
 }: DashboardProps) {
+    const { t } = useTranslation();
+
     const formatCurrency = (val?: number) => {
         return `$${(val ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
 
     return (
         <>
-            <Head title="University Administration Dashboard" />
+            <Head title={t('admin_dashboard')} />
 
             <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
                 {/* 1. Header Banner */}
@@ -160,20 +163,19 @@ export default function AdminDashboard({
                         <div className="space-y-1.5">
                             <div className="flex flex-wrap items-center gap-2.5">
                                 <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                                    Dashboard
+                                    {t('dashboard')}
                                 </h1>
                                 <Badge
                                     variant="outline"
                                     className="gap-1.5 border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600"
                                 >
                                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                                    System Active
+                                    {t('system_active')}
                                 </Badge>
                             </div>
 
                             <p className="text-xs text-muted-foreground">
-                                Overview of key metrics and recent activity
-                                across the university.
+                                {t('overview_metrics')}
                             </p>
                         </div>
 
@@ -187,7 +189,7 @@ export default function AdminDashboard({
                             >
                                 <Link href="/admin/students/create">
                                     <UserPlus className="h-3.5 w-3.5" />
-                                    <span>Register Student</span>
+                                    <span>{t('register_student')}</span>
                                 </Link>
                             </Button>
                             <Button
@@ -198,7 +200,7 @@ export default function AdminDashboard({
                             >
                                 <Link href="/admin/admissions">
                                     <Layers className="h-3.5 w-3.5" />
-                                    <span>Admissions Queue</span>
+                                    <span>{t('admissions_queue')}</span>
                                 </Link>
                             </Button>
                             <Button
@@ -209,7 +211,7 @@ export default function AdminDashboard({
                             >
                                 <Link href="/admin/reports">
                                     <FileText className="h-3.5 w-3.5" />
-                                    <span>Analytics</span>
+                                    <span>{t('analytics')}</span>
                                 </Link>
                             </Button>
                         </div>
@@ -224,62 +226,62 @@ export default function AdminDashboard({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-3 duration-700 fade-in slide-in-from-top-4 sm:grid-cols-2 md:grid-cols-4 lg:gap-4">
                             <MetricCard
-                                title="Total Enrolment"
+                                title={t('total_enrollment')}
                                 value={stats.total_students.toLocaleString()}
                                 icon={Users}
                                 color="primary"
-                                trend={`${stats.active_students} actively enrolled`}
+                                trend={`${stats.active_students} ${t('actively_enrolled')}`}
                             />
                             <MetricCard
-                                title="Academic Faculty"
+                                title={t('academic_faculty')}
                                 value={stats.total_lecturers.toLocaleString()}
                                 icon={GraduationCap}
                                 color="info"
-                                trend={`${stats.active_lecturers} on active teaching`}
+                                trend={`${stats.active_lecturers} ${t('on_active_teaching')}`}
                             />
                             <MetricCard
-                                title="Total Programs"
+                                title={t('total_programs')}
                                 value={`${stats.total_programs} / ${stats.total_courses}`}
                                 icon={BookOpen}
                                 color="success"
-                                trend={`${stats.active_courses} active courses`}
+                                trend={`${stats.active_courses} ${t('active_courses')}`}
                             />
                             <MetricCard
-                                title="Total Collected"
+                                title={t('total_collected')}
                                 value={formatCurrency(stats.total_revenue)}
                                 icon={DollarSign}
                                 color="warning"
-                                trend={`${stats.collection_rate}% collection rate`}
+                                trend={`${stats.collection_rate}% ${t('collection_rate')}`}
                             />
                             <MetricCard
-                                title="Outstanding Fees"
+                                title={t('outstanding_fees')}
                                 value={formatCurrency(
                                     stats.outstanding_balance,
                                 )}
                                 icon={CreditCard}
                                 color="destructive"
-                                trend="Pending student clearance"
+                                trend={t('pending_clearance')}
                             />
                             <MetricCard
-                                title="Pending Admissions"
+                                title={t('pending_admissions')}
                                 value={stats.pending_applications.toLocaleString()}
                                 icon={Clock}
                                 color="warning"
-                                trend={`${stats.total_applications} total applied`}
+                                trend={`${stats.total_applications} ${t('total_applied')}`}
                             />
                             <MetricCard
-                                title="Active Teaching"
+                                title={t('active_teaching')}
                                 value={stats.active_assignments.toLocaleString()}
                                 icon={BarChart3}
                                 color="info"
-                                trend={`${stats.total_assignments} total sections`}
+                                trend={`${stats.total_assignments} ${t('total_sections')}`}
                             />
                             <MetricCard
-                                title="Graduated Alumni"
+                                title={t('graduated_alumni')}
                                 value={stats.graduated_students.toLocaleString()}
                                 icon={Award}
                                 color="primary"
-                                trend={`${stats.total_certificates} issued certs`}
+                                trend={`${stats.total_certificates} ${t('issued_certs')}`}
                             />
                         </div>
                     )}
@@ -300,18 +302,17 @@ export default function AdminDashboard({
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                             <Users className="h-4 w-4 text-primary" />
-                                            Student Status Distribution
+                                            {t('student_status_distribution')}
                                         </CardTitle>
                                         <Badge
                                             variant="outline"
                                             className="text-[10px]"
                                         >
-                                            {stats.total_students} Total
+                                            {stats.total_students} {t('total')}
                                         </Badge>
                                     </div>
                                     <CardDescription className="text-xs">
-                                        Enrolment lifecycle breakdown across all
-                                        departments
+                                        {t('enrollment_lifecycle')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
@@ -352,7 +353,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-1.5">
                                                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                                                 <span className="text-muted-foreground">
-                                                    Enrolled
+                                                    {t('enrolled')}
                                                 </span>
                                             </div>
                                             <span className="font-semibold text-foreground">
@@ -363,7 +364,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-1.5">
                                                 <span className="h-2 w-2 rounded-full bg-amber-500" />
                                                 <span className="text-muted-foreground">
-                                                    Pending
+                                                    {t('pending')}
                                                 </span>
                                             </div>
                                             <span className="font-semibold text-foreground">
@@ -374,7 +375,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-1.5">
                                                 <span className="h-2 w-2 rounded-full bg-rose-500" />
                                                 <span className="text-muted-foreground">
-                                                    Suspended
+                                                    {t('suspended')}
                                                 </span>
                                             </div>
                                             <span className="font-semibold text-foreground">
@@ -385,7 +386,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-1.5">
                                                 <span className="h-2 w-2 rounded-full bg-sky-500" />
                                                 <span className="text-muted-foreground">
-                                                    Graduated
+                                                    {t('graduated')}
                                                 </span>
                                             </div>
                                             <span className="font-semibold text-foreground">
@@ -401,7 +402,7 @@ export default function AdminDashboard({
                                         className="w-full justify-between text-xs text-primary"
                                     >
                                         <Link href="/admin/students">
-                                            <span>Open Student Directory</span>
+                                            <span>{t('open_student_directory')}</span>
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </Link>
                                     </Button>
@@ -414,25 +415,24 @@ export default function AdminDashboard({
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                             <DollarSign className="h-4 w-4 text-emerald-600" />
-                                            Tuition & Fees Health
+                                            {t('tuition_fees_health')}
                                         </CardTitle>
                                         <Badge
                                             variant="outline"
                                             className="border-emerald-500/20 bg-emerald-500/10 text-[10px] text-emerald-600"
                                         >
-                                            {stats.collection_rate}% Collected
+                                            {stats.collection_rate}% {t('collected')}
                                         </Badge>
                                     </div>
                                     <CardDescription className="text-xs">
-                                        Invoiced totals against collected
-                                        student payments
+                                        {t('invoiced_totals')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="text-muted-foreground">
-                                                Collection Progress
+                                                {t('collection_progress')}
                                             </span>
                                             <span className="font-medium">
                                                 {stats.collection_rate}%
@@ -451,7 +451,7 @@ export default function AdminDashboard({
                                     <div className="space-y-2 pt-1 text-xs">
                                         <div className="flex items-center justify-between rounded-md bg-muted/40 p-2">
                                             <span className="text-muted-foreground">
-                                                Total Invoiced
+                                                {t('total_invoiced')}
                                             </span>
                                             <span className="font-semibold">
                                                 {formatCurrency(
@@ -460,7 +460,7 @@ export default function AdminDashboard({
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between rounded-md bg-emerald-500/5 p-2 text-emerald-700 dark:text-emerald-400">
-                                            <span>Cleared Payments</span>
+                                            <span>{t('cleared_payments')}</span>
                                             <span className="font-semibold">
                                                 {formatCurrency(
                                                     stats.total_revenue,
@@ -468,7 +468,7 @@ export default function AdminDashboard({
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between rounded-md bg-destructive/5 p-2 text-destructive">
-                                            <span>Outstanding Balance</span>
+                                            <span>{t('outstanding_balance')}</span>
                                             <span className="font-semibold">
                                                 {formatCurrency(
                                                     stats.outstanding_balance,
@@ -484,7 +484,7 @@ export default function AdminDashboard({
                                         className="w-full justify-between text-xs text-primary"
                                     >
                                         <Link href="/admin/reports/finance">
-                                            <span>View Detailed Ledger</span>
+                                            <span>{t('view_detailed_ledger')}</span>
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </Link>
                                     </Button>
@@ -497,19 +497,18 @@ export default function AdminDashboard({
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                             <Layers className="h-4 w-4 text-sky-600" />
-                                            Admissions Funnel
+                                            {t('admissions_funnel')}
                                         </CardTitle>
                                         <Badge
                                             variant="outline"
                                             className="text-[10px]"
                                         >
                                             {stats.total_applications}{' '}
-                                            Candidates
+                                            {t('candidates')}
                                         </Badge>
                                     </div>
                                     <CardDescription className="text-xs">
-                                        New applicant flow and conversion to
-                                        registered students
+                                        {t('applicant_flow')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
@@ -518,7 +517,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-2">
                                                 <Clock className="h-3.5 w-3.5 text-amber-600" />
                                                 <span className="font-medium text-amber-900 dark:text-amber-300">
-                                                    Pending Review
+                                                    {t('pending_review')}
                                                 </span>
                                             </div>
                                             <span className="font-bold text-amber-700 dark:text-amber-400">
@@ -530,7 +529,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-2">
                                                 <CheckCircle2 className="h-3.5 w-3.5 text-sky-600" />
                                                 <span className="font-medium text-sky-900 dark:text-sky-300">
-                                                    Approved Offers
+                                                    {t('approved_offers')}
                                                 </span>
                                             </div>
                                             <span className="font-bold text-sky-700 dark:text-sky-400">
@@ -542,7 +541,7 @@ export default function AdminDashboard({
                                             <div className="flex items-center gap-2">
                                                 <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
                                                 <span className="font-medium text-emerald-900 dark:text-emerald-300">
-                                                    Enrolled Students
+                                                    {t('enrolled_students')}
                                                 </span>
                                             </div>
                                             <span className="font-bold text-emerald-700 dark:text-emerald-400">
@@ -553,7 +552,7 @@ export default function AdminDashboard({
                                         <div className="flex items-center justify-between rounded-md bg-rose-500/5 p-2 text-muted-foreground">
                                             <div className="flex items-center gap-2">
                                                 <XCircle className="h-3.5 w-3.5 text-rose-500" />
-                                                <span>Declined / Rejected</span>
+                                                <span>{t('declined_rejected')}</span>
                                             </div>
                                             <span className="font-semibold">
                                                 {stats.rejected_applications}
@@ -568,7 +567,7 @@ export default function AdminDashboard({
                                         className="w-full justify-between text-xs text-primary"
                                     >
                                         <Link href="/admin/admissions">
-                                            <span>Review Applications</span>
+                                            <span>{t('review_applications')}</span>
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </Link>
                                     </Button>
@@ -594,12 +593,10 @@ export default function AdminDashboard({
                                         <div>
                                             <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                                 <Building2 className="h-4 w-4 text-primary" />
-                                                Academic Programs & Enrolment
-                                                Density
+                                                {t('academic_programs_enrollment')}
                                             </CardTitle>
                                             <CardDescription className="text-xs">
-                                                Leading degree programs ranked
-                                                by student volume
+                                                {t('leading_programs')}
                                             </CardDescription>
                                         </div>
                                     </div>
@@ -607,8 +604,7 @@ export default function AdminDashboard({
                                 <CardContent>
                                     {programs_distribution.length === 0 ? (
                                         <div className="py-8 text-center text-xs text-muted-foreground">
-                                            No program distribution data
-                                            available.
+                                            {t('no_program_data')}
                                         </div>
                                     ) : (
                                         <div className="space-y-2.5">
@@ -649,8 +645,7 @@ export default function AdminDashboard({
                                                                     }
                                                                 </span>
                                                                 <p className="text-[10px] text-muted-foreground">
-                                                                    Enrolled
-                                                                    Students
+                                                                    {t('enrolled_students_count')}
                                                                 </p>
                                                             </div>
                                                             <div className="text-right">
@@ -660,8 +655,7 @@ export default function AdminDashboard({
                                                                     }
                                                                 </span>
                                                                 <p className="text-[10px] text-muted-foreground">
-                                                                    Offered
-                                                                    Courses
+                                                                    {t('offered_courses')}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -686,16 +680,16 @@ export default function AdminDashboard({
                             <CardHeader className="pb-3">
                                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                     <Calendar className="h-4 w-4 text-primary" />
-                                    Active Cohort Progression
+                                    {t('active_cohort_progression')}
                                 </CardTitle>
                                 <CardDescription className="text-xs">
-                                    Students categorized by semester progression
+                                    {t('semester_breakdown')}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {semester_distribution.length === 0 ? (
                                     <div className="py-8 text-center text-xs text-muted-foreground">
-                                        No semester cohort breakdown available.
+                                        {t('no_semester_data')}
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
@@ -709,7 +703,7 @@ export default function AdminDashboard({
                                                         {sem.semester}
                                                     </span>
                                                     <span className="font-semibold text-muted-foreground">
-                                                        {sem.total} Students
+                                                        {sem.total} {t('students_count')}
                                                     </span>
                                                 </div>
                                                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -744,10 +738,10 @@ export default function AdminDashboard({
                                     <div>
                                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                             <FileText className="h-4 w-4 text-primary" />
-                                            Admissions Queue
+                                            {t('candidates_awaiting_review')}
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Candidates awaiting review
+                                            {t('candidates_awaiting_review')}
                                         </CardDescription>
                                     </div>
                                     <Button
@@ -757,7 +751,7 @@ export default function AdminDashboard({
                                         className="h-7 text-xs"
                                     >
                                         <Link href="/admin/admissions">
-                                            View All
+                                            {t('view_all')}
                                         </Link>
                                     </Button>
                                 </div>
@@ -765,7 +759,7 @@ export default function AdminDashboard({
                             <CardContent>
                                 {recent_applications.length === 0 ? (
                                     <div className="py-6 text-center text-xs text-muted-foreground">
-                                        No pending admissions at this moment.
+                                        {t('no_pending_admissions')}
                                     </div>
                                 ) : (
                                     <div className="space-y-2.5">
@@ -809,7 +803,7 @@ export default function AdminDashboard({
                                                             <Link
                                                                 href={`/admin/admissions/${app.id}`}
                                                             >
-                                                                Review
+                                                                {t('review')}
                                                             </Link>
                                                         </Button>
                                                     </div>
@@ -834,10 +828,10 @@ export default function AdminDashboard({
                                     <div>
                                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                             <DollarSign className="h-4 w-4 text-emerald-600" />
-                                            Recent Receipts
+                                            {t('recent_receipts')}
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Incoming cashier & bank payments
+                                            {t('incoming_payments')}
                                         </CardDescription>
                                     </div>
                                     <Button
@@ -847,7 +841,7 @@ export default function AdminDashboard({
                                         className="h-7 text-xs"
                                     >
                                         <Link href="/admin/reports/finance">
-                                            Ledger
+                                            {t('ledger')}
                                         </Link>
                                     </Button>
                                 </div>
@@ -855,8 +849,7 @@ export default function AdminDashboard({
                             <CardContent>
                                 {recent_payments.length === 0 ? (
                                     <div className="py-6 text-center text-xs text-muted-foreground">
-                                        No payment transactions recorded
-                                        recently.
+                                        {t('no_payment_transactions')}
                                     </div>
                                 ) : (
                                     <div className="space-y-2.5">
@@ -917,10 +910,10 @@ export default function AdminDashboard({
                                     <div>
                                         <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                             <GraduationCap className="h-4 w-4 text-primary" />
-                                            Faculty Teaching
+                                            {t('faculty_teaching')}
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Active course schedules & rooms
+                                            {t('active_schedules')}
                                         </CardDescription>
                                     </div>
                                     <Button
@@ -930,7 +923,7 @@ export default function AdminDashboard({
                                         className="h-7 text-xs"
                                     >
                                         <Link href="/admin/assignments">
-                                            Assignments
+                                            {t('assignments')}
                                         </Link>
                                     </Button>
                                 </div>
@@ -938,7 +931,7 @@ export default function AdminDashboard({
                             <CardContent>
                                 {recent_assignments.length === 0 ? (
                                     <div className="py-6 text-center text-xs text-muted-foreground">
-                                        No teaching assignments allocated.
+                                        {t('no_teaching_assignments')}
                                     </div>
                                 ) : (
                                     <div className="space-y-2.5">
@@ -981,11 +974,10 @@ export default function AdminDashboard({
                             <div>
                                 <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                     <Compass className="h-4 w-4 text-primary" />
-                                    Administrative Management Directory
+                                    {t('administrative_management')}
                                 </CardTitle>
                                 <CardDescription className="text-xs">
-                                    Quick navigation to core university
-                                    management modules and configurations
+                                    {t('quick_navigation')}
                                 </CardDescription>
                             </div>
                         </div>
@@ -1000,10 +992,10 @@ export default function AdminDashboard({
                                     <Users className="h-4 w-4" />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">
-                                    Students
+                                    {t('students_directory')}
                                 </span>
                                 <span className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Directory & Profiles
+                                    {t('directory_profiles')}
                                 </span>
                             </Link>
 
@@ -1015,10 +1007,10 @@ export default function AdminDashboard({
                                     <Layers className="h-4 w-4" />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">
-                                    Admissions
+                                    {t('admissions_screen')}
                                 </span>
                                 <span className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Screen & Admit
+                                    {t('screen_admit')}
                                 </span>
                             </Link>
 
@@ -1030,10 +1022,10 @@ export default function AdminDashboard({
                                     <GraduationCap className="h-4 w-4" />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">
-                                    Lecturers
+                                    {t('lecturers_staff')}
                                 </span>
                                 <span className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Faculty Staff
+                                    {t('faculty_staff')}
                                 </span>
                             </Link>
 
@@ -1045,10 +1037,10 @@ export default function AdminDashboard({
                                     <BookOpen className="h-4 w-4" />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">
-                                    Teaching
+                                    {t('teaching_allocation')}
                                 </span>
                                 <span className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Course Allocation
+                                    {t('course_allocation')}
                                 </span>
                             </Link>
 
@@ -1060,10 +1052,10 @@ export default function AdminDashboard({
                                     <BarChart3 className="h-4 w-4" />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">
-                                    Reports
+                                    {t('reports_institutional')}
                                 </span>
                                 <span className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Institutional Data
+                                    {t('institutional_data')}
                                 </span>
                             </Link>
 
@@ -1075,10 +1067,10 @@ export default function AdminDashboard({
                                     <ShieldCheck className="h-4 w-4" />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">
-                                    Users & Roles
+                                    {t('users_roles')}
                                 </span>
                                 <span className="mt-0.5 text-[10px] text-muted-foreground">
-                                    Security & Access
+                                    {t('security_access')}
                                 </span>
                             </Link>
                         </div>

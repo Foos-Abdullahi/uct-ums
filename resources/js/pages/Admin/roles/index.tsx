@@ -13,6 +13,7 @@ import {
     Layers,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -59,6 +60,7 @@ export default function AdminRolesIndex({
     stats,
     roles = [],
 }: AdminRolesIndexProps) {
+    const { t } = useTranslation();
     const [selectedForDelete, setSelectedForDelete] = useState<RoleItem | null>(
         null,
     );
@@ -74,7 +76,7 @@ export default function AdminRolesIndex({
 
         router.delete(`/admin/settings/roles/${selectedForDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Role ${selectedForDelete.name} deleted.`);
+                toast.success(t('role_deleted_success', { name: selectedForDelete.name }));
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
                 setDeleteProcessing(false);
@@ -86,7 +88,7 @@ export default function AdminRolesIndex({
     const columns: ColumnDef<RoleItem>[] = [
         {
             accessorKey: 'name',
-            header: 'Role Name',
+            header: t('role_name_column'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
@@ -102,7 +104,7 @@ export default function AdminRolesIndex({
                                     variant="secondary"
                                     className="px-1 py-0 text-[10px]"
                                 >
-                                    System
+                                    {t('system_badge')}
                                 </Badge>
                             )}
                         </div>
@@ -115,36 +117,36 @@ export default function AdminRolesIndex({
         },
         {
             accessorKey: 'description',
-            header: 'Description',
+            header: t('description_column'),
             cell: ({ row }) => (
                 <p className="max-w-[280px] truncate text-xs text-muted-foreground">
-                    {row.original.description || 'No description provided.'}
+                    {row.original.description || t('no_description_provided_role')}
                 </p>
             ),
         },
         {
             accessorKey: 'permissions_count',
-            header: 'Permissions',
+            header: t('permissions_column'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     <KeyRound className="h-3.5 w-3.5 text-primary" />
-                    <span>{row.original.permissions_count} Privileges</span>
+                    <span>{row.original.permissions_count} {t('privileges_count')}</span>
                 </div>
             ),
         },
         {
             accessorKey: 'users_count',
-            header: 'Assigned Users',
+            header: t('assigned_users_column'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                     <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>{row.original.users_count} accounts</span>
+                    <span>{row.original.users_count} {t('accounts_count')}</span>
                 </div>
             ),
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions_column')}</span>,
             cell: ({ row }) => {
                 const r = row.original;
 
@@ -158,7 +160,7 @@ export default function AdminRolesIndex({
                         >
                             <Link href={`/admin/settings/roles/${r.id}`}>
                                 <Eye className="mr-1 h-3.5 w-3.5" />
-                                View
+                                {t('view_role')}
                             </Link>
                         </Button>
                         <Button
@@ -169,7 +171,7 @@ export default function AdminRolesIndex({
                         >
                             <Link href={`/admin/settings/roles/${r.id}/edit`}>
                                 <Edit3 className="mr-1 h-3.5 w-3.5" />
-                                Edit
+                                {t('edit_role')}
                             </Link>
                         </Button>
                         {!r.is_system && (
@@ -194,18 +196,17 @@ export default function AdminRolesIndex({
 
     return (
         <>
-            <Head title="Roles & Permissions Management" />
+            <Head title={t('roles_permissions_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Roles & Access Permissions
+                            {t('roles_permissions_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage role hierarchies, configure fine-grained
-                            module privileges, and audit assigned user accounts.
+                            {t('roles_permissions_description')}
                         </p>
                     </div>
 
@@ -213,13 +214,13 @@ export default function AdminRolesIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/settings/users">
                                 <Users className="mr-1.5 h-4 w-4" />
-                                Users Roster
+                                {t('users_roster')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/settings/roles/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
-                                Create Role
+                                {t('create_role_button')}
                             </Link>
                         </Button>
                     </div>
@@ -230,31 +231,31 @@ export default function AdminRolesIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Roles"
+                                title={t('total_roles_stats')}
                                 value={stats.total_roles}
                                 icon={Shield}
                                 color="primary"
                             />
                             <MetricCard
-                                title="System Core Roles"
+                                title={t('system_core_roles')}
                                 value={stats.system_roles}
                                 icon={Lock}
                                 color="accent"
                             />
                             <MetricCard
-                                title="Custom Roles"
+                                title={t('custom_roles_stats')}
                                 value={stats.custom_roles}
                                 icon={Layers}
                                 color="info"
                             />
                             <MetricCard
-                                title="Defined Privileges"
+                                title={t('defined_privileges')}
                                 value={stats.total_permissions}
                                 icon={KeyRound}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Assigned Users"
+                                title={t('assigned_users_stats')}
                                 value={stats.total_users}
                                 icon={UserCheck}
                                 color="success"
@@ -266,8 +267,8 @@ export default function AdminRolesIndex({
                 {/* Roles Data Table */}
                 <div className="rounded-md border border-border/60 bg-card p-4">
                     <DataTable
-                        title="Configured Roles Roster"
-                        searchTitle="Search by role name, slug, description..."
+                        title={t('configured_roles_roster')}
+                        searchTitle={t('search_roles_description')}
                         columns={columns}
                         data={roles}
                         onRowClick={(row) =>

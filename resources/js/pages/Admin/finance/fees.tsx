@@ -10,6 +10,7 @@ import {
     Eye,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -73,18 +74,20 @@ interface AdminFinanceFeesProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Finance', href: '/admin/finance' },
-    { title: 'Fee Schedules', href: '/admin/finance/fees' },
-];
-
 export default function AdminFinanceFees({
     stats,
     students,
     programs = [],
     filters,
 }: AdminFinanceFeesProps) {
+    const { t } = useTranslation();
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_finance'), href: '/admin/finance' },
+        { title: t('breadcrumb_fees'), href: '/admin/finance/fees' },
+    ];
+
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -110,7 +113,7 @@ export default function AdminFinanceFees({
     const columns: ColumnDef<StudentFeeRecord>[] = [
         {
             accessorKey: 'matric_no',
-            header: 'Matric No',
+            header: t('matric_no_fees'),
             cell: ({ row }) => (
                 <Badge
                     variant="outline"
@@ -122,7 +125,7 @@ export default function AdminFinanceFees({
         },
         {
             accessorKey: 'user.name',
-            header: 'Student Name',
+            header: t('student_name'),
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -136,11 +139,11 @@ export default function AdminFinanceFees({
         },
         {
             accessorKey: 'program.name',
-            header: 'Program & Level',
+            header: t('program_filter_fees'),
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
                     <span className="block truncate text-xs font-medium text-foreground">
-                        {row.original.program?.name || 'Unassigned'}
+                        {row.original.program?.name || t('unassigned')}
                     </span>
                     <Badge
                         variant="secondary"
@@ -153,7 +156,7 @@ export default function AdminFinanceFees({
         },
         {
             accessorKey: 'total_billed',
-            header: 'Total Billed',
+            header: t('total_billed'),
             cell: ({ row }) => (
                 <span className="text-xs font-semibold text-foreground">
                     {formatCurrency(row.original.total_billed ?? 0)}
@@ -162,7 +165,7 @@ export default function AdminFinanceFees({
         },
         {
             accessorKey: 'total_paid',
-            header: 'Total Paid',
+            header: t('total_paid_fees'),
             cell: ({ row }) => (
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(row.original.total_paid ?? 0)}
@@ -171,7 +174,7 @@ export default function AdminFinanceFees({
         },
         {
             id: 'balance',
-            header: 'Outstanding Due',
+            header: t('balance'),
             cell: ({ row }) => {
                 const billed = Number(row.original.total_billed ?? 0);
                 const paid = Number(row.original.total_paid ?? 0);
@@ -195,7 +198,7 @@ export default function AdminFinanceFees({
                 if (status === 'paid') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                            Fully Paid
+                            {t('fully_paid_status')}
                         </Badge>
                     );
                 }
@@ -203,17 +206,17 @@ export default function AdminFinanceFees({
                 if (status === 'partial') {
                     return (
                         <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
-                            Partial
+                            {t('partial_status')}
                         </Badge>
                     );
                 }
 
-                return <Badge variant="destructive">Unpaid</Badge>;
+                return <Badge variant="destructive">{t('unpaid_status')}</Badge>;
             },
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end">
                     <Button
@@ -226,7 +229,7 @@ export default function AdminFinanceFees({
                             href={`/admin/students/${row.original.id}?tab=finance`}
                         >
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            Account
+                            {t('view_student_profile')}
                         </Link>
                     </Button>
                 </div>
@@ -237,20 +240,20 @@ export default function AdminFinanceFees({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'fee_status',
-            title: 'Fee Status',
+            title: t('fee_status_filter'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Fully Paid', value: 'paid' },
-                { label: 'Partial', value: 'partial' },
-                { label: 'Unpaid', value: 'unpaid' },
+                { label: t('all_fee_statuses'), value: 'all' },
+                { label: t('fully_paid_status'), value: 'paid' },
+                { label: t('partial_status'), value: 'partial' },
+                { label: t('unpaid_status'), value: 'unpaid' },
             ],
             value: filters.fee_status || undefined,
         },
         {
             key: 'program_id',
-            title: 'Program',
+            title: t('program_filter_fees'),
             options: [
-                { label: 'All Programs', value: 'all' },
+                { label: t('all_programs_fees'), value: 'all' },
                 ...programs.map((p) => ({
                     label: p.name,
                     value: String(p.id),
@@ -262,18 +265,17 @@ export default function AdminFinanceFees({
 
     return (
         <>
-            <Head title="Tuition & Fee Schedules" />
+            <Head title={t('fee_schedules')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Tuition & Fee Schedules
+                            {t('fee_schedules')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Tuition fee matrix by degree level, student ledger
-                            balance reconciliation, and debtor audit.
+                            {t('fee_schedules_description')}
                         </p>
                     </div>
 
@@ -281,13 +283,13 @@ export default function AdminFinanceFees({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/finance/invoices">
                                 <Receipt className="mr-1.5 h-4 w-4" />
-                                Invoices
+                                {t('invoices_list_page')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/finance/payments">
                                 <DollarSign className="mr-1.5 h-4 w-4" />
-                                Record Payment
+                                {t('record_payment')}
                             </Link>
                         </Button>
                     </div>
@@ -298,32 +300,32 @@ export default function AdminFinanceFees({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Receivables"
+                                title={t('total_receivables')}
                                 value={formatCurrency(stats.total_receivables)}
                                 icon={DollarSign}
                                 color="destructive"
                             />
                             <MetricCard
-                                title="Fully Paid"
-                                value={`${stats.fully_paid_students} students`}
+                                title={t('fully_paid_students')}
+                                value={`${stats.fully_paid_students} ${t('students')}`}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Partial Paid"
-                                value={`${stats.partial_students} students`}
+                                title={t('partial_students')}
+                                value={`${stats.partial_students} ${t('students')}`}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Unpaid Students"
-                                value={`${stats.unpaid_students} students`}
+                                title={t('unpaid_students')}
+                                value={`${stats.unpaid_students} ${t('students')}`}
                                 icon={AlertCircle}
                                 color="destructive"
                             />
                             <MetricCard
-                                title="Total Enrolled"
-                                value={`${stats.total_students} students`}
+                                title={t('total_students_fees')}
+                                value={`${stats.total_students} ${t('students')}`}
                                 icon={Users}
                                 color="primary"
                             />
@@ -333,63 +335,61 @@ export default function AdminFinanceFees({
 
                 {/* Fee Structure Reference Matrix */}
                 <UctPanelCard
-                    title="Institutional Tuition Schedule (Standard Academic Year 2026/2027)"
-                    description="Approved standard fee schedule by faculty degree program."
+                    title={t('institutional_tuition_schedule')}
+                    description={t('approved_fee_schedule')}
                     icon={Receipt}
                 >
                     <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-3">
                         <div className="space-y-2 rounded border border-border/60 bg-muted/20 p-3.5">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold text-foreground">
-                                    Undergraduate Tuition
+                                    {t('undergraduate_tuition')}
                                 </span>
                                 <Badge
                                     variant="outline"
                                     className="text-[10px]"
                                 >
-                                    Bachelor
+                                    {t('bachelor')}
                                 </Badge>
                             </div>
                             <p className="text-xl font-bold text-foreground">
                                 $450.00{' '}
                                 <span className="text-xs font-normal text-muted-foreground">
-                                    / semester
+                                    / {t('semester')}
                                 </span>
                             </p>
                             <p className="text-[11px] text-muted-foreground">
-                                Includes course registration, lab access, campus
-                                library, and examination fees.
+                                {t('includes_registration')}
                             </p>
                         </div>
 
                         <div className="space-y-2 rounded border border-border/60 bg-muted/20 p-3.5">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold text-foreground">
-                                    Postgraduate Tuition
+                                    {t('postgraduate_tuition')}
                                 </span>
                                 <Badge
                                     variant="outline"
                                     className="text-[10px]"
                                 >
-                                    Master / Ph.D.
+                                    {t('master')} / {t('phd')}
                                 </Badge>
                             </div>
                             <p className="text-xl font-bold text-foreground">
                                 $750.00{' '}
                                 <span className="text-xs font-normal text-muted-foreground">
-                                    / semester
+                                    / {t('semester')}
                                 </span>
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
-                                Includes advanced thesis supervision, journal
-                                repository, and laboratory facilities.
+                            <p className="text-[11px text-muted-foreground">
+                                {t('includes_thesis')}
                             </p>
                         </div>
 
                         <div className="space-y-2 rounded border border-border/60 bg-muted/20 p-3.5">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold text-foreground">
-                                    One-Time Institutional Fees
+                                    {t('one_time_institutional_fees')}
                                 </span>
                                 <Badge
                                     variant="outline"
@@ -400,13 +400,13 @@ export default function AdminFinanceFees({
                             </div>
                             <div className="space-y-1 pt-1 text-xs text-muted-foreground">
                                 <div className="flex justify-between">
-                                    <span>Admission & Matriculation:</span>{' '}
+                                    <span>{t('admission_matriculation')}:</span>{' '}
                                     <span className="font-semibold text-foreground">
                                         $50.00
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>Graduation & Transcript:</span>{' '}
+                                    <span>{t('graduation_transcript')}:</span>{' '}
                                     <span className="font-semibold text-foreground">
                                         $100.00
                                     </span>
@@ -421,8 +421,8 @@ export default function AdminFinanceFees({
                     {students && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Student Fee Accounts Roster"
-                                searchTitle="Search by matric no, student name, email..."
+                                title={t('fees_list_label')}
+                                searchTitle={t('search_fees')}
                                 columns={columns}
                                 data={students.data}
                                 pagination={{
@@ -470,4 +470,4 @@ export default function AdminFinanceFees({
     );
 }
 
-AdminFinanceFees.layout = { breadcrumbs };
+AdminFinanceFees.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_fees', href: '/admin/finance/fees' }] };

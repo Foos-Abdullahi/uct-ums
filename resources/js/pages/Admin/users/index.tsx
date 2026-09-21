@@ -13,6 +13,7 @@ import {
     Save,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -85,6 +86,7 @@ export default function AdminUsersIndex({
     users,
     filters,
 }: AdminUsersIndexProps) {
+    const { t } = useTranslation();
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -183,7 +185,7 @@ export default function AdminUsersIndex({
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => toast.success(`User status updated.`),
+                onSuccess: () => toast.success(t('user_status_updated')),
             },
         );
     };
@@ -210,31 +212,31 @@ export default function AdminUsersIndex({
             case 'super_admin':
                 return (
                     <Badge className="border-primary/20 bg-primary/10 text-primary">
-                        Super Admin
+                        {t('super_admin_role')}
                     </Badge>
                 );
             case 'registrar':
                 return (
                     <Badge className="border-sky-200 bg-sky-500/10 text-sky-700">
-                        Registrar
+                        {t('registrar_role')}
                     </Badge>
                 );
             case 'finance':
                 return (
                     <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700">
-                        Finance
+                        {t('finance_role')}
                     </Badge>
                 );
             case 'hr':
                 return (
                     <Badge className="border-purple-200 bg-purple-500/10 text-purple-700">
-                        HR
+                        {t('hr_role')}
                     </Badge>
                 );
             case 'lecturer':
                 return (
                     <Badge className="border-amber-200 bg-amber-500/10 text-amber-700">
-                        Lecturer
+                        {t('lecturer_role')}
                     </Badge>
                 );
             default:
@@ -249,7 +251,7 @@ export default function AdminUsersIndex({
     const columns: ColumnDef<UserItem>[] = [
         {
             accessorKey: 'name',
-            header: 'User Account',
+            header: t('user_account_column'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
@@ -268,12 +270,12 @@ export default function AdminUsersIndex({
         },
         {
             accessorKey: 'role',
-            header: 'Assigned Role',
+            header: t('assigned_role_column'),
             cell: ({ row }) => getRoleBadge(row.original.role),
         },
         {
             accessorKey: 'is_active',
-            header: 'Account Status',
+            header: t('account_status_column'),
             cell: ({ row }) => {
                 const isActive = row.original.is_active;
 
@@ -288,14 +290,14 @@ export default function AdminUsersIndex({
                     >
                         {isActive ? (
                             <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                                Active
+                                {t('active_status_users')}
                             </Badge>
                         ) : (
                             <Badge
                                 variant="outline"
                                 className="text-muted-foreground hover:bg-muted/40"
                             >
-                                Deactivated
+                                {t('deactivated_status')}
                             </Badge>
                         )}
                     </button>
@@ -304,7 +306,7 @@ export default function AdminUsersIndex({
         },
         {
             accessorKey: 'created_at',
-            header: 'Created On',
+            header: t('created_on_column'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
                     {String(row.original.created_at).split('T')[0]}
@@ -313,7 +315,7 @@ export default function AdminUsersIndex({
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions_column')}</span>,
             cell: ({ row }) => {
                 const u = row.original;
 
@@ -331,7 +333,7 @@ export default function AdminUsersIndex({
                             }}
                         >
                             <KeyRound className="mr-1 h-3.5 w-3.5" />
-                            Password
+                            {t('password_button')}
                         </Button>
                         <Button
                             variant="ghost"
@@ -372,25 +374,25 @@ export default function AdminUsersIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'role',
-            title: 'Role',
+            title: t('role_filter'),
             options: [
-                { label: 'All Roles', value: 'all' },
-                { label: 'Super Admin', value: 'super_admin' },
-                { label: 'Registrar', value: 'registrar' },
-                { label: 'Finance', value: 'finance' },
-                { label: 'HR', value: 'hr' },
-                { label: 'Lecturer', value: 'lecturer' },
-                { label: 'Student', value: 'student' },
+                { label: t('all_roles_filter'), value: 'all' },
+                { label: t('super_admin_role'), value: 'super_admin' },
+                { label: t('registrar_role'), value: 'registrar' },
+                { label: t('finance_role'), value: 'finance' },
+                { label: t('hr_role'), value: 'hr' },
+                { label: t('lecturer_role'), value: 'lecturer' },
+                { label: t('student_role'), value: 'student' },
             ],
             value: filters.role || undefined,
         },
         {
             key: 'status',
-            title: 'Status',
+            title: t('status_filter_users'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Active', value: 'active' },
-                { label: 'Deactivated', value: 'inactive' },
+                { label: t('all_statuses_users'), value: 'all' },
+                { label: t('active_status_users'), value: 'active' },
+                { label: t('deactivated_status'), value: 'inactive' },
             ],
             value: filters.status || undefined,
         },
@@ -398,19 +400,17 @@ export default function AdminUsersIndex({
 
     return (
         <>
-            <Head title="User Management & Access Control" />
+            <Head title={t('user_management_access_control')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            User Management & Access Control
+                            {t('user_management_access_control')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Provision system logins, assign institutional roles,
-                            activate/deactivate credentials, and reset security
-                            passkeys.
+                            {t('user_management_description')}
                         </p>
                     </div>
 
@@ -418,7 +418,7 @@ export default function AdminUsersIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/settings/roles">
                                 <Shield className="mr-1.5 h-4 w-4" />
-                                Roles & Permissions
+                                {t('roles_permissions')}
                             </Link>
                         </Button>
                         <Button
@@ -426,7 +426,7 @@ export default function AdminUsersIndex({
                             onClick={() => setCreateModalOpen(true)}
                         >
                             <UserPlus className="mr-1.5 h-4 w-4" />
-                            Create User
+                            {t('create_user_button')}
                         </Button>
                     </div>
                 </div>
@@ -436,31 +436,31 @@ export default function AdminUsersIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Users"
+                                title={t('total_users_stats')}
                                 value={stats.total_users}
                                 icon={Users}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active Accounts"
+                                title={t('active_accounts_stats')}
                                 value={stats.active_users}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Super Admins"
+                                title={t('super_admins_stats')}
                                 value={stats.super_admins}
                                 icon={Shield}
                                 color="accent"
                             />
                             <MetricCard
-                                title="Faculty Lecturers"
+                                title={t('faculty_lecturers_stats')}
                                 value={stats.lecturers}
                                 icon={GraduationCap}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Enrolled Students"
+                                title={t('enrolled_students_stats')}
                                 value={stats.students}
                                 icon={Users}
                                 color="info"
@@ -474,8 +474,8 @@ export default function AdminUsersIndex({
                     {users && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="System Accounts Roster"
-                                searchTitle="Search by name, email..."
+                                title={t('system_accounts_roster')}
+                                searchTitle={t('search_users_description')}
                                 columns={columns}
                                 data={users.data}
                                 pagination={{

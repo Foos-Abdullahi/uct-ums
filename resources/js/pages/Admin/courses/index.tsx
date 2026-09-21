@@ -11,6 +11,7 @@ import {
     GraduationCap,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -83,6 +84,8 @@ export default function AdminCoursesIndex({
     programs = [],
     filters,
 }: AdminCoursesIndexProps) {
+    const { t } = useTranslation();
+
     const [selectedForDelete, setSelectedForDelete] =
         useState<CourseItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -117,14 +120,14 @@ export default function AdminCoursesIndex({
         router.delete(`/admin/courses/${selectedForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    `Course ${selectedForDelete.code} - ${selectedForDelete.name} deleted.`,
+                    t('course_deleted', { code: selectedForDelete.code, name: selectedForDelete.name }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
                 setDeleteProcessing(false);
             },
             onError: () => {
-                toast.error('Failed to delete course.');
+                toast.error(t('failed_delete_course'));
                 setDeleteProcessing(false);
             },
         });
@@ -133,7 +136,7 @@ export default function AdminCoursesIndex({
     const columns: ColumnDef<CourseItem>[] = [
         {
             accessorKey: 'code',
-            header: 'Code',
+            header: t('code'),
             cell: ({ row }) => (
                 <Badge
                     variant="outline"
@@ -145,21 +148,21 @@ export default function AdminCoursesIndex({
         },
         {
             accessorKey: 'name',
-            header: 'Course Name',
+            header: t('course_title'),
             cell: ({ row }) => (
                 <div className="max-w-[280px]">
                     <p className="truncate text-sm font-medium text-foreground">
                         {row.original.name}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                        {row.original.program?.name || 'General Program'}
+                        {row.original.program?.name || t('general_program')}
                     </p>
                 </div>
             ),
         },
         {
             accessorKey: 'credit_hours',
-            header: 'Credits',
+            header: t('course_credits'),
             cell: ({ row }) => (
                 <span className="text-xs font-semibold text-foreground">
                     {row.original.credit_hours} CH
@@ -168,17 +171,17 @@ export default function AdminCoursesIndex({
         },
         {
             accessorKey: 'semester',
-            header: 'Semester',
+            header: t('semester'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>Sem {row.original.semester}</span>
+                    <span>{t('semester_prefix')} {row.original.semester}</span>
                 </div>
             ),
         },
         {
             accessorKey: 'level',
-            header: 'Level',
+            header: t('program_level'),
             cell: ({ row }) => (
                 <Badge variant="secondary" className="text-[11px] capitalize">
                     {row.original.level}
@@ -187,7 +190,7 @@ export default function AdminCoursesIndex({
         },
         {
             accessorKey: 'assignments_count',
-            header: 'Lecturer Assignments',
+            header: t('lecturer_assignments_label'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
                     <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
@@ -197,14 +200,14 @@ export default function AdminCoursesIndex({
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('status'),
             cell: ({ row }) => {
                 const status = row.original.status;
 
                 if (status === 'active') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                            Active
+                            {t('active')}
                         </Badge>
                     );
                 }
@@ -215,17 +218,17 @@ export default function AdminCoursesIndex({
                             variant="outline"
                             className="text-muted-foreground"
                         >
-                            Inactive
+                            {t('inactive')}
                         </Badge>
                     );
                 }
 
-                return <Badge variant="destructive">Archived</Badge>;
+                return <Badge variant="destructive">{t('archived')}</Badge>;
             },
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     <Button
@@ -236,7 +239,7 @@ export default function AdminCoursesIndex({
                     >
                         <Link href={`/admin/courses/${row.original.id}`}>
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            View
+                            {t('view')}
                         </Link>
                     </Button>
                     <Button
@@ -259,20 +262,20 @@ export default function AdminCoursesIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('status'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Active', value: 'active' },
-                { label: 'Inactive', value: 'inactive' },
-                { label: 'Archived', value: 'archived' },
+                { label: t('all_statuses'), value: 'all' },
+                { label: t('active'), value: 'active' },
+                { label: t('inactive'), value: 'inactive' },
+                { label: t('archived'), value: 'archived' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'program_id',
-            title: 'Program',
+            title: t('program'),
             options: [
-                { label: 'All Programs', value: 'all' },
+                { label: t('all_programs_filter'), value: 'all' },
                 ...programs.map((p) => ({
                     label: p.name,
                     value: String(p.id),
@@ -282,11 +285,11 @@ export default function AdminCoursesIndex({
         },
         {
             key: 'semester',
-            title: 'Semester',
+            title: t('semester'),
             options: [
-                { label: 'All Semesters', value: 'all' },
+                { label: t('all_semesters_filter'), value: 'all' },
                 ...Array.from({ length: 8 }, (_, i) => ({
-                    label: `Semester ${i + 1}`,
+                    label: `${t('semester')} ${i + 1}`,
                     value: String(i + 1),
                 })),
             ],
@@ -296,18 +299,17 @@ export default function AdminCoursesIndex({
 
     return (
         <>
-            <Head title="Course Catalog" />
+            <Head title={t('courses_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Course Catalog
+                            {t('courses_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage curriculum modules, credit allocations,
-                            syllabus levels, and faculty teaching assignments.
+                            {t('courses_description')}
                         </p>
                     </div>
 
@@ -315,13 +317,13 @@ export default function AdminCoursesIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/assignments">
                                 <ClipboardList className="mr-1.5 h-4 w-4" />
-                                Assignments
+                                {t('breadcrumb_assignments')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/courses/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
-                                New Course
+                                {t('create_course')}
                             </Link>
                         </Button>
                     </div>
@@ -332,25 +334,25 @@ export default function AdminCoursesIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
-                                title="Total Courses"
+                                title={t('total_courses_stats')}
                                 value={stats.total_courses}
                                 icon={BookOpen}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active Courses"
+                                title={t('active_courses_stats')}
                                 value={stats.active_courses}
                                 icon={CheckCircle}
                                 color="success"
                             />
                             <MetricCard
-                                title="Teaching Assignments"
+                                title={t('total_assignments_stats')}
                                 value={stats.total_assignments}
                                 icon={ClipboardList}
                                 color="info"
                             />
                             <MetricCard
-                                title="Total Credits"
+                                title={t('total_credits_stats')}
                                 value={stats.total_credits}
                                 icon={GraduationCap}
                                 color="accent"
@@ -364,8 +366,8 @@ export default function AdminCoursesIndex({
                     {courses && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Course List"
-                                searchTitle="Search by course code, name, description..."
+                                title={t('courses_list')}
+                                searchTitle={t('search_courses')}
                                 columns={columns}
                                 data={courses.data}
                                 pagination={{
@@ -413,8 +415,8 @@ export default function AdminCoursesIndex({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Course"
-                    description="Are you sure you want to delete this course? This action cannot be undone."
+                    title={t('delete_course')}
+                    description={t('delete_course_confirm')}
                     itemName={
                         selectedForDelete
                             ? `${selectedForDelete.code} - ${selectedForDelete.name}`

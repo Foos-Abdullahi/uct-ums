@@ -9,6 +9,7 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -16,6 +17,7 @@ import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
 import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { Admission } from '@/types/admission';
 import type { PaginatedData, Program } from '@/types/student';
@@ -45,17 +47,18 @@ interface AdminAdmissionsIndexProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Admissions', href: '/admin/admissions' },
-];
-
 export default function AdminAdmissionsIndex({
     stats,
     admissions,
     programs = [],
     filters,
 }: AdminAdmissionsIndexProps) {
+    const { t } = useTranslation();
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_admissions'), href: '/admin/admissions' },
+    ];
     const [selectedForReview, setSelectedForReview] =
         useState<Admission | null>(null);
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -135,22 +138,22 @@ export default function AdminAdmissionsIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('status'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Pending', value: 'pending' },
-                { label: 'Under Review', value: 'under_review' },
-                { label: 'Approved', value: 'approved' },
-                { label: 'Rejected', value: 'rejected' },
-                { label: 'Enrolled', value: 'enrolled' },
+                { label: t('all_statuses'), value: 'all' },
+                { label: t('pending'), value: 'pending' },
+                { label: t('under_review'), value: 'under_review' },
+                { label: t('approved'), value: 'approved' },
+                { label: t('rejected'), value: 'rejected' },
+                { label: t('enrolled'), value: 'enrolled' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'program_id',
-            title: 'Program',
+            title: t('program'),
             options: [
-                { label: 'All Programs', value: 'all' },
+                { label: t('all_programs'), value: 'all' },
                 ...programs.map((p) => ({
                     label: p.name,
                     value: String(p.id),
@@ -162,18 +165,17 @@ export default function AdminAdmissionsIndex({
 
     return (
         <>
-            <Head title="Admissions & Applications" />
+            <Head title={t('admissions_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Admissions Management
+                            {t('admissions_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Process new student applications, review qualifying
-                            documents, and convert approved applicants.
+                            {t('admissions_description')}
                         </p>
                     </div>
 
@@ -181,13 +183,13 @@ export default function AdminAdmissionsIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/students">
                                 <Users className="mr-1.5 h-4 w-4" />
-                                All Students
+                                {t('all_students')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/admissions/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
-                                New Application
+                                {t('create_application')}
                             </Link>
                         </Button>
                     </div>
@@ -198,31 +200,31 @@ export default function AdminAdmissionsIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Applications"
+                                title={t('total_applications')}
                                 value={stats.total_applications}
                                 icon={ClipboardList}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Pending"
+                                title={t('pending')}
                                 value={stats.pending}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Under Review"
+                                title={t('under_review')}
                                 value={stats.under_review}
                                 icon={Eye}
                                 color="info"
                             />
                             <MetricCard
-                                title="Approved"
+                                title={t('approved')}
                                 value={stats.approved}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Enrolled Students"
+                                title={t('enrolled_students')}
                                 value={stats.enrolled}
                                 icon={UserCheck}
                                 color="primary"
@@ -239,8 +241,8 @@ export default function AdminAdmissionsIndex({
                     {admissions && (
                         <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
-                                title="Applications List"
-                                searchTitle="Search by name, email, application no, phone..."
+                                title={t('applications_list')}
+                                searchTitle={t('search_applications')}
                                 columns={columns}
                                 data={admissions.data}
                                 pagination={{
@@ -302,8 +304,8 @@ export default function AdminAdmissionsIndex({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Application"
-                    description="Are you sure you want to delete this admission application record?"
+                    title={t('delete_application')}
+                    description={t('delete_application_confirm')}
                     itemName={
                         selectedForDelete
                             ? `${selectedForDelete.full_name} (${selectedForDelete.application_no})`
@@ -317,4 +319,11 @@ export default function AdminAdmissionsIndex({
     );
 }
 
-AdminAdmissionsIndex.layout = { breadcrumbs };
+AdminAdmissionsIndex.layout = (page: any) => {
+    const { t } = useTranslation();
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_admissions'), href: '/admin/admissions' },
+    ];
+    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
+};

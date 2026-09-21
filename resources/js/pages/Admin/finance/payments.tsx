@@ -12,6 +12,7 @@ import {
     Save,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -84,19 +85,21 @@ interface AdminFinancePaymentsProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Finance', href: '/admin/finance' },
-    { title: 'Payments', href: '/admin/finance/payments' },
-];
-
 export default function AdminFinancePayments({
     stats,
     payments,
     students = [],
     filters,
 }: AdminFinancePaymentsProps) {
+    const { t } = useTranslation();
     const [createModalOpen, setCreateModalOpen] = useState(false);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_finance'), href: '/admin/finance' },
+        { title: t('breadcrumb_payments'), href: '/admin/finance/payments' },
+    ];
+
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -156,7 +159,7 @@ export default function AdminFinancePayments({
     const columns: ColumnDef<PaymentItem>[] = [
         {
             accessorKey: 'transaction_no',
-            header: 'Transaction ID',
+            header: t('transaction_no_payments'),
             cell: ({ row }) => (
                 <Badge
                     variant="outline"
@@ -168,7 +171,7 @@ export default function AdminFinancePayments({
         },
         {
             accessorKey: 'student.user.name',
-            header: 'Student',
+            header: t('student_name_payments'),
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -182,7 +185,7 @@ export default function AdminFinancePayments({
         },
         {
             accessorKey: 'amount',
-            header: 'Amount Paid',
+            header: t('payment_amount_payments'),
             cell: ({ row }) => (
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(row.original.amount)}
@@ -191,7 +194,7 @@ export default function AdminFinancePayments({
         },
         {
             accessorKey: 'payment_method',
-            header: 'Method',
+            header: t('payment_method_payments'),
             cell: ({ row }) => (
                 <Badge variant="secondary" className="text-[11px] capitalize">
                     {row.original.payment_method.replace('_', ' ')}
@@ -200,7 +203,7 @@ export default function AdminFinancePayments({
         },
         {
             accessorKey: 'payment_date',
-            header: 'Date',
+            header: t('payment_date_payments'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
                     {row.original.payment_date}
@@ -209,14 +212,14 @@ export default function AdminFinancePayments({
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('status_payments'),
             cell: ({ row }) => {
                 const status = row.original.status;
 
                 if (status === 'paid') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                            Verified / Paid
+                            {t('completed_payment')}
                         </Badge>
                     );
                 }
@@ -224,17 +227,17 @@ export default function AdminFinancePayments({
                 if (status === 'pending') {
                     return (
                         <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
-                            Pending Review
+                            {t('pending_payment')}
                         </Badge>
                     );
                 }
 
-                return <Badge variant="destructive">Rejected</Badge>;
+                return <Badge variant="destructive">{t('failed_payment')}</Badge>;
             },
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions')}</span>,
             cell: ({ row }) => {
                 const pmt = row.original;
 
@@ -251,7 +254,7 @@ export default function AdminFinancePayments({
                                     }
                                 >
                                     <Check className="mr-1 h-3.5 w-3.5" />
-                                    Approve
+                                    {t('approve')}
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -262,7 +265,7 @@ export default function AdminFinancePayments({
                                     }
                                 >
                                     <X className="mr-1 h-3.5 w-3.5" />
-                                    Reject
+                                    {t('reject')}
                                 </Button>
                             </>
                         )}
@@ -276,7 +279,7 @@ export default function AdminFinancePayments({
                                 href={`/admin/students/${pmt.student_id}?tab=finance`}
                             >
                                 <Eye className="mr-1 h-3.5 w-3.5" />
-                                Details
+                                {t('view_details')}
                             </Link>
                         </Button>
                     </div>
@@ -288,20 +291,20 @@ export default function AdminFinancePayments({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('status_payments'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Paid', value: 'paid' },
-                { label: 'Pending', value: 'pending' },
-                { label: 'Rejected', value: 'rejected' },
+                { label: t('all_statuses_payments'), value: 'all' },
+                { label: t('completed_payment'), value: 'paid' },
+                { label: t('pending_payment'), value: 'pending' },
+                { label: t('failed_payment'), value: 'rejected' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'payment_method',
-            title: 'Payment Method',
+            title: t('payment_method_filter'),
             options: [
-                { label: 'All Methods', value: 'all' },
+                { label: t('all_payment_methods'), value: 'all' },
                 { label: 'Bank Transfer', value: 'bank_transfer' },
                 { label: 'Cash', value: 'cash' },
                 { label: 'EVC Plus', value: 'evc_plus' },
@@ -315,32 +318,30 @@ export default function AdminFinancePayments({
 
     return (
         <>
-            <Head title="Student Payments & Transactions" />
+            <Head title={t('payments_roster')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Student Payments & Transactions
+                            {t('payments_roster')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Audit incoming tuition receipts, mobile money
-                            payments (EVC/Zaad), bank slips, and verification
-                            queue.
+                            {t('payments_description')}
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/invoices">Invoices</Link>
+                            <Link href="/admin/finance/invoices">{t('invoices_list_page')}</Link>
                         </Button>
                         <Button
                             size="sm"
                             onClick={() => setCreateModalOpen(true)}
                         >
                             <Plus className="mr-1.5 h-4 w-4" />
-                            Record Payment
+                            {t('record_payment')}
                         </Button>
                     </div>
                 </div>
@@ -350,25 +351,25 @@ export default function AdminFinancePayments({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
-                                title="Total Collected"
+                                title={t('total_collected')}
                                 value={formatCurrency(stats.total_collected)}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Pending Review"
+                                title={t('pending_review')}
                                 value={`${stats.pending_verification} txns`}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Today's Collections"
+                                title={t('todays_collections')}
                                 value={formatCurrency(stats.today_collected)}
                                 icon={DollarSign}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Total Transactions"
+                                title={t('total_transactions')}
                                 value={`${stats.total_transactions} txns`}
                                 icon={CreditCard}
                                 color="accent"
@@ -382,8 +383,8 @@ export default function AdminFinancePayments({
                     {payments && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Payment Transactions Roster"
-                                searchTitle="Search by transaction no, matric no, student name..."
+                                title={t('payments_list')}
+                                searchTitle={t('search_payments')}
                                 columns={columns}
                                 data={payments.data}
                                 pagination={{
@@ -435,11 +436,10 @@ export default function AdminFinancePayments({
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-base font-semibold">
-                                Record Student Payment
+                                {t('record_payment')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Enter payment transaction details received from
-                                student.
+                                {t('enter_payment_details')}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -452,7 +452,7 @@ export default function AdminFinancePayments({
                                     htmlFor="student_id"
                                     className="text-xs font-semibold"
                                 >
-                                    Student{' '}
+                                    {t('student')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <select
@@ -464,7 +464,7 @@ export default function AdminFinancePayments({
                                     }
                                     required
                                 >
-                                    <option value="">Select Student</option>
+                                    <option value="">{t('select_student')}</option>
                                     {students.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.matric_no})
@@ -483,7 +483,7 @@ export default function AdminFinancePayments({
                                     htmlFor="amount"
                                     className="text-xs font-semibold"
                                 >
-                                    Payment Amount ($){' '}
+                                    {t('payment_amount_payments')} ($){' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
@@ -511,7 +511,7 @@ export default function AdminFinancePayments({
                                         htmlFor="payment_method"
                                         className="text-xs font-semibold"
                                     >
-                                        Method{' '}
+                                        {t('payment_method_payments')}{' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -550,7 +550,7 @@ export default function AdminFinancePayments({
                                         htmlFor="payment_date"
                                         className="text-xs font-semibold"
                                     >
-                                        Payment Date{' '}
+                                        {t('payment_date_payments')}{' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -576,7 +576,7 @@ export default function AdminFinancePayments({
                                     htmlFor="notes"
                                     className="text-xs font-semibold"
                                 >
-                                    Receipt / Reference Note
+                                    {t('receipt_reference_note')}
                                 </Label>
                                 <Input
                                     id="notes"
@@ -596,7 +596,7 @@ export default function AdminFinancePayments({
                                     size="sm"
                                     onClick={() => setCreateModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -605,8 +605,8 @@ export default function AdminFinancePayments({
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing
-                                        ? 'Saving...'
-                                        : 'Record Payment'}
+                                        ? t('saving')
+                                        : t('record_payment')}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -617,4 +617,4 @@ export default function AdminFinancePayments({
     );
 }
 
-AdminFinancePayments.layout = { breadcrumbs };
+AdminFinancePayments.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_payments', href: '/admin/finance/payments' }] };
