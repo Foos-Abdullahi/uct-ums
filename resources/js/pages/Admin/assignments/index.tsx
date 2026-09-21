@@ -7,7 +7,9 @@ import {
     Plus,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import AppLayout from '@/layouts/app-layout';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -39,11 +41,6 @@ interface AdminAssignmentsIndexProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Course Assignments', href: '/admin/assignments' },
-];
-
 export default function AdminAssignmentsIndex({
     stats,
     assignments,
@@ -51,6 +48,12 @@ export default function AdminAssignmentsIndex({
     courses = [],
     filters,
 }: AdminAssignmentsIndexProps) {
+    const { t } = useTranslation();
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_assignments'), href: '/admin/assignments' },
+    ];
     const [selectedAssignment, setSelectedAssignment] =
         useState<CourseAssignment | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -89,13 +92,13 @@ export default function AdminAssignmentsIndex({
 
         router.delete(`/admin/assignments/${selectedAssignment.id}`, {
             onSuccess: () => {
-                toast.success('Assignment deleted successfully.');
+                toast.success(t('assignment_deleted'));
                 setDeleteModalOpen(false);
                 setSelectedAssignment(null);
                 setDeleteProcessing(false);
             },
             onError: () => {
-                toast.error('Failed to delete assignment.');
+                toast.error(t('failed_delete_assignment'));
                 setDeleteProcessing(false);
             },
         });
@@ -110,9 +113,9 @@ export default function AdminAssignmentsIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'academic_year',
-            title: 'Academic Year',
+            title: t('academic_year'),
             options: [
-                { label: 'All Years', value: 'all' },
+                { label: t('all_years'), value: 'all' },
                 { label: '2024/2025', value: '2024/2025' },
                 { label: '2025/2026', value: '2025/2026' },
                 { label: '2026/2027', value: '2026/2027' },
@@ -122,23 +125,23 @@ export default function AdminAssignmentsIndex({
         },
         {
             key: 'semester',
-            title: 'Semester',
+            title: t('semester'),
             options: [
-                { label: 'All Semesters', value: 'all' },
-                { label: 'Semester 1', value: 'Semester 1' },
-                { label: 'Semester 2', value: 'Semester 2' },
-                { label: 'Semester 3', value: 'Semester 3' },
-                { label: 'Semester 4', value: 'Semester 4' },
-                { label: 'Semester 5', value: 'Semester 5' },
-                { label: 'Semester 6', value: 'Semester 6' },
+                { label: t('all_semesters'), value: 'all' },
+                { label: t('semester_1'), value: 'Semester 1' },
+                { label: t('semester_2'), value: 'Semester 2' },
+                { label: t('semester_3'), value: 'Semester 3' },
+                { label: t('semester_4'), value: 'Semester 4' },
+                { label: t('semester_5'), value: 'Semester 5' },
+                { label: t('semester_6'), value: 'Semester 6' },
             ],
             value: filters.semester || undefined,
         },
         {
             key: 'lecturer_id',
-            title: 'Lecturer',
+            title: t('lecturer'),
             options: [
-                { label: 'All Lecturers', value: 'all' },
+                { label: t('all_lecturers'), value: 'all' },
                 ...lecturers.map((l) => ({
                     label: `${l.name} (${l.lecturer_no})`,
                     value: String(l.id),
@@ -148,9 +151,9 @@ export default function AdminAssignmentsIndex({
         },
         {
             key: 'course_id',
-            title: 'Course',
+            title: t('course'),
             options: [
-                { label: 'All Courses', value: 'all' },
+                { label: t('all_courses'), value: 'all' },
                 ...courses.map((c) => ({
                     label: `${c.code} - ${c.name}`,
                     value: String(c.id),
@@ -160,13 +163,13 @@ export default function AdminAssignmentsIndex({
         },
         {
             key: 'status',
-            title: 'Status',
+            title: t('status'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Assigned', value: 'assigned' },
-                { label: 'Active', value: 'active' },
-                { label: 'Completed', value: 'completed' },
-                { label: 'Cancelled', value: 'cancelled' },
+                { label: t('all_statuses'), value: 'all' },
+                { label: t('assigned'), value: 'assigned' },
+                { label: t('active'), value: 'active' },
+                { label: t('completed'), value: 'completed' },
+                { label: t('cancelled'), value: 'cancelled' },
             ],
             value: filters.status || undefined,
         },
@@ -174,18 +177,17 @@ export default function AdminAssignmentsIndex({
 
     return (
         <>
-            <Head title="Course Assignments" />
+            <Head title={t('assignments_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Course Assignments
+                            {t('assignments_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage which lecturers are assigned to which
-                            courses, roles, and schedules.
+                            {t('assignments_description')}
                         </p>
                     </div>
 
@@ -193,7 +195,7 @@ export default function AdminAssignmentsIndex({
                     <Button size="sm" asChild>
                         <Link href="/admin/assignments/create">
                             <Plus className="mr-1.5 h-4 w-4" />
-                            New Assignment
+                            {t('create_assignment')}
                         </Link>
                     </Button>
                 </div>
@@ -203,31 +205,31 @@ export default function AdminAssignmentsIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Assignments"
+                                title={t('total_assignments')}
                                 value={stats.total_assignments}
                                 icon={ClipboardList}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active"
+                                title={t('active')}
                                 value={stats.active_assignments}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Assigned"
+                                title={t('assigned')}
                                 value={stats.assigned_assignments}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Completed"
+                                title={t('completed')}
                                 value={stats.completed_assignments}
                                 icon={CheckCircle2}
                                 color="info"
                             />
                             <MetricCard
-                                title="Cancelled"
+                                title={t('cancelled')}
                                 value={stats.cancelled_assignments}
                                 icon={XCircle}
                                 color="destructive"
@@ -241,8 +243,8 @@ export default function AdminAssignmentsIndex({
                     {assignments && (
                         <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
-                                title="Assignments List"
-                                searchTitle="Search by course code, lecturer name, or section..."
+                                title={t('assignments_list')}
+                                searchTitle={t('search_assignments')}
                                 columns={columns}
                                 data={assignments.data}
                                 pagination={{
@@ -290,8 +292,8 @@ export default function AdminAssignmentsIndex({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Assignment"
-                    description="Are you sure you want to remove this course assignment? This action cannot be undone."
+                    title={t('delete_assignment')}
+                    description={t('delete_assignment_confirm')}
                     itemName={
                         selectedAssignment
                             ? `${selectedAssignment.course?.code} – ${selectedAssignment.lecturer?.user?.name} (${selectedAssignment.section})`
@@ -305,4 +307,11 @@ export default function AdminAssignmentsIndex({
     );
 }
 
-AdminAssignmentsIndex.layout = { breadcrumbs };
+AdminAssignmentsIndex.layout = (page: any) => {
+    const { t } = useTranslation();
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_assignments'), href: '/admin/assignments' },
+    ];
+    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
+};

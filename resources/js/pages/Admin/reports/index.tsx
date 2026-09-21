@@ -14,6 +14,7 @@ import {
     CreditCard,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { Badge } from '@/components/ui/badge';
@@ -116,7 +117,7 @@ interface ReportsIndexProps {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Reports & Analytics', href: '/admin/reports' },
+    { title: 'Reports', href: '/admin/reports' },
 ];
 
 const fmt = (n?: number) =>
@@ -271,6 +272,8 @@ export default function ReportsIndex({
     recent_payments = [],
     top_students = [],
 }: ReportsIndexProps) {
+    const { t } = useTranslation();
+
     const studentSegments = kpis
         ? [
               {
@@ -303,7 +306,7 @@ export default function ReportsIndex({
 
     return (
         <>
-            <Head title="Reports & Analytics" />
+            <Head title={t('reports_management')} />
 
             <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
                 {/* ── Header ──────────────────────────────────────────────── */}
@@ -311,11 +314,10 @@ export default function ReportsIndex({
                     <div>
                         <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
                             <BarChart3 className="h-5 w-5 text-primary" />
-                            Institutional Analytics & Reports
+                            {t('reports_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Comprehensive overview of all university operations
-                            — students, academics, admissions, and finances.
+                            {t('reports_description')}
                         </p>
                     </div>
                     <Badge
@@ -334,60 +336,60 @@ export default function ReportsIndex({
                     {kpis && (
                         <div className="grid animate-in grid-cols-2 gap-3 duration-700 fade-in slide-in-from-top-4 sm:grid-cols-4">
                             <MetricCard
-                                title="Total Students"
+                                title={t('total_students_reports')}
                                 value={num(kpis.total_students)}
                                 icon={Users}
                                 color="primary"
-                                trend={`${num(kpis.active_students)} enrolled`}
+                                trend={`${num(kpis.active_students)} ${t('enrolled_students_reports')}`}
                             />
                             <MetricCard
-                                title="Academic Faculty"
+                                title={t('academic_faculty')}
                                 value={num(kpis.total_lecturers)}
                                 icon={GraduationCap}
                                 color="info"
-                                trend={`${num(kpis.active_lecturers)} active`}
+                                trend={`${num(kpis.active_lecturers)} ${t('active_faculty_reports')}`}
                             />
                             <MetricCard
-                                title="Courses Offered"
+                                title={t('courses_offered')}
                                 value={num(kpis.total_courses)}
                                 icon={BookOpen}
                                 color="success"
-                                trend={`${num(kpis.active_courses)} active`}
+                                trend={`${num(kpis.active_courses)} ${t('active_courses_reports')}`}
                             />
                             <MetricCard
-                                title="Total Collected"
+                                title={t('total_collected')}
                                 value={fmt(kpis.total_collected)}
                                 icon={DollarSign}
                                 color="warning"
-                                trend={`${kpis.collection_rate}% rate`}
+                                trend={`${kpis.collection_rate}${t('collection_rate_reports')}`}
                             />
                             <MetricCard
-                                title="Outstanding Fees"
+                                title={t('outstanding_fees')}
                                 value={fmt(kpis.total_outstanding)}
                                 icon={CreditCard}
                                 color="destructive"
-                                trend="Pending clearance"
+                                trend={t('pending_clearance')}
                             />
                             <MetricCard
-                                title="Pending Admissions"
+                                title={t('pending_admissions_reports')}
                                 value={num(kpis.pending_admissions)}
                                 icon={Clock}
                                 color="warning"
-                                trend={`${num(kpis.total_admissions)} total`}
+                                trend={`${num(kpis.total_admissions)} ${t('total_admissions_reports')}`}
                             />
                             <MetricCard
-                                title="Course Sections"
+                                title={t('course_sections')}
                                 value={num(kpis.active_assignments)}
                                 icon={TrendingUp}
                                 color="info"
-                                trend={`${num(kpis.total_assignments)} total`}
+                                trend={`${num(kpis.total_assignments)} ${t('total_admissions_reports')}`}
                             />
                             <MetricCard
-                                title="Graduated Alumni"
+                                title={t('graduated_alumni')}
                                 value={num(kpis.graduated_students)}
                                 icon={Award}
                                 color="primary"
-                                trend={`${num(kpis.total_certificates)} certs issued`}
+                                trend={`${num(kpis.total_certificates)} ${t('total_certificates_issued')}`}
                             />
                         </div>
                     )}

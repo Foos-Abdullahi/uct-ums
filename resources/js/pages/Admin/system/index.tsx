@@ -11,6 +11,7 @@ import {
     CheckCircle2,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -72,6 +73,8 @@ export default function AdminSystemIndex({
     app_config,
     system_counts,
 }: AdminSystemIndexProps) {
+    const { t } = useTranslation();
+
     const { data, setData, post, processing, errors } = useForm({
         institution_name: app_config.institution_name,
         institution_motto: app_config.institution_motto,
@@ -91,25 +94,23 @@ export default function AdminSystemIndex({
         post('/admin/settings/system', {
             preserveScroll: true,
             onSuccess: () =>
-                toast.success('System configuration saved successfully.'),
+                toast.success(t('system_configuration_saved')),
         });
     };
 
     return (
         <>
-            <Head title="System Configuration & Server Diagnostics" />
+            <Head title={t('system_configuration_diagnostics')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            System & Institutional Configurations
+                            {t('system_institutional_configurations')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage institution metadata, portal enrollment
-                            locks, academic session dates, and server
-                            environment health.
+                            {t('system_config_description')}
                         </p>
                     </div>
 
@@ -120,7 +121,7 @@ export default function AdminSystemIndex({
                         disabled={processing}
                     >
                         <Save className="mr-1.5 h-4 w-4" />
-                        {processing ? 'Saving...' : 'Save Changes'}
+                        {processing ? t('saving_changes') : t('save_changes')}
                     </Button>
                 </div>
 

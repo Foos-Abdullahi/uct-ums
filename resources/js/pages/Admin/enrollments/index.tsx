@@ -9,6 +9,7 @@ import {
     Eye,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -81,6 +82,8 @@ export default function AdminEnrollmentsIndex({
     programs = [],
     filters,
 }: AdminEnrollmentsIndexProps) {
+    const { t } = useTranslation();
+
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
             ...filters,
@@ -129,11 +132,11 @@ export default function AdminEnrollmentsIndex({
         },
         {
             accessorKey: 'program.name',
-            header: 'Academic Program',
+            header: t('program'),
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
                     <span className="block truncate text-xs font-medium text-foreground">
-                        {row.original.program?.name || 'Unassigned'}
+                        {row.original.program?.name || t('unassigned')}
                     </span>
                     {row.original.program?.code && (
                         <Badge
@@ -148,23 +151,23 @@ export default function AdminEnrollmentsIndex({
         },
         {
             accessorKey: 'current_semester',
-            header: 'Term',
+            header: t('term'),
             cell: ({ row }) => (
                 <span className="text-xs font-semibold text-foreground">
-                    Sem {row.original.current_semester || 1}
+                    {t('semester_prefix')} {row.original.current_semester || 1}
                 </span>
             ),
         },
         {
             accessorKey: 'enrollment_status',
-            header: 'Enrollment Status',
+            header: t('enrollment_status_page'),
             cell: ({ row }) => {
                 const status = row.original.enrollment_status;
 
                 if (status === 'enrolled') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                            Enrolled
+                            {t('enrolled_status_enrollment')}
                         </Badge>
                     );
                 }
@@ -172,7 +175,7 @@ export default function AdminEnrollmentsIndex({
                 if (status === 'pending') {
                     return (
                         <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
-                            Pending
+                            {t('enrollment_pending')}
                         </Badge>
                     );
                 }
@@ -180,7 +183,7 @@ export default function AdminEnrollmentsIndex({
                 if (status === 'graduated') {
                     return (
                         <Badge className="border-sky-200 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20">
-                            Graduated
+                            {t('enrollment_graduated')}
                         </Badge>
                     );
                 }
@@ -190,14 +193,14 @@ export default function AdminEnrollmentsIndex({
         },
         {
             accessorKey: 'fee_status',
-            header: 'Fee Status',
+            header: t('fee_status_enrollment'),
             cell: ({ row }) => {
                 const feeStatus = String(row.original.fee_status);
 
                 if (feeStatus === 'paid') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-[11px] text-emerald-700">
-                            Paid
+                            {t('paid_fee_status')}
                         </Badge>
                     );
                 }
@@ -205,14 +208,14 @@ export default function AdminEnrollmentsIndex({
                 if (feeStatus === 'partial') {
                     return (
                         <Badge className="border-amber-200 bg-amber-500/10 text-[11px] text-amber-700">
-                            Partial
+                            {t('partial_fee_status')}
                         </Badge>
                     );
                 }
 
                 return (
                     <Badge variant="destructive" className="text-[11px]">
-                        Unpaid
+                        {t('unpaid')}
                     </Badge>
                 );
             },
@@ -252,7 +255,7 @@ export default function AdminEnrollmentsIndex({
                     >
                         <Link href={`/admin/students/${row.original.id}`}>
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            Profile
+                            {t('profile')}
                         </Link>
                     </Button>
                 </div>
@@ -263,22 +266,22 @@ export default function AdminEnrollmentsIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('status'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Enrolled', value: 'enrolled' },
-                { label: 'Pending', value: 'pending' },
-                { label: 'Suspended', value: 'suspended' },
-                { label: 'Graduated', value: 'graduated' },
-                { label: 'Withdrawn', value: 'withdrawn' },
+                { label: t('all_statuses'), value: 'all' },
+                { label: t('enrolled_status_enrollment'), value: 'enrolled' },
+                { label: t('enrollment_pending'), value: 'pending' },
+                { label: t('enrollment_suspended'), value: 'suspended' },
+                { label: t('enrollment_graduated'), value: 'graduated' },
+                { label: t('withdrawn'), value: 'withdrawn' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'program_id',
-            title: 'Program',
+            title: t('program'),
             options: [
-                { label: 'All Programs', value: 'all' },
+                { label: t('all_programs'), value: 'all' },
                 ...programs.map((p) => ({
                     label: p.name,
                     value: String(p.id),
@@ -288,11 +291,11 @@ export default function AdminEnrollmentsIndex({
         },
         {
             key: 'semester',
-            title: 'Semester',
+            title: t('semester'),
             options: [
-                { label: 'All Semesters', value: 'all' },
+                { label: t('all_semesters'), value: 'all' },
                 ...Array.from({ length: 8 }, (_, i) => ({
-                    label: `Semester ${i + 1}`,
+                    label: `${t('semester')} ${i + 1}`,
                     value: String(i + 1),
                 })),
             ],
@@ -300,12 +303,12 @@ export default function AdminEnrollmentsIndex({
         },
         {
             key: 'fee_status',
-            title: 'Fee Status',
+            title: t('fee_status'),
             options: [
-                { label: 'All Fee Statuses', value: 'all' },
-                { label: 'Paid', value: 'paid' },
-                { label: 'Partial', value: 'partial' },
-                { label: 'Unpaid', value: 'unpaid' },
+                { label: t('all_fees'), value: 'all' },
+                { label: t('paid'), value: 'paid' },
+                { label: t('partial'), value: 'partial' },
+                { label: t('unpaid'), value: 'unpaid' },
             ],
             value: filters.fee_status || undefined,
         },
@@ -313,19 +316,17 @@ export default function AdminEnrollmentsIndex({
 
     return (
         <>
-            <Head title="Student Enrollments" />
+            <Head title={t('enrollments_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Student Enrollments
+                            {t('enrollments_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage student academic registrations, program
-                            affiliations, cohort progressions, and matriculation
-                            standing.
+                            {t('enrollments_description')}
                         </p>
                     </div>
 
@@ -333,13 +334,13 @@ export default function AdminEnrollmentsIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/admissions">
                                 <Users className="mr-1.5 h-4 w-4" />
-                                Admissions Funnel
+                                {t('admissions_funnel')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/students/create">
                                 <UserCheck className="mr-1.5 h-4 w-4" />
-                                Enroll Student
+                                {t('enroll_student')}
                             </Link>
                         </Button>
                     </div>
@@ -350,31 +351,31 @@ export default function AdminEnrollmentsIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Enrolled"
+                                title={t('total_enrolled_stats')}
                                 value={stats.total_enrolled}
                                 icon={Users}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active Students"
+                                title={t('active_students_enrollments')}
                                 value={stats.active_students}
                                 icon={UserCheck}
                                 color="success"
                             />
                             <MetricCard
-                                title="Pending"
+                                title={t('pending_enrollments_stats')}
                                 value={stats.pending_enrollments}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Graduated"
+                                title={t('graduated_students_enrollments')}
                                 value={stats.graduated_students}
                                 icon={GraduationCap}
                                 color="info"
                             />
                             <MetricCard
-                                title="Suspended"
+                                title={t('suspended_students_enrollments')}
                                 value={stats.suspended_students}
                                 icon={AlertCircle}
                                 color="destructive"
@@ -388,8 +389,8 @@ export default function AdminEnrollmentsIndex({
                     {enrollments && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Enrollment Roster"
-                                searchTitle="Search by matric no, student name, email..."
+                                title={t('enrollments_list')}
+                                searchTitle={t('search_enrollments')}
                                 columns={columns}
                                 data={enrollments.data}
                                 pagination={{
