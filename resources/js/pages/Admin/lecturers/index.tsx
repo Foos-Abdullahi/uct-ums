@@ -8,6 +8,7 @@ import {
     Plus,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -37,17 +38,14 @@ interface AdminLecturersIndexProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Lecturers', href: '/admin/lecturers' },
-];
-
 export default function AdminLecturersIndex({
     stats,
     lecturers,
     departments = [],
     filters,
 }: AdminLecturersIndexProps) {
+    const { t } = useTranslation();
+
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedLecturerForDelete, setSelectedLecturerForDelete] =
         useState<Lecturer | null>(null);
@@ -74,14 +72,14 @@ export default function AdminLecturersIndex({
         router.delete(`/admin/lecturers/${selectedLecturerForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    `Lecturer ${selectedLecturerForDelete.user?.name} deleted successfully.`,
+                    t('lecturer_deleted', { name: selectedLecturerForDelete.user?.name }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedLecturerForDelete(null);
                 setDeleteProcessing(false);
             },
             onError: () => {
-                toast.error('Failed to delete lecturer record.');
+                toast.error(t('failed_delete_lecturer'));
                 setDeleteProcessing(false);
             },
         });
@@ -94,8 +92,8 @@ export default function AdminLecturersIndex({
             {
                 preserveScroll: true,
                 onSuccess: () =>
-                    toast.success('Lecturer status updated successfully.'),
-                onError: () => toast.error('Failed to update lecturer status.'),
+                    toast.success(t('lecturer_status_updated')),
+                onError: () => toast.error(t('failed_update_lecturer_status')),
             },
         );
     };
@@ -115,30 +113,30 @@ export default function AdminLecturersIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'employment_status',
-            title: 'Status',
+            title: t('status'),
             options: [
-                { label: 'Active', value: 'active' },
-                { label: 'On Leave', value: 'on_leave' },
-                { label: 'Sabbatical', value: 'sabbatical' },
-                { label: 'Inactive', value: 'inactive' },
-                { label: 'Terminated', value: 'terminated' },
+                { label: t('active'), value: 'active' },
+                { label: t('on_leave'), value: 'on_leave' },
+                { label: t('sabbatical'), value: 'sabbatical' },
+                { label: t('inactive'), value: 'inactive' },
+                { label: t('terminated'), value: 'terminated' },
             ],
             value: filters.employment_status || undefined,
         },
         {
             key: 'department',
-            title: 'Department',
+            title: t('department'),
             options: departments.map((d) => ({ label: d, value: d })),
             value: filters.department || undefined,
         },
         {
             key: 'contract_type',
-            title: 'Contract',
+            title: t('contract'),
             options: [
-                { label: 'Full Time', value: 'full_time' },
-                { label: 'Part Time', value: 'part_time' },
-                { label: 'Adjunct', value: 'adjunct' },
-                { label: 'Visiting', value: 'visiting' },
+                { label: t('full_time'), value: 'full_time' },
+                { label: t('part_time'), value: 'part_time' },
+                { label: t('adjunct'), value: 'adjunct' },
+                { label: t('visiting'), value: 'visiting' },
             ],
             value: filters.contract_type || undefined,
         },
@@ -146,18 +144,17 @@ export default function AdminLecturersIndex({
 
     return (
         <>
-            <Head title="Lecturers Management" />
+            <Head title={t('lecturers_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Lecturers Directory
+                            {t('lecturers_directory')}
                         </h1>
                         <p className="text-xs text-muted-foreground">
-                            Manage university faculty members, designations,
-                            department appointments, and teaching loads.
+                            {t('lecturers_description')}
                         </p>
                     </div>
 
@@ -165,7 +162,7 @@ export default function AdminLecturersIndex({
                         <Button size="sm" asChild>
                             <Link href="/admin/lecturers/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
-                                Add Lecturer
+                                {t('create_lecturer')}
                             </Link>
                         </Button>
                     </div>
@@ -179,37 +176,37 @@ export default function AdminLecturersIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-700 fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Faculty"
+                                title={t('total_faculty')}
                                 value={stats.total_lecturers}
-                                description="Registered academic staff"
+                                description={t('registered_academic_staff')}
                                 icon={Users}
                                 variant="primary"
                             />
                             <MetricCard
-                                title="Active Teaching"
+                                title={t('active_teaching')}
                                 value={stats.active_lecturers}
-                                description="Currently lecturing"
+                                description={t('currently_lecturing')}
                                 icon={UserCheck}
                                 variant="success"
                             />
                             <MetricCard
-                                title="On Leave"
+                                title={t('on_leave')}
                                 value={stats.on_leave_lecturers}
-                                description="Sabbatical / leave"
+                                description={t('sabbatical_leave')}
                                 icon={UserX}
                                 variant="warning"
                             />
                             <MetricCard
-                                title="Full-Time"
+                                title={t('full_time')}
                                 value={stats.full_time_lecturers}
-                                description="Permanent faculty"
+                                description={t('permanent_faculty')}
                                 icon={Briefcase}
                                 variant="info"
                             />
                             <MetricCard
-                                title="Part-Time / Adjunct"
+                                title={t('part_time_adjunct')}
                                 value={stats.part_time_lecturers}
-                                description="Visiting & adjunct staff"
+                                description={t('visiting_adjunct_staff')}
                                 icon={UserCog}
                                 variant="default"
                             />
@@ -227,8 +224,8 @@ export default function AdminLecturersIndex({
                     {lecturers && (
                         <div className="animate-in duration-700 fade-in slide-in-from-bottom-6">
                             <DataTable
-                                title="Lecturers"
-                                searchTitle="Search by name, lecturer number, department, faculty, or designation..."
+                                title={t('lecturers_list')}
+                                searchTitle={t('search_lecturers')}
                                 columns={columns}
                                 data={lecturers.data}
                                 pagination={{
@@ -273,8 +270,8 @@ export default function AdminLecturersIndex({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Lecturer Record"
-                    description="Are you sure you want to delete this lecturer? Their user account will be deactivated."
+                    title={t('delete_lecturer')}
+                    description={t('delete_lecturer_confirm')}
                     itemName={
                         selectedLecturerForDelete
                             ? `${selectedLecturerForDelete.user?.name} (${selectedLecturerForDelete.lecturer_no})`
@@ -295,14 +292,19 @@ export default function AdminLecturersIndex({
                     }
                     userName={selectedLecturerForPassword?.user?.name}
                     userIdentifier={selectedLecturerForPassword?.lecturer_no}
-                    title="Reset Lecturer Password"
-                    description="Set a new secure password for this faculty member account."
+                    title={t('reset_lecturer_password')}
+                    description={t('reset_password_description')}
                 />
             </div>
         </>
     );
 }
 
-AdminLecturersIndex.layout = (page: any) => (
-    <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>
-);
+AdminLecturersIndex.layout = (page: any) => {
+    const { t } = useTranslation();
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_lecturers'), href: '/admin/lecturers' },
+    ];
+    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
+};
