@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
+import { useTranslation } from 'react-i18next';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -26,16 +27,34 @@ const sidebarNavItems: NavItem[] = [
         href: editAppearance(),
         icon: null,
     },
+    {
+        title: 'Language',
+        href: '/settings/language',
+        icon: null,
+    },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const { t } = useTranslation();
+
+    const navTitleMap: Record<string, string> = {
+        'Profile': t('profile_menu'),
+        'Security': t('security_menu'),
+        'Appearance': t('appearance_menu'),
+        'Language': t('language_menu'),
+    };
+
+    const translatedNavItems = sidebarNavItems.map((item) => ({
+        ...item,
+        title: navTitleMap[item.title] || item.title,
+    }));
 
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title={t('settings_page')}
+                description={t('settings_description')}
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
@@ -44,7 +63,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         className="flex flex-col space-y-1 space-x-0"
                         aria-label="Settings"
                     >
-                        {sidebarNavItems.map((item, index) => (
+                        {translatedNavItems.map((item, index) => (
                             <Button
                                 key={`${toUrl(item.href ?? '')}-${index}`}
                                 size="sm"
