@@ -19,7 +19,6 @@ import {
     X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MetricCard } from '@/components/tools/MetricCard';
 import {
@@ -157,16 +156,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Finance', href: '/admin/finance' },
     { title: 'Chart of Accounts', href: '/admin/finance/chart-of-accounts' },
 ];
-
-export default function AdminChartOfAccounts({
-    summary,
-    categories,
-    account_groups,
-    account_types,
-    normal_balances,
-    filters,
-}: AdminChartOfAccountsProps) {
-    const { t } = useTranslation();
 
 const GROUP_DEFAULTS: Record<string, { type: string; balance: string }> = {
     assets: { type: 'asset', balance: 'Debit' },
