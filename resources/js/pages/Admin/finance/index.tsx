@@ -12,6 +12,7 @@ import {
     ArrowRight,
 } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
@@ -80,23 +81,24 @@ export default function AdminFinanceOverview({
     revenue_by_method = [],
     invoices_by_type = [],
 }: FinanceOverviewProps) {
+    const { t } = useTranslation();
+
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     return (
         <>
-            <Head title="Financial Solvency & Revenue Overview" />
+            <Head title={t('financial_solvency_revenue')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Finance & Bursar Control Center
+                            {t('finance_bursar_center')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Real-time tuition fee assessment, fee collections,
-                            student payment verification, and cashflow audit.
+                            {t('finance_description')}
                         </p>
                     </div>
 
@@ -104,19 +106,19 @@ export default function AdminFinanceOverview({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/finance/fees">
                                 <Receipt className="mr-1.5 h-4 w-4" />
-                                Fee Schedules
+                                {t('manage_fees')}
                             </Link>
                         </Button>
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/finance/invoices">
                                 <FileText className="mr-1.5 h-4 w-4" />
-                                All Invoices
+                                {t('view_all_invoices')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/finance/payments">
                                 <CreditCard className="mr-1.5 h-4 w-4" />
-                                Payments Roster
+                                {t('view_all_payments')}
                             </Link>
                         </Button>
                     </div>
@@ -127,31 +129,31 @@ export default function AdminFinanceOverview({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Invoiced"
+                                title={t('total_invoiced_finance')}
                                 value={formatCurrency(stats.total_invoiced)}
                                 icon={FileText}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Total Collected"
+                                title={t('total_collected_finance')}
                                 value={formatCurrency(stats.total_collected)}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Outstanding Balance"
+                                title={t('total_outstanding_finance')}
                                 value={formatCurrency(stats.total_outstanding)}
                                 icon={TrendingUp}
                                 color="destructive"
                             />
                             <MetricCard
-                                title="Pending Approvals"
+                                title={t('pending_payments_finance')}
                                 value={`${stats.pending_payments} txns`}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Overdue Invoices"
+                                title={t('overdue_invoices_finance')}
                                 value={`${stats.overdue_invoices} bills`}
                                 icon={AlertCircle}
                                 color="destructive"
@@ -166,8 +168,8 @@ export default function AdminFinanceOverview({
                     <div className="space-y-6 lg:col-span-2">
                         {/* Recent Payments Stream */}
                         <UctPanelCard
-                            title="Recent Transactions & Collections"
-                            description="Latest student payments processed across all channels."
+                            title={t('recent_transactions')}
+                            description={t('revenue_by_payment_method')}
                             icon={CreditCard}
                             actions={
                                 <Button
@@ -177,7 +179,7 @@ export default function AdminFinanceOverview({
                                     asChild
                                 >
                                     <Link href="/admin/finance/payments">
-                                        View All
+                                        {t('view_all')}
                                         <ArrowRight className="ml-1 h-3.5 w-3.5" />
                                     </Link>
                                 </Button>
@@ -191,7 +193,7 @@ export default function AdminFinanceOverview({
                             >
                                 {recent_payments.length === 0 ? (
                                     <p className="py-6 text-center text-xs text-muted-foreground italic">
-                                        No payment transactions recorded yet.
+                                        {t('no_payment_transactions')}
                                     </p>
                                 ) : (
                                     <div className="divide-y divide-border/40 pt-1 text-xs">
@@ -265,8 +267,8 @@ export default function AdminFinanceOverview({
 
                         {/* Recent Invoices Issued */}
                         <UctPanelCard
-                            title="Recent Invoices & Tuition Bills"
-                            description="Newly generated student fee assessments."
+                            title={t('recent_invoices_finance')}
+                            description={t('recent_invoices_desc')}
                             icon={FileText}
                             actions={
                                 <Button
@@ -276,7 +278,7 @@ export default function AdminFinanceOverview({
                                     asChild
                                 >
                                     <Link href="/admin/finance/invoices">
-                                        View All
+                                        {t('view_all')}
                                         <ArrowRight className="ml-1 h-3.5 w-3.5" />
                                     </Link>
                                 </Button>
@@ -290,7 +292,7 @@ export default function AdminFinanceOverview({
                             >
                                 {recent_invoices.length === 0 ? (
                                     <p className="py-6 text-center text-xs text-muted-foreground italic">
-                                        No student invoices generated yet.
+                                        {t('no_invoices_recorded')}
                                     </p>
                                 ) : (
                                     <div className="divide-y divide-border/40 pt-1 text-xs">
