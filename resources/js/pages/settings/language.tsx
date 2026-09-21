@@ -68,11 +68,7 @@ export default function Language() {
                         </Select>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <Button type="submit" data-test="save-language-button">
-                            {t('save_button')}
-                        </Button>
-                    </div>
+                 
                 </Form>
             </div>
         </>
