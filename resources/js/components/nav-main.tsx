@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Collapsible,
     CollapsibleContent,
@@ -20,6 +21,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
 function NavGroupItem({ item }: { item: NavItem }) {
+    const { t } = useTranslation();
     const { isCurrentUrl } = useCurrentUrl();
     const children = item.items ?? [];
     const isActive = children.some(
@@ -36,9 +38,9 @@ function NavGroupItem({ item }: { item: NavItem }) {
         >
             <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={{ children: item.title }}>
+                    <SidebarMenuButton tooltip={{ children: t(item.title) }}>
                         {item.icon && <item.icon />}
-                        <span>{item.title}</span>
+                        <span>{t(item.title)}</span>
                         <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -55,7 +57,7 @@ function NavGroupItem({ item }: { item: NavItem }) {
                                     }
                                 >
                                     <Link href={child.href!} prefetch>
-                                        <span>{child.title}</span>
+                                        <span>{t(child.title)}</span>
                                     </Link>
                                 </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -68,6 +70,7 @@ function NavGroupItem({ item }: { item: NavItem }) {
 }
 
 function NavLinkItem({ item }: { item: NavItem }) {
+    const { t } = useTranslation();
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
@@ -75,11 +78,11 @@ function NavLinkItem({ item }: { item: NavItem }) {
             <SidebarMenuButton
                 asChild
                 isActive={item.href ? isCurrentUrl(item.href) : false}
-                tooltip={{ children: item.title }}
+                tooltip={{ children: t(item.title) }}
             >
                 <Link href={item.href!} prefetch>
                     {item.icon && <item.icon />}
-                    <span>{item.title}</span>
+                    <span>{t(item.title)}</span>
                 </Link>
             </SidebarMenuButton>
         </SidebarMenuItem>
@@ -87,9 +90,11 @@ function NavLinkItem({ item }: { item: NavItem }) {
 }
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
+    const { t } = useTranslation();
+
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('nav_platform')}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) =>
                     item.items?.length ? (
