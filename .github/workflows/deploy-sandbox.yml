@@ -48,6 +48,7 @@ jobs:
         env:
           APP_KEY: ${{ secrets.APP_KEY }}
           APP_URL: ${{ secrets.APP_URL }}
+          APP_DEBUG: ${{ secrets.APP_DEBUG }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -76,7 +77,7 @@ jobs:
             $replacements = [
               "APP_NAME" => "\"UCT Online\"",
               "APP_ENV" => "production",
-              "APP_DEBUG" => "true",
+              "APP_DEBUG" => getenv("APP_DEBUG") ?: "false",
               "APP_URL" => getenv("APP_URL") ?: "https://local.uct.so",
               "APP_KEY" => $appKey,
               "DB_CONNECTION" => "mysql",
