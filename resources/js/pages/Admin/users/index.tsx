@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePermissions } from '@/hooks/use-permissions';
 import type { BreadcrumbItem } from '@/types';
 
 export interface UserItem {
@@ -87,6 +88,7 @@ export default function AdminUsersIndex({
     filters,
 }: AdminUsersIndexProps) {
     const { t } = useTranslation();
+    const { can } = usePermissions();
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -321,50 +323,56 @@ export default function AdminUsersIndex({
 
                 return (
                     <div className="flex items-center justify-end gap-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedUser(u);
-                                passwordForm.reset();
-                                setPasswordModalOpen(true);
-                            }}
-                        >
-                            <KeyRound className="mr-1 h-3.5 w-3.5" />
-                            {t('password_button')}
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedUser(u);
-                                editForm.setData({
-                                    name: u.name,
-                                    email: u.email,
-                                    role: u.role,
-                                    is_active: u.is_active,
-                                });
-                                setEditModalOpen(true);
-                            }}
-                        >
-                            <Edit3 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedUser(u);
-                                setDeleteModalOpen(true);
-                            }}
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {can('settings.users') && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedUser(u);
+                                    passwordForm.reset();
+                                    setPasswordModalOpen(true);
+                                }}
+                            >
+                                <KeyRound className="mr-1 h-3.5 w-3.5" />
+                                {t('password_button')}
+                            </Button>
+                        )}
+                        {can('settings.users') && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedUser(u);
+                                    editForm.setData({
+                                        name: u.name,
+                                        email: u.email,
+                                        role: u.role,
+                                        is_active: u.is_active,
+                                    });
+                                    setEditModalOpen(true);
+                                }}
+                            >
+                                <Edit3 className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
+                        {can('settings.users') && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedUser(u);
+                                    setDeleteModalOpen(true);
+                                }}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
                     </div>
                 );
             },
@@ -415,12 +423,14 @@ export default function AdminUsersIndex({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/settings/roles">
-                                <Shield className="mr-1.5 h-4 w-4" />
-                                {t('roles_permissions')}
-                            </Link>
-                        </Button>
+                        {can('settings.roles') && (
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href="/admin/settings/roles">
+                                    <Shield className="mr-1.5 h-4 w-4" />
+                                    {t('roles_permissions')}
+                                </Link>
+                            </Button>
+                        )}
                         <Button
                             size="sm"
                             onClick={() => setCreateModalOpen(true)}
@@ -430,7 +440,6 @@ export default function AdminUsersIndex({
                         </Button>
                     </div>
                 </div>
-
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
