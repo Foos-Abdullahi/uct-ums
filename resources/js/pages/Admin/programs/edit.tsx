@@ -5,7 +5,22 @@ import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NumberInput } from '@/components/ui/number-input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    DEGREE_LEVELS,
+    durationBounds,
+    durationUnit
+    
+} from '@/lib/programs';
+import type {ProgramFormValues} from '@/lib/programs';
 
 interface EditProgramProps {
     program: {
@@ -25,22 +40,26 @@ interface EditProgramProps {
 }
 
 export default function AdminProgramEdit({ program }: EditProgramProps) {
-    const { data, setData, put, processing, errors } = useForm({
-        name: program.name,
-        code: program.code || '',
-        degree_level: program.degree_level,
-        duration_semesters: program.duration_semesters,
-        total_credits: program.total_credits,
-        department: program.department || '',
-        faculty: program.faculty || '',
-        status: program.status,
-        description: program.description || '',
-    });
+    const { data, setData, put, processing, errors } =
+        useForm<ProgramFormValues>({
+            name: program.name,
+            code: program.code || '',
+            degree_level: program.degree_level,
+            duration_semesters: program.duration_semesters,
+            total_credits: program.total_credits,
+            department: program.department || '',
+            faculty: program.faculty || '',
+            status: program.status,
+            description: program.description || '',
+        });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         put(`/admin/programs/${program.id}`);
     };
+
+    const duration = durationBounds(data.degree_level);
+    const durationUnitLabel = durationUnit(data.degree_level);
 
     return (
         <>
@@ -160,29 +179,31 @@ export default function AdminProgramEdit({ program }: EditProgramProps) {
                                     Degree Level{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="degree_level"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                <Select
                                     value={data.degree_level}
-                                    onChange={(e) =>
-                                        setData('degree_level', e.target.value)
+                                    onValueChange={(value) =>
+                                        setData('degree_level', value)
                                     }
-                                    required
                                 >
-                                    <option value="bachelor">
-                                        Bachelor's Degree
-                                    </option>
-                                    <option value="master">
-                                        Master's Degree
-                                    </option>
-                                    <option value="doctorate">
-                                        Doctorate (Ph.D.)
-                                    </option>
-                                    <option value="diploma">Diploma</option>
-                                    <option value="certificate">
-                                        Certificate
-                                    </option>
-                                </select>
+                                    <SelectTrigger
+                                        id="degree_level"
+                                        size="sm"
+                                        className="text-xs"
+                                    >
+                                        <SelectValue placeholder="Select a degree level" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {DEGREE_LEVELS.map((level) => (
+                                            <SelectItem
+                                                key={level.value}
+                                                value={level.value}
+                                                className="text-xs"
+                                            >
+                                                {level.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.degree_level && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.degree_level}
@@ -195,24 +216,26 @@ export default function AdminProgramEdit({ program }: EditProgramProps) {
                                     htmlFor="duration_semesters"
                                     className="text-xs font-semibold"
                                 >
-                                    Duration (Semesters){' '}
+                                    Duration ({durationUnitLabel}){' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <Input
+                                <NumberInput
                                     id="duration_semesters"
-                                    type="number"
-                                    min="1"
-                                    max="16"
+                                    aria-label={`Duration in ${durationUnitLabel.toLowerCase()}`}
                                     value={data.duration_semesters}
-                                    onChange={(e) =>
-                                        setData(
-                                            'duration_semesters',
-                                            parseInt(e.target.value) || 8,
-                                        )
+                                    onValueChange={(value) =>
+                                        setData('duration_semesters', value)
                                     }
-                                    className="text-xs"
+                                    min={duration.min}
+                                    max={duration.max}
+                                    placeholder={duration.placeholder}
                                     required
                                 />
+                                <p className="text-[11px] text-muted-foreground">
+                                    Enter a whole number from{' '}
+                                    {duration.min} to {duration.max}{' '}
+                                    {durationUnitLabel.toLowerCase()}.
+                                </p>
                                 {errors.duration_semesters && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.duration_semesters}
@@ -228,19 +251,15 @@ export default function AdminProgramEdit({ program }: EditProgramProps) {
                                     Total Credits{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <Input
+                                <NumberInput
                                     id="total_credits"
-                                    type="number"
-                                    min="1"
-                                    max="300"
                                     value={data.total_credits}
-                                    onChange={(e) =>
-                                        setData(
-                                            'total_credits',
-                                            parseInt(e.target.value) || 120,
-                                        )
+                                    onValueChange={(value) =>
+                                        setData('total_credits', value)
                                     }
-                                    className="text-xs"
+                                    min={1}
+                                    max={300}
+                                    placeholder="120"
                                     required
                                 />
                                 {errors.total_credits && (

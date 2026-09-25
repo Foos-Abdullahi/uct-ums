@@ -8,6 +8,8 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::Hr->value])
     ->name('hr.')
     ->group(function () {
         Route::inertia('dashboard', 'hr/dashboard')->name('dashboard');
-        Route::inertia('staff', 'hr/staff/index')->name('staff.index');
-        Route::inertia('leave', 'hr/leave/index')->name('leave.index');
+        Route::inertia('staff', 'hr/staff/index')
+            ->middleware('permission:lecturers.view')->name('staff.index');
+        Route::inertia('leave', 'hr/leave/index')
+            ->middleware('permission:lecturers.view')->name('leave.index');
     });

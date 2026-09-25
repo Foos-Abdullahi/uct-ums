@@ -21,6 +21,7 @@ import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { usePermissions } from '@/hooks/use-permissions';
 import type { BreadcrumbItem } from '@/types';
 
 export interface RoleItem {
@@ -61,6 +62,7 @@ export default function AdminRolesIndex({
     roles = [],
 }: AdminRolesIndexProps) {
     const { t } = useTranslation();
+    const { can } = usePermissions();
     const [selectedForDelete, setSelectedForDelete] = useState<RoleItem | null>(
         null,
     );
@@ -163,18 +165,20 @@ export default function AdminRolesIndex({
                                 {t('view_role')}
                             </Link>
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs"
-                            asChild
-                        >
-                            <Link href={`/admin/settings/roles/${r.id}/edit`}>
-                                <Edit3 className="mr-1 h-3.5 w-3.5" />
-                                {t('edit_role')}
-                            </Link>
-                        </Button>
-                        {!r.is_system && (
+                        {can('settings.roles') && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                asChild
+                            >
+                                <Link href={`/admin/settings/roles/${r.id}/edit`}>
+                                    <Edit3 className="mr-1 h-3.5 w-3.5" />
+                                    {t('edit_role')}
+                                </Link>
+                            </Button>
+                        )}
+                        {can('settings.roles') && !r.is_system && (
                             <Button
                                 variant="ghost"
                                 size="sm"

@@ -41,6 +41,7 @@ class RolePermissionSeeder extends Seeder
                 ['name' => 'Manage Semesters', 'slug' => 'academics.semesters', 'description' => 'Configure terms, cohort allocations, and sessions.'],
                 ['name' => 'Manage Grades', 'slug' => 'academics.grades', 'description' => 'Record, edit, and post semester grades.'],
                 ['name' => 'Issue Transcripts', 'slug' => 'academics.transcripts', 'description' => 'Generate and verify official academic transcripts.'],
+                ['name' => 'Manage Enrollments', 'slug' => 'academics.enrollments', 'description' => 'Enroll and unenroll students into course sections.'],
             ],
             'Finance' => [
                 ['name' => 'View Finance Overview', 'slug' => 'finance.view', 'description' => 'View financial dashboards and revenue statistics.'],
@@ -54,6 +55,11 @@ class RolePermissionSeeder extends Seeder
                 ['name' => 'Deactivate Accounts', 'slug' => 'finance.accounts.deactivate', 'description' => 'Deactivate or reactivate accounts.'],
                 ['name' => 'Import Accounts', 'slug' => 'finance.accounts.import', 'description' => 'Import accounts from an Excel or CSV workbook.'],
                 ['name' => 'View Account History', 'slug' => 'finance.accounts.history', 'description' => 'Inspect account audit history and changes.'],
+                ['name' => 'View Expenses', 'slug' => 'finance.expenses.view', 'description' => 'View the expense ledger and individual expense records.'],
+                ['name' => 'Create Expenses', 'slug' => 'finance.expenses.create', 'description' => 'Record new operating and capital expenditure.'],
+                ['name' => 'Edit Expenses', 'slug' => 'finance.expenses.edit', 'description' => 'Update expense line items, categories, and vendors.'],
+                ['name' => 'Approve Expenses', 'slug' => 'finance.expenses.approve', 'description' => 'Approve, reject, and mark expenses as paid.'],
+                ['name' => 'Delete Expenses', 'slug' => 'finance.expenses.delete', 'description' => 'Remove expense records from the ledger.'],
             ],
             'Reports' => [
                 ['name' => 'View Reports', 'slug' => 'reports.view', 'description' => 'Access executive reports and statistical charts.'],
@@ -100,8 +106,8 @@ class RolePermissionSeeder extends Seeder
                     'students.view', 'students.create', 'students.edit', 'students.export',
                     'admissions.view', 'admissions.review', 'admissions.decision', 'admissions.convert',
                     'lecturers.view', 'academics.programs', 'academics.courses', 'academics.semesters',
-                    'academics.grades', 'academics.transcripts', 'finance.view', 'reports.view',
-                    'reports.academic.export', 'settings.audit_logs',
+                    'academics.grades', 'academics.transcripts', 'academics.enrollments', 'finance.view',
+                    'reports.view', 'reports.academic.export', 'settings.audit_logs',
                 ],
             ],
             [
@@ -113,6 +119,8 @@ class RolePermissionSeeder extends Seeder
                     'students.view', 'admissions.view', 'finance.view', 'finance.invoices.create',
                     'finance.invoices.delete', 'finance.payments.create', 'finance.payments.verify',
                     'finance.accounts.view', 'finance.accounts.history',
+                    'finance.expenses.view', 'finance.expenses.create', 'finance.expenses.edit',
+                    'finance.expenses.approve', 'finance.expenses.delete',
                     'reports.view', 'reports.finance.export',
                 ],
             ],
@@ -133,7 +141,8 @@ class RolePermissionSeeder extends Seeder
                 'is_system' => false,
                 'permissions' => [
                     'students.view', 'lecturers.view', 'lecturers.assign', 'academics.programs',
-                    'academics.courses', 'academics.semesters', 'academics.grades', 'reports.view',
+                    'academics.courses', 'academics.semesters', 'academics.grades',
+                    'academics.enrollments', 'reports.view',
                 ],
             ],
             [
@@ -143,7 +152,7 @@ class RolePermissionSeeder extends Seeder
                 'is_system' => false,
                 'permissions' => [
                     'students.view', 'lecturers.view', 'lecturers.assign', 'academics.courses',
-                    'academics.semesters', 'academics.grades', 'reports.view',
+                    'academics.semesters', 'academics.grades', 'academics.enrollments', 'reports.view',
                 ],
             ],
             [

@@ -11,10 +11,15 @@ use App\Models\Student;
 use App\Models\StudentInvoice;
 use App\Models\User;
 use Database\Seeders\ChartOfAccountsSeeder;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(RolePermissionSeeder::class);
+});
 
 // ─── Expense Index ────────────────────────────────────────────────────────────
 

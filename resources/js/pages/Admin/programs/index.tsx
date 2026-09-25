@@ -13,7 +13,6 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import AppLayout from '@/layouts/app-layout';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -22,6 +21,8 @@ import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { TableSkeleton } from '@/components/tools/table-skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import { durationUnit } from '@/lib/programs';
 import type { BreadcrumbItem } from '@/types';
 
 export interface ProgramItem {
@@ -180,7 +181,8 @@ export default function AdminProgramsIndex({
             header: t('program_duration'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
-                    {row.original.duration_semesters} {t('semester_label')} (
+                    {row.original.duration_semesters}{' '}
+                    {durationUnit(row.original.degree_level)} (
                     {row.original.total_credits} {t('credit_hours')})
                 </span>
             ),

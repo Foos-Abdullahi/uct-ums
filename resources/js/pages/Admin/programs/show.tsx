@@ -13,6 +13,7 @@ import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { durationUnit } from '@/lib/programs';
 
 interface Course {
     id: number;
@@ -176,7 +177,8 @@ export default function AdminProgramShow({ program }: AdminProgramShowProps) {
                                         Duration
                                     </span>
                                     <span className="font-medium text-foreground">
-                                        {program.duration_semesters} Semesters
+                                        {program.duration_semesters}{' '}
+                                        {durationUnit(program.degree_level)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between py-2">
