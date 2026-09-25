@@ -15,6 +15,7 @@
 .env
 .env.backup
 .env.production
+/UCT Website & Email Delivery Note.pdf
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
