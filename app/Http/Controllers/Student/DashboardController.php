@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Student;
 
 use App\Models\Course;
-use App\Models\StudentAttendance;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

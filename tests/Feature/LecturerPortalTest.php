@@ -8,7 +8,6 @@ use App\Models\Lecturer;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\StudentAttendance;
-use App\Models\StudentGrade;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
