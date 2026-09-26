@@ -1,11 +1,13 @@
 import { Head, Link } from '@inertiajs/react';
 import {
+    ArrowRight,
     Award,
     BookOpen,
     Calendar,
     CheckCircle2,
     CreditCard,
     GraduationCap,
+    Sparkles,
     TrendingUp,
     Wallet,
 } from 'lucide-react';
@@ -75,38 +77,56 @@ export default function StudentDashboard({
         <>
             <Head title="Student Dashboard" />
 
-            <div className="flex flex-col gap-6 p-4 md:p-6">
-                {/* Welcome Banner */}
-                <div className="flex flex-col gap-2 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border border-primary/20">
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                            <span className="text-xs font-semibold tracking-wider text-primary uppercase">
-                                Student Portal
-                            </span>
-                            <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-                                Welcome, {student.user?.name ?? 'Student'}
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 p-4 sm:p-6 lg:p-8">
+                <section className="relative overflow-hidden rounded-3xl bg-[#132a55] px-6 py-7 text-primary-foreground shadow-xl shadow-primary/15 sm:px-8 sm:py-9">
+                    <div className="absolute -top-24 -right-16 size-64 rounded-full bg-white/10" />
+                    <div className="absolute right-32 -bottom-20 size-48 rounded-full border-[24px] border-cyan-300/15" />
+                    <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="max-w-2xl">
+                            <div className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-cyan-200 uppercase">
+                                <Sparkles className="size-4" />
+                                Your learning space
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                                Good to see you,{' '}
+                                {student.user?.name ?? 'Student'}.
                             </h1>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                {student.matric_no} &bull;{' '}
-                                {student.program?.name ?? 'Program'} &bull; Semester{' '}
-                                {student.current_semester}
+                            <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">
+                                {student.program?.name ?? 'Your programme'}{' '}
+                                <span className="mx-1.5 text-cyan-300">•</span>{' '}
+                                Semester {student.current_semester}{' '}
+                                <span className="mx-1.5 text-cyan-300">•</span>{' '}
+                                {student.matric_no}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <Button asChild size="sm">
+                            <Button
+                                asChild
+                                size="sm"
+                                className="bg-white text-primary shadow-none hover:bg-slate-100"
+                            >
                                 <Link href="/student/courses">
                                     <BookOpen className="mr-2 h-4 w-4" />
                                     My Courses
                                 </Link>
                             </Button>
-                            <Button asChild variant="outline" size="sm">
+                            <Button
+                                asChild
+                                variant="outline"
+                                size="sm"
+                                className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                            >
                                 <Link href="/student/grades">
                                     <GraduationCap className="mr-2 h-4 w-4" />
                                     View Grades
                                 </Link>
                             </Button>
                             {stats.fee_status !== 'paid' && (
-                                <Button asChild variant="secondary" size="sm">
+                                <Button
+                                    asChild
+                                    size="sm"
+                                    className="bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+                                >
                                     <Link href="/student/fees">
                                         <Wallet className="mr-2 h-4 w-4" />
                                         Pay Fees
@@ -115,67 +135,84 @@ export default function StudentDashboard({
                             )}
                         </div>
                     </div>
-                </div>
+                </section>
 
-                {/* KPI Stats */}
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">CGPA</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-primary" />
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+                    <Card className="border-0 bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-card dark:ring-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 sm:p-5 sm:pb-2">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                CGPA
+                            </CardTitle>
+                            <span className="rounded-xl bg-primary/10 p-2 text-primary">
+                                <TrendingUp className="size-4" />
+                            </span>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
+                        <CardContent className="p-4 pt-1 sm:p-5 sm:pt-1">
+                            <div className="text-2xl font-bold tracking-tight sm:text-3xl">
                                 {stats.gpa ? Number(stats.gpa).toFixed(2) : '—'}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 Cumulative GPA
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Credits Earned</CardTitle>
-                            <Award className="h-4 w-4 text-emerald-600" />
+                    <Card className="border-0 bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-card dark:ring-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 sm:p-5 sm:pb-2">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Credits
+                            </CardTitle>
+                            <span className="rounded-xl bg-emerald-500/10 p-2 text-emerald-600">
+                                <Award className="size-4" />
+                            </span>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.passed_credits}</div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                        <CardContent className="p-4 pt-1 sm:p-5 sm:pt-1">
+                            <div className="text-2xl font-bold tracking-tight sm:text-3xl">
+                                {stats.passed_credits}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 of {stats.total_credits} attempted
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Attendance</CardTitle>
-                            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                    <Card className="border-0 bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-card dark:ring-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 sm:p-5 sm:pb-2">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Attendance
+                            </CardTitle>
+                            <span className="rounded-xl bg-sky-500/10 p-2 text-sky-600">
+                                <CheckCircle2 className="size-4" />
+                            </span>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
+                        <CardContent className="p-4 pt-1 sm:p-5 sm:pt-1">
+                            <div className="text-2xl font-bold tracking-tight sm:text-3xl">
                                 {stats.attendance_rate !== null
                                     ? `${stats.attendance_rate}%`
                                     : '—'}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 Overall attendance rate
                             </p>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Fee Balance</CardTitle>
-                            <CreditCard className="h-4 w-4 text-amber-600" />
+                    <Card className="border-0 bg-white shadow-sm ring-1 ring-slate-200/70 dark:bg-card dark:ring-border">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2 sm:p-5 sm:pb-2">
+                            <CardTitle className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Fee balance
+                            </CardTitle>
+                            <span className="rounded-xl bg-amber-500/10 p-2 text-amber-600">
+                                <CreditCard className="size-4" />
+                            </span>
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
+                        <CardContent className="p-4 pt-1 sm:p-5 sm:pt-1">
+                            <div className="text-2xl font-bold tracking-tight sm:text-3xl">
                                 {stats.outstanding_balance > 0
                                     ? `$${Number(stats.outstanding_balance).toLocaleString()}`
                                     : 'Paid'}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="mt-1 text-xs text-muted-foreground">
                                 <Badge
                                     variant={feeStatusVariant(stats.fee_status)}
                                     className="text-[10px] capitalize"
@@ -187,10 +224,8 @@ export default function StudentDashboard({
                     </Card>
                 </div>
 
-                {/* Enrolled Courses & Recent Grades */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    {/* Current Semester Courses */}
-                    <div className="lg:col-span-2 space-y-4">
+                    <div className="space-y-4 lg:col-span-2">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h2 className="text-lg font-semibold tracking-tight">
@@ -201,50 +236,77 @@ export default function StudentDashboard({
                                     {student.program?.name}
                                 </p>
                             </div>
-                            <Button asChild variant="ghost" size="sm">
-                                <Link href="/student/courses">All Courses &rarr;</Link>
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-xl"
+                            >
+                                <Link href="/student/courses">
+                                    All courses{' '}
+                                    <ArrowRight className="ml-1 size-4" />
+                                </Link>
                             </Button>
                         </div>
 
                         {courses.length === 0 ? (
                             <Card>
                                 <CardContent className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
-                                    <BookOpen className="h-10 w-10 stroke-1 mb-2 text-muted-foreground/60" />
-                                    <p className="text-sm font-medium">No courses found for this semester</p>
-                                    <p className="text-xs">Contact the registrar if you believe this is incorrect.</p>
+                                    <BookOpen className="mb-2 h-10 w-10 stroke-1 text-muted-foreground/60" />
+                                    <p className="text-sm font-medium">
+                                        No courses found for this semester
+                                    </p>
+                                    <p className="text-xs">
+                                        Contact the registrar if you believe
+                                        this is incorrect.
+                                    </p>
                                 </CardContent>
                             </Card>
                         ) : (
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {courses.map((course) => (
-                                    <Card key={course.id} className="hover:border-primary/50 transition-colors">
+                                    <Card
+                                        key={course.id}
+                                        className="group border-slate-200/80 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md dark:border-border"
+                                    >
                                         <CardHeader className="pb-2">
                                             <div className="flex items-start justify-between gap-2">
-                                                <Badge variant="outline" className="font-mono text-xs">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="font-mono text-xs"
+                                                >
                                                     {course.code}
                                                 </Badge>
                                                 <span className="text-xs text-muted-foreground">
                                                     {course.credit_hours} cr
                                                 </span>
                                             </div>
-                                            <CardTitle className="text-sm line-clamp-1 mt-1">
+                                            <CardTitle className="mt-1 line-clamp-1 text-sm">
                                                 {course.name}
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="pt-0 text-xs text-muted-foreground space-y-1">
+                                        <CardContent className="space-y-1 pt-0 text-xs text-muted-foreground">
                                             {course.lecturer_name && (
                                                 <div className="flex items-center gap-1.5">
                                                     <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                                                    <span>{course.lecturer_name}</span>
+                                                    <span>
+                                                        {course.lecturer_name}
+                                                    </span>
                                                 </div>
                                             )}
-                                            {(course.schedule_day || course.schedule_time) && (
+                                            {(course.schedule_day ||
+                                                course.schedule_time) && (
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar className="h-3.5 w-3.5 text-primary" />
                                                     <span>
-                                                        {course.schedule_day ?? 'TBA'} &bull;{' '}
-                                                        {course.schedule_time ?? 'TBA'}
-                                                        {course.room ? ` · ${course.room}` : ''}
+                                                        {course.schedule_day ??
+                                                            'TBA'}{' '}
+                                                        &bull;{' '}
+                                                        {course.schedule_time ??
+                                                            'TBA'}
+                                                        {course.room
+                                                            ? ` · ${course.room}`
+                                                            : ''}
                                                     </span>
                                                 </div>
                                             )}
@@ -255,11 +317,9 @@ export default function StudentDashboard({
                         )}
                     </div>
 
-                    {/* Right Column */}
                     <div className="space-y-4">
-                        {/* Next Due Invoice */}
                         {next_due_invoice && (
-                            <Card className="border-amber-500/30 bg-amber-50/40 dark:bg-amber-950/10">
+                            <Card className="overflow-hidden border-amber-500/25 bg-amber-50/70 shadow-sm dark:bg-amber-950/10">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm text-amber-700 dark:text-amber-400">
                                         Upcoming Fee Deadline
@@ -268,62 +328,92 @@ export default function StudentDashboard({
                                         {next_due_invoice.title}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="text-xs space-y-1">
+                                <CardContent className="space-y-1 text-xs">
                                     <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Balance</span>
+                                        <span className="text-muted-foreground">
+                                            Balance
+                                        </span>
                                         <span className="font-semibold text-destructive">
-                                            ${Number(next_due_invoice.balance).toLocaleString()}
+                                            $
+                                            {Number(
+                                                next_due_invoice.balance,
+                                            ).toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Due date</span>
+                                        <span className="text-muted-foreground">
+                                            Due date
+                                        </span>
                                         <span className="font-medium">
                                             {next_due_invoice.due_date ?? '—'}
                                         </span>
                                     </div>
-                                    <Button asChild size="sm" className="w-full mt-3">
-                                        <Link href="/student/fees">Pay Now</Link>
+                                    <Button
+                                        asChild
+                                        size="sm"
+                                        className="mt-3 w-full"
+                                    >
+                                        <Link href="/student/fees">
+                                            Pay Now
+                                        </Link>
                                     </Button>
                                 </CardContent>
                             </Card>
                         )}
 
-                        {/* Recent Grades */}
                         <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-semibold">Recent Grades</h3>
-                                <Button asChild variant="ghost" size="sm" className="text-xs h-7">
-                                    <Link href="/student/grades">View All &rarr;</Link>
+                            <div className="mb-2 flex items-center justify-between">
+                                <h3 className="text-sm font-semibold">
+                                    Recent Grades
+                                </h3>
+                                <Button
+                                    asChild
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 rounded-lg text-xs"
+                                >
+                                    <Link href="/student/grades">
+                                        View all{' '}
+                                        <ArrowRight className="ml-1 size-3" />
+                                    </Link>
                                 </Button>
                             </div>
                             <Card>
-                                <CardContent className="p-3 space-y-2">
+                                <CardContent className="space-y-2 p-3">
                                     {recent_grades.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground text-center py-4">
+                                        <p className="py-4 text-center text-xs text-muted-foreground">
                                             No grades recorded yet.
                                         </p>
                                     ) : (
                                         recent_grades.map((grade) => (
                                             <div
                                                 key={grade.id}
-                                                className="flex items-center justify-between text-xs p-2 rounded hover:bg-muted/50"
+                                                className="flex items-center justify-between rounded p-2 text-xs hover:bg-muted/50"
                                             >
                                                 <div className="truncate">
-                                                    <div className="font-medium truncate">
+                                                    <div className="truncate font-medium">
                                                         {grade.course_name}
                                                     </div>
                                                     <div className="text-[10px] text-muted-foreground">
-                                                        {grade.course_code} &bull; Sem {grade.semester}
+                                                        {grade.course_code}{' '}
+                                                        &bull; Sem{' '}
+                                                        {grade.semester}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                                <div className="ml-2 flex shrink-0 items-center gap-1.5">
                                                     <span className="font-bold text-primary">
                                                         {grade.grade ?? '—'}
                                                     </span>
-                                                    {grade.grade_point !== null &&
-                                                        grade.grade_point !== undefined && (
+                                                    {grade.grade_point !==
+                                                        null &&
+                                                        grade.grade_point !==
+                                                            undefined && (
                                                             <span className="text-[10px] text-muted-foreground">
-                                                                ({Number(grade.grade_point).toFixed(1)})
+                                                                (
+                                                                {Number(
+                                                                    grade.grade_point,
+                                                                ).toFixed(1)}
+                                                                )
                                                             </span>
                                                         )}
                                                 </div>

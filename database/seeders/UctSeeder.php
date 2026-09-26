@@ -114,10 +114,11 @@ class UctSeeder extends Seeder
             ],
         );
 
-        Student::query()->firstOrCreate(
-            ['matric_no' => 'UCT2026001'],
+        Student::query()->updateOrCreate(
+            ['user_id' => $studentUser->id],
             [
                 'user_id' => $studentUser->id,
+                'matric_no' => 'UCT-DEMO-0001',
                 'program_id' => $softwareEngineering?->id,
                 'fee_status' => FeeStatus::Unpaid,
                 'enrollment_date' => now()->toDateString(),
@@ -135,10 +136,11 @@ class UctSeeder extends Seeder
             ],
         );
 
-        Student::query()->firstOrCreate(
-            ['matric_no' => 'UCT2026002'],
+        Student::query()->updateOrCreate(
+            ['user_id' => $paidStudentUser->id],
             [
                 'user_id' => $paidStudentUser->id,
+                'matric_no' => 'UCT-DEMO-0002',
                 'program_id' => $softwareEngineering?->id,
                 'fee_status' => FeeStatus::Paid,
                 'enrollment_date' => now()->toDateString(),

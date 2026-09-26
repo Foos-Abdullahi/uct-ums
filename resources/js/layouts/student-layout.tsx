@@ -10,7 +10,12 @@ export default function StudentLayout({
     return (
         <AppShell variant="header">
             <StudentHeader breadcrumbs={breadcrumbs} />
-            <AppContent variant="header">{children}</AppContent>
+            <AppContent
+                variant="header"
+                className="min-h-[calc(100vh-4rem)] max-w-none bg-slate-50/70 dark:bg-background"
+            >
+                {children}
+            </AppContent>
         </AppShell>
     );
 }

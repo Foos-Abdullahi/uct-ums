@@ -52,8 +52,9 @@ class StudentSeeder extends Seeder
         );
 
         $student = Student::query()->updateOrCreate(
-            ['user_id' => $user->id],
+            ['matric_no' => 'UCT2026001'],
             [
+                'user_id' => $user->id,
                 'matric_no' => 'UCT2026001',
                 'program_id' => $seProgram->id,
                 'current_semester' => 4,
@@ -275,8 +276,9 @@ class StudentSeeder extends Seeder
             );
 
             $st = Student::query()->updateOrCreate(
-                ['user_id' => $u->id],
+                ['matric_no' => $s['matric_no']],
                 [
+                    'user_id' => $u->id,
                     'matric_no' => $s['matric_no'],
                     'program_id' => $s['program_id'],
                     'current_semester' => $s['current_semester'],
