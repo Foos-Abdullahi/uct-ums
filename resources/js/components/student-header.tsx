@@ -32,8 +32,7 @@ type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const activeItemStyles =
-    'text-primary bg-primary/5 dark:bg-primary/10 dark:text-primary-foreground';
+const activeItemStyles = 'bg-primary text-primary-foreground shadow-sm';
 
 export function StudentHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
@@ -43,36 +42,46 @@ export function StudentHeader({ breadcrumbs = [] }: Props) {
 
     return (
         <>
-            <div className="border-b border-sidebar-border/80 bg-background">
-                <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
-                    <div className="lg:hidden">
+            <div className="sticky top-0 z-40 border-b border-slate-200/80 bg-background/95 shadow-sm backdrop-blur dark:border-border">
+                <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center px-4 sm:px-6">
+                    <div className="xl:hidden">
                         <Sheet>
                             <SheetTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="mr-2 h-[34px] w-[34px]"
+                                    className="mr-2 size-10 rounded-xl"
                                 >
                                     <Menu className="h-5 w-5" />
                                 </Button>
                             </SheetTrigger>
                             <SheetContent
                                 side="left"
-                                className="flex h-full w-64 flex-col"
+                                className="flex h-full w-72 flex-col"
                             >
                                 <SheetTitle className="sr-only">
                                     Student navigation
                                 </SheetTitle>
-                                <SheetHeader className="text-left">
+                                <SheetHeader className="border-b px-2 pb-5 text-left">
                                     <AppLogo />
                                 </SheetHeader>
-                                <nav className="flex flex-col gap-2 p-4">
+                                <nav className="flex flex-col gap-1 p-4">
                                     {studentNav.map((item) => (
                                         <Link
                                             key={item.title}
                                             href={item.href}
-                                            className="text-sm font-medium"
+                                            className={cn(
+                                                'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors',
+                                                whenCurrentUrl(
+                                                    item.href,
+                                                    activeItemStyles,
+                                                    'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                                ),
+                                            )}
                                         >
+                                            {item.icon && (
+                                                <item.icon className="size-4" />
+                                            )}
                                             {item.title}
                                         </Link>
                                     ))}
@@ -84,12 +93,12 @@ export function StudentHeader({ breadcrumbs = [] }: Props) {
                     <Link
                         href="/student/dashboard"
                         prefetch
-                        className="flex items-center space-x-2"
+                        className="flex items-center gap-2"
                     >
                         <AppLogo />
                     </Link>
 
-                    <div className="ml-6 hidden h-full items-center lg:flex">
+                    <div className="ml-8 hidden h-full items-center xl:flex">
                         <NavigationMenu className="flex h-full items-stretch">
                             <NavigationMenuList className="flex h-full items-stretch space-x-1">
                                 {studentNav.map((item) => (
@@ -105,7 +114,7 @@ export function StudentHeader({ breadcrumbs = [] }: Props) {
                                                     item.href,
                                                     activeItemStyles,
                                                 ),
-                                                'h-9 cursor-pointer px-3',
+                                                'h-10 cursor-pointer rounded-xl px-3 text-sm font-medium transition-all',
                                             )}
                                         >
                                             {item.icon && (
@@ -122,19 +131,27 @@ export function StudentHeader({ breadcrumbs = [] }: Props) {
                         </NavigationMenu>
                     </div>
 
-                    <div className="ml-auto">
+                    <div className="ml-auto flex items-center gap-2">
+                        <div className="hidden text-right sm:block">
+                            <p className="max-w-40 truncate text-sm font-semibold">
+                                {auth.user?.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Student portal
+                            </p>
+                        </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     variant="ghost"
-                                    className="size-10 rounded-full p-1"
+                                    className="size-10 rounded-xl border border-border/70 bg-muted/40 p-1 hover:bg-muted"
                                 >
-                                    <Avatar className="size-8 overflow-hidden rounded-full">
+                                    <Avatar className="size-8 overflow-hidden rounded-lg">
                                         <AvatarImage
                                             src={auth.user?.avatar}
                                             alt={auth.user?.name}
                                         />
-                                        <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
+                                        <AvatarFallback className="rounded-lg bg-primary text-primary-foreground">
                                             {getInitials(auth.user?.name ?? '')}
                                         </AvatarFallback>
                                     </Avatar>
