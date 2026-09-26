@@ -1143,6 +1143,10 @@ const en = {
 
   // Navigation
   nav_platform: 'Platform',
+  nav_admin_portal: 'Admin Portal',
+  nav_lecturer_portal: 'Lecturer Portal',
+  nav_student_portal: 'Student Portal',
+  nav_finance_portal: 'Finance Portal',
   nav_dashboard: 'Dashboard',
   nav_students: 'Students',
   nav_admissions: 'Admissions',

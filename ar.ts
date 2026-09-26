@@ -1145,6 +1145,10 @@ const ar = {
 
   // Navigation
   nav_platform: 'المنصة',
+  nav_admin_portal: 'بوابة الإدارة',
+  nav_lecturer_portal: 'بوابة المحاضرين',
+  nav_student_portal: 'بوابة الطلاب',
+  nav_finance_portal: 'البوابة المالية',
   nav_dashboard: 'لوحة التحكم',
   nav_students: 'الطلاب',
   nav_admissions: 'القبول',

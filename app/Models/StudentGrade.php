@@ -17,6 +17,7 @@ class StudentGrade extends Model
      */
     protected $fillable = [
         'student_id',
+        'course_id',
         'course_code',
         'course_name',
         'semester',
@@ -44,5 +45,13 @@ class StudentGrade extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(Student::class);
+    }
+
+    /**
+     * @return BelongsTo<Course, $this>
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 }
