@@ -1,41 +1,30 @@
-import { usePage } from '@inertiajs/react';
 import React from 'react';
-import type { UserRole } from '@/types/auth';
+import { usePermissions } from '@/hooks/use-permissions';
+import type { PermissionSlug } from '@/types/permissions';
 
-interface PermissionCheckProps {
-    role?: UserRole | UserRole[];
+type PermissionCheckProps = {
+    /** Every listed permission must be granted for the children to render. */
+    permission: PermissionSlug | PermissionSlug[];
     fallback?: React.ReactNode;
     children: React.ReactNode;
-}
+};
 
+/**
+ * Render children only when the signed-in user's role grants the permission.
+ *
+ * The server-side `permission` middleware remains the real enforcement
+ * boundary; this only keeps the UI in step with it.
+ */
 export function PermissionCheck({
-    role,
+    permission,
     fallback = null,
     children,
 }: PermissionCheckProps) {
-    const { auth } = usePage().props as {
-        auth?: { user?: { role?: UserRole } };
-    };
-    const userRole = auth?.user?.role;
+    const { can } = usePermissions();
 
-    if (!userRole) {
-        return <>{fallback}</>;
-    }
+    const permissions = Array.isArray(permission) ? permission : [permission];
 
-    // Super admin has full permissions
-    if (userRole === 'super_admin') {
-        return <>{children}</>;
-    }
-
-    if (role) {
-        const allowedRoles = Array.isArray(role) ? role : [role];
-
-        if (!allowedRoles.includes(userRole)) {
-            return <>{fallback}</>;
-        }
-    }
-
-    return <>{children}</>;
+    return <>{can(...permissions) ? children : fallback}</>;
 }
 
 export default PermissionCheck;

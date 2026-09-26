@@ -1,5 +1,6 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
+import type { PermissionSlug } from '@/types/permissions';
 
 export type BreadcrumbItem = {
     title: string;
@@ -12,4 +13,9 @@ export type NavItem = {
     icon?: LucideIcon | null;
     isActive?: boolean;
     items?: NavItem[];
+    /**
+     * Permission slug required to see this entry. Entries without one are
+     * always visible.
+     */
+    permission?: PermissionSlug;
 };

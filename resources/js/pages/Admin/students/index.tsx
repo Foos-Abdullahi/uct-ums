@@ -10,6 +10,7 @@ import {
     FileSpreadsheet,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -58,6 +59,7 @@ export default function AdminStudentsIndex({
     programs = [],
     filters,
 }: AdminStudentsIndexProps) {
+    const { t } = useTranslation();
     const [selectedStudentForDelete, setSelectedStudentForDelete] =
         useState<Student | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -103,14 +105,14 @@ export default function AdminStudentsIndex({
         router.delete(`/admin/students/${selectedStudentForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    `Student ${selectedStudentForDelete.matric_no} deleted successfully.`,
+                    t('student_deleted_success', { matric_no: selectedStudentForDelete.matric_no }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedStudentForDelete(null);
                 setDeleteProcessing(false);
             },
             onError: () => {
-                toast.error('Failed to delete student.');
+                toast.error(t('failed_delete_student'));
                 setDeleteProcessing(false);
             },
         });
@@ -130,12 +132,12 @@ export default function AdminStudentsIndex({
                 onSuccess: () => {
                     const next =
                         student.enrollment_status === 'suspended'
-                            ? 'activated'
-                            : 'suspended';
-                    toast.success(`Student account ${next}.`);
+                            ? t('student_account_activated')
+                            : t('student_account_suspended');
+                    toast.success(next);
                 },
                 onError: () =>
-                    toast.error('Failed to update student account status.'),
+                    toast.error(t('failed_update_status')),
             },
         );
     };
@@ -149,33 +151,33 @@ export default function AdminStudentsIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'enrollment_status',
-            title: 'Status',
+            title: t('status'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Enrolled', value: 'enrolled' },
-                { label: 'Pending', value: 'pending' },
-                { label: 'Suspended', value: 'suspended' },
-                { label: 'Graduated', value: 'graduated' },
-                { label: 'Withdrawn', value: 'withdrawn' },
+                { label: t('all_statuses'), value: 'all' },
+                { label: t('enrolled_status'), value: 'enrolled' },
+                { label: t('pending_status'), value: 'pending' },
+                { label: t('suspended_label'), value: 'suspended' },
+                { label: t('graduated_label'), value: 'graduated' },
+                { label: t('withdrawn'), value: 'withdrawn' },
             ],
             value: filters.enrollment_status || undefined,
         },
         {
             key: 'fee_status',
-            title: 'Fee Status',
+            title: t('fee_status'),
             options: [
-                { label: 'All Fees', value: 'all' },
-                { label: 'Paid', value: 'paid' },
-                { label: 'Unpaid', value: 'unpaid' },
-                { label: 'Partial', value: 'partial' },
+                { label: t('all_fees'), value: 'all' },
+                { label: t('paid'), value: 'paid' },
+                { label: t('unpaid'), value: 'unpaid' },
+                { label: t('partial'), value: 'partial' },
             ],
             value: filters.fee_status || undefined,
         },
         {
             key: 'program_id',
-            title: 'Program',
+            title: t('program'),
             options: [
-                { label: 'All Programs', value: 'all' },
+                { label: t('all_programs'), value: 'all' },
                 ...programs.map((p) => ({
                     label: p.name,
                     value: String(p.id),
@@ -185,11 +187,11 @@ export default function AdminStudentsIndex({
         },
         {
             key: 'semester',
-            title: 'Semester',
+            title: t('semester_label'),
             options: [
-                { label: 'All Semesters', value: 'all' },
+                { label: t('all_semesters'), value: 'all' },
                 ...[1, 2, 3, 4, 5, 6, 7, 8].map((s) => ({
-                    label: `Semester ${s}`,
+                    label: `${t('semester_label')} ${s}`,
                     value: String(s),
                 })),
             ],
@@ -197,11 +199,11 @@ export default function AdminStudentsIndex({
         },
         {
             key: 'gender',
-            title: 'Gender',
+            title: t('gender'),
             options: [
-                { label: 'All Genders', value: 'all' },
-                { label: 'Male', value: 'Male' },
-                { label: 'Female', value: 'Female' },
+                { label: t('all_genders'), value: 'all' },
+                { label: t('male'), value: 'Male' },
+                { label: t('female'), value: 'Female' },
             ],
             value: filters.gender || undefined,
         },
@@ -209,18 +211,17 @@ export default function AdminStudentsIndex({
 
     return (
         <>
-            <Head title="Students Management" />
+            <Head title={t('students_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Students Management
+                            {t('students_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage and monitor all enrolled student records,
-                            academic performance, and fee status.
+                            {t('students_description')}
                         </p>
                     </div>
 
@@ -231,18 +232,18 @@ export default function AdminStudentsIndex({
                             onClick={() => setImportDialogOpen(true)}
                         >
                             <FileSpreadsheet className="mr-1.5 h-4 w-4" />
-                            Import Students
+                            {t('import_students')}
                         </Button>
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/admissions">
                                 <UserPlus className="mr-1.5 h-4 w-4" />
-                                Admissions
+                                {t('admissions_queue')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/students/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
-                                Create Student
+                                {t('create_student')}
                             </Link>
                         </Button>
                     </div>
@@ -253,31 +254,31 @@ export default function AdminStudentsIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Students"
+                                title={t('total_students')}
                                 value={stats.total_students}
                                 icon={Users}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active Enrolled"
+                                title={t('active_enrolled')}
                                 value={stats.active_students}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Pending Enrollment"
+                                title={t('pending_enrollment')}
                                 value={stats.pending_students}
                                 icon={Clock}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Suspended"
+                                title={t('suspended_status')}
                                 value={stats.suspended_students}
                                 icon={Ban}
                                 color="destructive"
                             />
                             <MetricCard
-                                title="Graduated"
+                                title={t('graduated_status')}
                                 value={stats.graduated_students}
                                 icon={GraduationCap}
                                 color="info"
@@ -291,8 +292,8 @@ export default function AdminStudentsIndex({
                     {students && (
                         <div className="animate-in duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                             <DataTable
-                                title="Students List"
-                                searchTitle="Search by name, email, matric no, phone..."
+                                title={t('students_list')}
+                                searchTitle={t('search_students')}
                                 columns={columns}
                                 data={students.data}
                                 pagination={{
@@ -340,8 +341,8 @@ export default function AdminStudentsIndex({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Student Record"
-                    description="Are you sure you want to delete this student? Their user account will be deactivated."
+                    title={t('delete_student_record')}
+                    description={t('delete_student_description')}
                     itemName={
                         selectedStudentForDelete
                             ? `${selectedStudentForDelete.user?.name} (${selectedStudentForDelete.matric_no})`
@@ -362,6 +363,7 @@ export default function AdminStudentsIndex({
                 <ImportStudentsDialog
                     open={importDialogOpen}
                     onOpenChange={setImportDialogOpen}
+                    programs={programs}
                     onImported={() => {
                         router.reload({ only: ['students', 'stats'] });
                     }}

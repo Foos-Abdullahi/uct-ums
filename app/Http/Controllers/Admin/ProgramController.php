@@ -8,6 +8,7 @@ use App\Models\Program;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -83,17 +84,7 @@ class ProgramController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', 'unique:programs,code'],
-            'degree_level' => ['required', 'string', 'in:bachelor,master,doctorate,diploma,certificate'],
-            'duration_semesters' => ['required', 'integer', 'min:1', 'max:16'],
-            'total_credits' => ['required', 'integer', 'min:1', 'max:300'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'faculty' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:active,inactive,archived'],
-            'description' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validate($this->rules($request));
 
         $program = Program::create([
             ...$validated,
@@ -102,6 +93,48 @@ class ProgramController extends Controller
 
         return redirect()->route('admin.programs.show', $program)
             ->with('success', 'Academic program created successfully.');
+    }
+
+    /**
+     * Validation rules for a program, with duration bounds that follow the
+     * unit implied by the degree level.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    protected function rules(Request $request): array
+    {
+        $isProgram = $request->route('program') instanceof Program;
+
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('programs', 'code')->ignore($isProgram ? $request->route('program') : null),
+            ],
+            'degree_level' => ['required', 'string', 'in:bachelor,master,doctorate,diploma,certificate'],
+            'duration_semesters' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:'.$this->durationCeiling($request->input('degree_level')),
+            ],
+            'total_credits' => ['required', 'integer', 'min:1', 'max:300'],
+            'department' => ['nullable', 'string', 'max:255'],
+            'faculty' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'in:active,inactive,archived'],
+            'description' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    /**
+     * Largest accepted duration. Certificates are short programmes measured in
+     * months; every other level is measured in semesters.
+     */
+    protected function durationCeiling(?string $degreeLevel): int
+    {
+        return $degreeLevel === 'certificate' ? 72 : 16;
     }
 
     /**
@@ -144,17 +177,7 @@ class ProgramController extends Controller
      */
     public function update(Request $request, Program $program): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', 'unique:programs,code,'.$program->id],
-            'degree_level' => ['required', 'string', 'in:bachelor,master,doctorate,diploma,certificate'],
-            'duration_semesters' => ['required', 'integer', 'min:1', 'max:16'],
-            'total_credits' => ['required', 'integer', 'min:1', 'max:300'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'faculty' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:active,inactive,archived'],
-            'description' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validate($this->rules($request));
 
         $program->update($validated);
 

@@ -2,6 +2,7 @@ import { Deferred, Head, Link, router } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Award, GraduationCap, TrendingUp, Eye, FileText } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -69,6 +70,8 @@ export default function AdminTranscriptsIndex({
     programs = [],
     filters,
 }: AdminTranscriptsIndexProps) {
+    const { t } = useTranslation();
+
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
             ...filters,
@@ -136,7 +139,7 @@ export default function AdminTranscriptsIndex({
         },
         {
             accessorKey: 'gpa',
-            header: 'Cumulative GPA',
+            header: t('cumulative_gpa'),
             cell: ({ row }) => {
                 const gpa = Number(row.original.gpa ?? 0);
                 let badgeStyle = 'bg-red-500/10 text-red-700 border-red-200';
@@ -160,27 +163,27 @@ export default function AdminTranscriptsIndex({
         },
         {
             accessorKey: 'grades_count',
-            header: 'Grades Logged',
+            header: t('grades_count_label'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>{row.original.grades_count ?? 0} grades</span>
+                    <span>{row.original.grades_count ?? 0} {t('grades_count_label')}</span>
                 </div>
             ),
         },
         {
             accessorKey: 'certificates_count',
-            header: 'Certificates',
+            header: t('certificates_count_label'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1 text-xs font-medium text-foreground">
                     <Award className="h-3.5 w-3.5 text-primary" />
-                    <span>{row.original.certificates_count ?? 0} issued</span>
+                    <span>{row.original.certificates_count ?? 0} {t('issued')}</span>
                 </div>
             ),
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end">
                     <Button
@@ -191,7 +194,7 @@ export default function AdminTranscriptsIndex({
                     >
                         <Link href={`/admin/students/${row.original.id}`}>
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            Academic Record
+                            {t('student_record')}
                         </Link>
                     </Button>
                 </div>
@@ -202,9 +205,9 @@ export default function AdminTranscriptsIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'program_id',
-            title: 'Program',
+            title: t('program'),
             options: [
-                { label: 'All Programs', value: 'all' },
+                { label: t('all_programs'), value: 'all' },
                 ...programs.map((p) => ({
                     label: p.name,
                     value: String(p.id),
@@ -216,19 +219,17 @@ export default function AdminTranscriptsIndex({
 
     return (
         <>
-            <Head title="Academic Transcripts & Grades" />
+            <Head title={t('transcripts_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Official Academic Transcripts
+                            {t('transcripts_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Verify cumulative GPAs, awarded course grades,
-                            semester credits, and official academic
-                            certificates.
+                            {t('transcripts_description')}
                         </p>
                     </div>
 
@@ -236,7 +237,7 @@ export default function AdminTranscriptsIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/students">
                                 <GraduationCap className="mr-1.5 h-4 w-4" />
-                                All Students
+                                {t('all_students')}
                             </Link>
                         </Button>
                     </div>
@@ -247,13 +248,13 @@ export default function AdminTranscriptsIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
-                                title="Enrolled Students"
+                                title={t('total_students_transcripts')}
                                 value={stats.total_students}
                                 icon={GraduationCap}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Institution Avg GPA"
+                                title={t('avg_institution_gpa')}
                                 value={
                                     stats.avg_institution_gpa
                                         ? `${stats.avg_institution_gpa.toFixed(2)}`
@@ -263,13 +264,13 @@ export default function AdminTranscriptsIndex({
                                 color="success"
                             />
                             <MetricCard
-                                title="Grades Logged"
+                                title={t('total_grades_recorded')}
                                 value={stats.total_grades_recorded}
                                 icon={FileText}
                                 color="info"
                             />
                             <MetricCard
-                                title="Certificates Issued"
+                                title={t('certificates_issued')}
                                 value={stats.certificates_issued}
                                 icon={Award}
                                 color="accent"
@@ -283,8 +284,8 @@ export default function AdminTranscriptsIndex({
                     {transcripts && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Transcripts Directory"
-                                searchTitle="Search by student name, matric no, email..."
+                                title={t('transcripts_list')}
+                                searchTitle={t('search_transcripts')}
                                 columns={columns}
                                 data={transcripts.data}
                                 pagination={{

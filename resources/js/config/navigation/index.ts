@@ -18,138 +18,174 @@ import {
 import type { NavItem } from '@/types';
 
 export const adminNav: NavItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutGrid },
+    { title: 'nav_dashboard', href: '/admin/dashboard', icon: LayoutGrid },
     {
-        title: 'Students',
+        title: 'nav_students',
         icon: Users,
         items: [
-            { title: 'Students', href: '/admin/students', icon: Users },
-            { title: 'Admissions', href: '/admin/admissions', icon: UserPlus },
+            {
+                title: 'nav_students',
+                href: '/admin/students',
+                icon: Users,
+                permission: 'students.view',
+            },
+            {
+                title: 'nav_admissions',
+                href: '/admin/admissions',
+                icon: UserPlus,
+                permission: 'admissions.view',
+            },
         ],
     },
     {
-        title: 'Lecturers',
+        title: 'nav_lecturers',
         icon: GraduationCap,
         items: [
             {
-                title: 'Lecturers',
+                title: 'nav_lecturers',
                 href: '/admin/lecturers',
                 icon: GraduationCap,
+                permission: 'lecturers.view',
             },
             {
-                title: 'Assignments',
+                title: 'nav_assignments',
                 href: '/admin/assignments',
                 icon: ClipboardList,
+                permission: 'lecturers.assign',
             },
         ],
     },
 
     {
-        title: 'Academic',
+        title: 'nav_academic',
         icon: BookOpen,
         items: [
-            { title: 'Programs', href: '/admin/programs', icon: BookOpen },
-            { title: 'Courses', href: '/admin/courses', icon: BookOpen },
-            { title: 'Semesters', href: '/admin/semesters', icon: Calendar },
-            { title: 'Enrollments', href: '/admin/enrollments', icon: Users },
             {
-                title: 'Transcripts',
+                title: 'nav_programs',
+                href: '/admin/programs',
+                icon: BookOpen,
+                permission: 'academics.programs',
+            },
+            {
+                title: 'nav_courses',
+                href: '/admin/courses',
+                icon: BookOpen,
+                permission: 'academics.courses',
+            },
+            {
+                title: 'nav_semesters',
+                href: '/admin/semesters',
+                icon: Calendar,
+                permission: 'academics.semesters',
+            },
+            {
+                title: 'nav_enrollments',
+                href: '/admin/enrollments',
+                icon: Users,
+                permission: 'academics.enrollments',
+            },
+            {
+                title: 'nav_transcripts',
                 href: '/admin/transcripts',
                 icon: ScrollText,
+                permission: 'academics.transcripts',
             },
         ],
     },
 
     {
-        title: 'Finance',
+        title: 'nav_finance',
         icon: Wallet,
         items: [
-            { title: 'Overview', href: '/admin/finance', icon: Wallet },
-            { title: 'Fees', href: '/admin/finance/fees', icon: Receipt },
             {
-                title: 'Payments',
+                title: 'nav_finance_overview',
+                href: '/admin/finance',
+                icon: Wallet,
+                permission: 'finance.view',
+            },
+            {
+                title: 'nav_fees',
+                href: '/admin/finance/fees',
+                icon: Receipt,
+                permission: 'finance.view',
+            },
+            {
+                title: 'nav_payments',
                 href: '/admin/finance/payments',
                 icon: CreditCard,
+                permission: 'finance.view',
             },
             {
-                title: 'Invoices',
+                title: 'nav_invoices',
                 href: '/admin/finance/invoices',
                 icon: FileText,
+                permission: 'finance.view',
             },
             {
-                title: 'Expenses',
+                title: 'nav_expenses',
                 href: '/admin/expenses',
                 icon: Receipt,
+                permission: 'finance.expenses.view',
             },
             {
-                title: 'Chart of Accounts',
+                title: 'nav_chart_of_accounts',
                 href: '/admin/finance/chart-of-accounts',
                 icon: BookOpen,
+                permission: 'finance.accounts.view',
             },
         ],
     },
-    { title: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    { title: 'nav_reports', href: '/admin/reports', icon: BarChart3, permission: 'reports.view' },
     {
-        title: 'Settings',
+        title: 'nav_settings',
         icon: Settings,
         items: [
             {
-                title: 'General Settings',
+                title: 'nav_general_settings',
                 href: '/admin/settings/system',
                 icon: Settings,
+                permission: 'settings.system',
             },
             {
-                title: 'User Management',
+                title: 'nav_user_management',
                 href: '/admin/settings/users',
                 icon: Users,
+                permission: 'settings.users',
             },
             {
-                title: 'Roles & Permissions',
+                title: 'nav_roles_permissions',
                 href: '/admin/settings/roles',
                 icon: Shield,
+                permission: 'settings.roles',
             },
             {
-                title: 'Audit Log',
+                title: 'nav_audit_log',
                 href: '/admin/settings/audit-log',
                 icon: ScrollText,
+                permission: 'settings.audit_logs',
             },
         ],
     },
-];
-
-export const financeNav: NavItem[] = [
-    { title: 'Dashboard', href: '/finance/dashboard', icon: LayoutGrid },
-    {
-        title: 'Expenses',
-        icon: Wallet,
-        items: [
-            { title: 'All Expenses', href: '/finance/expenses', icon: Receipt },
-            { title: 'Approvals', href: '/finance/approvals', icon: Shield },
-        ],
-    },
-    { title: 'Invoices', href: '/finance/invoices', icon: FileText },
-    { title: 'Payments', href: '/finance/payments', icon: CreditCard },
-    { title: 'Reports', href: '/finance/reports', icon: BarChart3 },
 ];
 
 export const lecturerNav: NavItem[] = [
-    { title: 'Dashboard', href: '/lecturer/dashboard', icon: LayoutGrid },
-    { title: 'My Courses', href: '/lecturer/courses', icon: BookOpen },
-    { title: 'Students', href: '/lecturer/students', icon: Users },
-    { title: 'Attendance', href: '/lecturer/attendance', icon: ClipboardList },
-    { title: 'Gradebook', href: '/lecturer/gradebook', icon: GraduationCap },
-    { title: 'Materials', href: '/lecturer/materials', icon: FileText },
+    { title: 'nav_dashboard', href: '/lecturer/dashboard', icon: LayoutGrid },
+    { title: 'nav_my_courses', href: '/lecturer/courses', icon: BookOpen },
+    { title: 'nav_students', href: '/lecturer/students', icon: Users },
+    { title: 'nav_attendance', href: '/lecturer/attendance', icon: ClipboardList },
+    { title: 'nav_gradebook', href: '/lecturer/gradebook', icon: GraduationCap },
+    { title: 'nav_materials', href: '/lecturer/materials', icon: FileText },
 ];
 
 export const studentNav: NavItem[] = [
-    { title: 'Dashboard', href: '/student/dashboard', icon: LayoutGrid },
-    { title: 'My Courses', href: '/student/courses', icon: BookOpen },
-    { title: 'Grades', href: '/student/grades', icon: GraduationCap },
-    { title: 'Attendance', href: '/student/attendance', icon: ClipboardList },
-    { title: 'Fees', href: '/student/fees', icon: CreditCard },
-    { title: 'Documents', href: '/student/documents', icon: FileText },
+    { title: 'nav_dashboard', href: '/student/dashboard', icon: LayoutGrid },
+    { title: 'nav_my_courses', href: '/student/courses', icon: BookOpen },
+    { title: 'nav_grades', href: '/student/grades', icon: GraduationCap },
+    { title: 'nav_attendance', href: '/student/attendance', icon: ClipboardList },
+    { title: 'nav_fees', href: '/student/fees', icon: CreditCard },
+    { title: 'nav_documents', href: '/student/documents', icon: FileText },
     {
-        title: 'Certificates',
+        title: 'nav_certificates',
         href: '/student/certificates',
         icon: ScrollText,
     },

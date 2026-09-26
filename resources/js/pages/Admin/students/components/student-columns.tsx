@@ -89,6 +89,19 @@ export function getStudentColumns({
             },
         },
         {
+            accessorKey: 'academic_year',
+            header: 'Year',
+            cell: ({ row }) => {
+                const year = row.original.academic_year;
+
+                return (
+                    <span className="text-xs font-medium text-foreground">
+                        {year ?? '-'}
+                    </span>
+                );
+            },
+        },
+        {
             accessorKey: 'current_semester',
             header: 'Semester',
             cell: ({ row }) => {

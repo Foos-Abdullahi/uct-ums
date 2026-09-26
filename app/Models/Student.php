@@ -24,6 +24,7 @@ class Student extends Model
         'user_id',
         'matric_no',
         'program_id',
+        'academic_year',
         'current_semester',
         'phone',
         'gender',

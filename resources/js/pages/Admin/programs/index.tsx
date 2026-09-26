@@ -11,6 +11,7 @@ import {
     CheckCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -20,6 +21,8 @@ import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { TableSkeleton } from '@/components/tools/table-skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
+import { durationUnit } from '@/lib/programs';
 import type { BreadcrumbItem } from '@/types';
 
 export interface ProgramItem {
@@ -70,7 +73,6 @@ interface AdminProgramsIndexProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
     { title: 'Academic Programs', href: '/admin/programs' },
 ];
 
@@ -80,6 +82,8 @@ export default function AdminProgramsIndex({
     faculties = [],
     filters,
 }: AdminProgramsIndexProps) {
+    const { t } = useTranslation();
+
     const [selectedForDelete, setSelectedForDelete] =
         useState<ProgramItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -113,13 +117,13 @@ export default function AdminProgramsIndex({
 
         router.delete(`/admin/programs/${selectedForDelete.id}`, {
             onSuccess: () => {
-                toast.success(`Program ${selectedForDelete.name} deleted.`);
+                toast.success(t('program_deleted', { name: selectedForDelete.name }));
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
                 setDeleteProcessing(false);
             },
             onError: () => {
-                toast.error('Failed to delete academic program.');
+                toast.error(t('failed_delete_program'));
                 setDeleteProcessing(false);
             },
         });
@@ -128,7 +132,7 @@ export default function AdminProgramsIndex({
     const columns: ColumnDef<ProgramItem>[] = [
         {
             accessorKey: 'code',
-            header: 'Code',
+            header: t('code'),
             cell: ({ row }) => (
                 <Badge
                     variant="outline"
@@ -140,7 +144,7 @@ export default function AdminProgramsIndex({
         },
         {
             accessorKey: 'name',
-            header: 'Program Name',
+            header: t('program_name_label'),
             cell: ({ row }) => (
                 <div className="max-w-[280px]">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -149,14 +153,14 @@ export default function AdminProgramsIndex({
                     <p className="truncate text-xs text-muted-foreground">
                         {row.original.department ||
                             row.original.faculty ||
-                            'General Department'}
+                            t('department')}
                     </p>
                 </div>
             ),
         },
         {
             accessorKey: 'faculty',
-            header: 'Faculty',
+            header: t('faculty_label'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
                     {row.original.faculty || '—'}
@@ -165,7 +169,7 @@ export default function AdminProgramsIndex({
         },
         {
             accessorKey: 'degree_level',
-            header: 'Degree Level',
+            header: t('degree_level'),
             cell: ({ row }) => (
                 <Badge variant="secondary" className="text-[11px] capitalize">
                     {row.original.degree_level}
@@ -174,17 +178,18 @@ export default function AdminProgramsIndex({
         },
         {
             accessorKey: 'duration_semesters',
-            header: 'Duration',
+            header: t('program_duration'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
-                    {row.original.duration_semesters} Semesters (
-                    {row.original.total_credits} Credits)
+                    {row.original.duration_semesters}{' '}
+                    {durationUnit(row.original.degree_level)} (
+                    {row.original.total_credits} {t('credit_hours')})
                 </span>
             ),
         },
         {
             accessorKey: 'students_count',
-            header: 'Students',
+            header: t('students_count'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
                     <Users className="h-3.5 w-3.5 text-muted-foreground" />
@@ -194,7 +199,7 @@ export default function AdminProgramsIndex({
         },
         {
             accessorKey: 'courses_count',
-            header: 'Courses',
+            header: t('courses'),
             cell: ({ row }) => (
                 <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
                     <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
@@ -204,14 +209,14 @@ export default function AdminProgramsIndex({
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('program_status'),
             cell: ({ row }) => {
                 const status = row.original.status;
 
                 if (status === 'active') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                            Active
+                            {t('program_active')}
                         </Badge>
                     );
                 }
@@ -222,17 +227,17 @@ export default function AdminProgramsIndex({
                             variant="outline"
                             className="text-muted-foreground"
                         >
-                            Inactive
+                            {t('program_inactive')}
                         </Badge>
                     );
                 }
 
-                return <Badge variant="destructive">Archived</Badge>;
+                return <Badge variant="destructive">{t('archived')}</Badge>;
             },
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     <Button
@@ -243,7 +248,7 @@ export default function AdminProgramsIndex({
                     >
                         <Link href={`/admin/programs/${row.original.id}`}>
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            View
+                            {t('view')}
                         </Link>
                     </Button>
                     <Button
@@ -266,33 +271,33 @@ export default function AdminProgramsIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('program_status'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Active', value: 'active' },
-                { label: 'Inactive', value: 'inactive' },
-                { label: 'Archived', value: 'archived' },
+                { label: t('all_statuses'), value: 'all' },
+                { label: t('program_active'), value: 'active' },
+                { label: t('program_inactive'), value: 'inactive' },
+                { label: t('archived'), value: 'archived' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'degree_level',
-            title: 'Degree Level',
+            title: t('degree_level'),
             options: [
-                { label: 'All Levels', value: 'all' },
-                { label: 'Bachelor', value: 'bachelor' },
-                { label: 'Master', value: 'master' },
-                { label: 'Doctorate', value: 'doctorate' },
-                { label: 'Diploma', value: 'diploma' },
-                { label: 'Certificate', value: 'certificate' },
+                { label: t('all_degree_levels'), value: 'all' },
+                { label: t('bachelor'), value: 'bachelor' },
+                { label: t('master'), value: 'master' },
+                { label: t('phd'), value: 'doctorate' },
+                { label: t('diploma'), value: 'diploma' },
+                { label: t('certificate'), value: 'certificate' },
             ],
             value: filters.degree_level || undefined,
         },
         {
             key: 'faculty',
-            title: 'Faculty',
+            title: t('faculty_label'),
             options: [
-                { label: 'All Faculties', value: 'all' },
+                { label: t('all_faculties'), value: 'all' },
                 ...faculties.map((f) => ({
                     label: f,
                     value: f,
@@ -304,19 +309,17 @@ export default function AdminProgramsIndex({
 
     return (
         <>
-            <Head title="Academic Programs" />
+            <Head title={t('programs_management')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Academic Programs
+                            {t('programs_management')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Manage undergraduate and postgraduate degree
-                            curricula, faculty departments, and credit
-                            requirements.
+                            {t('programs_description')}
                         </p>
                     </div>
 
@@ -324,13 +327,13 @@ export default function AdminProgramsIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/courses">
                                 <BookOpen className="mr-1.5 h-4 w-4" />
-                                Course Catalog
+                                {t('courses_curriculum')}
                             </Link>
                         </Button>
                         <Button size="sm" asChild>
                             <Link href="/admin/programs/create">
                                 <Plus className="mr-1.5 h-4 w-4" />
-                                New Program
+                                {t('create_program')}
                             </Link>
                         </Button>
                     </div>
@@ -341,31 +344,31 @@ export default function AdminProgramsIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Programs"
+                                title={t('total_programs_stats')}
                                 value={stats.total_programs}
                                 icon={Layers}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active Programs"
+                                title={t('active_programs_stats')}
                                 value={stats.active_programs}
                                 icon={CheckCircle}
                                 color="success"
                             />
                             <MetricCard
-                                title="Total Students"
+                                title={t('total_students_stats')}
                                 value={stats.total_students}
                                 icon={Users}
                                 color="info"
                             />
                             <MetricCard
-                                title="Total Courses"
+                                title={t('total_courses_stats')}
                                 value={stats.total_courses}
                                 icon={BookOpen}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Faculties"
+                                title={t('faculties_count')}
                                 value={stats.faculties_count}
                                 icon={Building}
                                 color="accent"
@@ -379,8 +382,8 @@ export default function AdminProgramsIndex({
                     {programs && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Programs List"
-                                searchTitle="Search by program name, code, department..."
+                                title={t('programs_list')}
+                                searchTitle={t('search_programs')}
                                 columns={columns}
                                 data={programs.data}
                                 pagination={{
@@ -428,8 +431,8 @@ export default function AdminProgramsIndex({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Academic Program"
-                    description="Are you sure you want to delete this program? This action cannot be undone."
+                    title={t('delete_program')}
+                    description={t('delete_program_confirm')}
                     itemName={selectedForDelete?.name}
                     loading={deleteProcessing}
                     onConfirm={confirmDelete}

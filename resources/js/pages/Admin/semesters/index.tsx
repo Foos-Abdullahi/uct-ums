@@ -1,6 +1,7 @@
 import { Deferred, Head, Link, router } from '@inertiajs/react';
 import { Calendar, BookOpen, Users, Layers, ArrowRight } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
@@ -58,6 +59,8 @@ export default function AdminSemestersIndex({
     programs = [],
     filters,
 }: AdminSemestersIndexProps) {
+    const { t } = useTranslation();
+
     const handleProgramChange = (programId: string) => {
         router.get(
             '/admin/semesters',
@@ -68,19 +71,17 @@ export default function AdminSemestersIndex({
 
     return (
         <>
-            <Head title="Semester Curricula & Cohorts" />
+            <Head title={t('semester_curricula_cohorts')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Semester Overview & Cohort Distribution
+                            {t('semester_overview_cohort')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Track the 8-semester standard academic progression,
-                            active courses per semester term, and cohort student
-                            distribution.
+                            {t('semester_description')}
                         </p>
                     </div>
 
@@ -93,7 +94,7 @@ export default function AdminSemestersIndex({
                                 handleProgramChange(e.target.value)
                             }
                         >
-                            <option value="all">All Academic Programs</option>
+                            <option value="all">{t('all_programs_semesters')}</option>
                             {programs.map((p) => (
                                 <option key={p.id} value={String(p.id)}>
                                     {p.name}
@@ -104,7 +105,7 @@ export default function AdminSemestersIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/courses">
                                 <BookOpen className="mr-1.5 h-4 w-4" />
-                                All Courses
+                                {t('courses')}
                             </Link>
                         </Button>
                     </div>
@@ -115,25 +116,25 @@ export default function AdminSemestersIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
-                                title="Standard Terms"
-                                value={`${stats.total_semesters} Semesters`}
+                                title={t('total_semesters_stats')}
+                                value={`${stats.total_semesters} ${t('semester_label_page')}`}
                                 icon={Calendar}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Active Cohorts"
-                                value={`${stats.active_cohorts} Cohorts`}
+                                title={t('active_cohorts_stats')}
+                                value={`${stats.active_cohorts} ${t('active_cohorts_stats')}`}
                                 icon={Layers}
                                 color="info"
                             />
                             <MetricCard
-                                title="Courses Offered"
+                                title={t('total_courses_offered_stats')}
                                 value={stats.total_courses_offered}
                                 icon={BookOpen}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Enrolled Students"
+                                title={t('total_enrolled_students_stats')}
                                 value={stats.total_enrolled_students}
                                 icon={Users}
                                 color="success"
@@ -157,7 +158,7 @@ export default function AdminSemestersIndex({
                                     {sem.level}
                                 </Badge>
                             }
-                            description={`${sem.courses_count} Courses · ${sem.total_credits} Credits`}
+                            description={`${sem.courses_count} ${t('courses_count_label')} · ${sem.total_credits} ${t('total_credits_label')}`}
                             actions={
                                 <Button
                                     variant="ghost"
@@ -178,15 +179,15 @@ export default function AdminSemestersIndex({
                                 <div className="grid grid-cols-2 gap-2 text-xs">
                                     <div className="rounded border border-border/40 bg-muted/40 p-2">
                                         <span className="block text-[10px] font-semibold text-muted-foreground uppercase">
-                                            Students
+                                            {t('students_count_label')}
                                         </span>
                                         <span className="text-sm font-bold text-foreground">
-                                            {sem.students_count} enrolled
+                                            {sem.students_count} {t('enrolled')}
                                         </span>
                                     </div>
                                     <div className="rounded border border-border/40 bg-muted/40 p-2">
                                         <span className="block text-[10px] font-semibold text-muted-foreground uppercase">
-                                            Workload
+                                            {t('workload')}
                                         </span>
                                         <span className="text-sm font-bold text-foreground">
                                             {sem.total_credits} CH
@@ -197,11 +198,11 @@ export default function AdminSemestersIndex({
                                 {/* Courses Preview */}
                                 <div className="space-y-1.5 border-t border-border/40 pt-2">
                                     <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                                        Curriculum Courses
+                                        {t('curriculum_courses')}
                                     </p>
                                     {sem.courses.length === 0 ? (
                                         <p className="text-xs text-muted-foreground italic">
-                                            No courses configured yet.
+                                            {t('no_courses_configured')}
                                         </p>
                                     ) : (
                                         <div className="space-y-1">

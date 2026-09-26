@@ -153,3 +153,28 @@
         display: none;
     }
 }
+
+/*
+ * Number inputs: the stepper arrows are hidden on pointer-precise devices
+ * (desktop, where they are easy to bump by accident) and restored on touch
+ * devices (mobile and tablet), where they are the quickest way to nudge a
+ * value and no hover state is available.
+ */
+.uct-number-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.uct-number-input::-webkit-outer-spin-button,
+.uct-number-input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+@media (pointer: coarse) {
+    .uct-number-input::-webkit-outer-spin-button,
+    .uct-number-input::-webkit-inner-spin-button {
+        -webkit-appearance: auto;
+    }
+}
+

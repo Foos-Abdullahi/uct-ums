@@ -43,6 +43,31 @@ function makeStudentImportFile(array $rows): UploadedFile
     return UploadedFile::fake()->createWithContent('students.xlsx', $content);
 }
 
+/**
+ * Build an in-memory .xlsx file matching the legacy MPU list layout:
+ * title rows on top, then a Number/ID/Full Names header.
+ */
+function makeLegacyStudentImportFile(array $rows, string $fileName = 'legacy_students.xlsx'): UploadedFile
+{
+    $spreadsheet = new Spreadsheet;
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $sheet->setCellValue('A1', 'MPU University');
+    $sheet->setCellValue('B2', 'Department List');
+    $sheet->fromArray([null, 'Number', 'ID', 'Full Names'], null, 'A3');
+
+    foreach ($rows as $index => $row) {
+        $sheet->fromArray([null, $index + 1, $row['id'], $row['name']], null, 'A'.($index + 4));
+    }
+
+    $writer = new Xlsx($spreadsheet);
+    ob_start();
+    $writer->save('php://output');
+    $content = ob_get_clean();
+
+    return UploadedFile::fake()->createWithContent($fileName, $content);
+}
+
 // ─── Import ───────────────────────────────────────────────────────────────────
 
 test('admin can import students from an excel file', function () {
@@ -140,6 +165,159 @@ test('student role users cannot import students', function () {
     $response->assertForbidden();
 });
 
+test('admin can import legacy MPU list files when a program is selected', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create(['name' => 'Bsc Network Engineering']);
+
+    $rows = [
+        ['id' => '10076', 'name' => 'Abdulkadir Mohamed Hassan'],
+        ['id' => '10077', 'name' => 'Omar Ibrahim'],
+    ];
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile($rows),
+        'program' => $program->name,
+    ]);
+
+    $response->assertOk()
+        ->assertJson(['imported' => 2, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '10076',
+        'program_id' => $program->id,
+    ]);
+    $this->assertDatabaseHas('users', ['email' => 'abdulkadir.hassan@uct.edu.so']);
+    $this->assertDatabaseHas('users', ['email' => 'omar.ibrahim@uct.edu.so']);
+});
+
+test('legacy MPU list files require a program selection', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '10076', 'name' => 'Abdulkadir Mohamed Hassan'],
+        ]),
+    ]);
+
+    $response->assertOk()->assertJson([
+        'imported' => 0,
+        'failed' => 0,
+        'errors' => ['This file does not include a Program column. Select a program and try again.'],
+    ]);
+
+    $this->assertDatabaseCount('students', 0);
+});
+
+test('legacy MPU list files with an unknown program are rejected', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '10076', 'name' => 'Abdulkadir Mohamed Hassan'],
+        ]),
+        'program' => 'Unknown Program',
+    ]);
+
+    $response->assertOk()->assertJson([
+        'imported' => 0,
+        'failed' => 0,
+        'errors' => ["Program 'Unknown Program' was not found in the system."],
+    ]);
+
+    $this->assertDatabaseCount('students', 0);
+});
+
+test('import stamps the academic year when provided', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Network Engineering']);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '100320', 'name' => 'Abdulahi Hussein Mohamed'],
+        ]),
+        'program' => 'Bsc Network Engineering',
+        'academic_year' => '2016',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '100320',
+        'academic_year' => '2016',
+    ]);
+});
+
+test('import auto-detects the year from the file name', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Software Engineering']);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile(
+            [['id' => '100115', 'name' => 'Abdiaziiz Ali Nuur']],
+            '2016F-DOSE-Dpartment of Software Engineering_List.xlsx'
+        ),
+        'program' => 'Bsc Software Engineering',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '100115',
+        'academic_year' => '2016',
+    ]);
+});
+
+test('import stamps the enrollment status when provided', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Network Engineering']);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '100907', 'name' => 'Abas Hassan Elmi'],
+        ]),
+        'program' => 'Bsc Network Engineering',
+        'academic_year' => '2026',
+        'enrollment_status' => 'graduated',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('students', [
+        'matric_no' => '100907',
+        'academic_year' => '2026',
+        'enrollment_status' => 'graduated',
+    ]);
+});
+
+test('import suffixes the email when the account already exists', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    Program::factory()->create(['name' => 'Bsc Software Engineering']);
+    User::factory()->create([
+        'name' => 'Abdirahman Mohamed',
+        'email' => 'abdirahman.mohamed@uct.edu.so',
+    ]);
+
+    $response = $this->post(route('admin.students.import'), [
+        'file' => makeLegacyStudentImportFile([
+            ['id' => '100643', 'name' => 'Abdirahman Mohamed'],
+        ]),
+        'program' => 'Bsc Software Engineering',
+    ]);
+
+    $response->assertOk()->assertJson(['imported' => 1, 'failed' => 0, 'errors' => []]);
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'abdirahman.mohamed.100643@uct.edu.so',
+    ]);
+});
+
 // ─── Index ────────────────────────────────────────────────────────────────────
 
 test('admin can view the students index page', function () {
@@ -189,6 +367,7 @@ test('admin can create a new student with auto-generated matric number', functio
         'name' => 'Fatima Ali',
         'email' => 'fatima.ali@example.com',
         'program_id' => $program->id,
+        'academic_year' => '2016',
         'current_semester' => 1,
         'gender' => 'Female',
         'date_of_birth' => '2001-03-10',
@@ -204,7 +383,8 @@ test('admin can create a new student with auto-generated matric number', functio
 
     $student = Student::where('user_id', $user->id)->first();
     expect($student)->not->toBeNull()
-        ->and($student->matric_no)->toStartWith('UCT-');
+        ->and($student->matric_no)->toStartWith('UCT-')
+        ->and($student->academic_year)->toBe('2016');
 });
 
 test('student creation validates required fields', function () {

@@ -15,6 +15,7 @@ import {
     ListChecks,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
@@ -89,23 +90,24 @@ interface AdminFinanceInvoicesProps {
     };
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/admin/dashboard' },
-    { title: 'Finance', href: '/admin/finance' },
-    { title: 'Invoices', href: '/admin/finance/invoices' },
-];
-
 export default function AdminFinanceInvoices({
     stats,
     invoices,
     students = [],
     filters,
 }: AdminFinanceInvoicesProps) {
+    const { t } = useTranslation();
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [selectedForDelete, setSelectedForDelete] =
         useState<InvoiceItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
+        { title: t('breadcrumb_finance'), href: '/admin/finance' },
+        { title: t('breadcrumb_invoices'), href: '/admin/finance/invoices' },
+    ];
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -232,7 +234,7 @@ export default function AdminFinanceInvoices({
     const columns: ColumnDef<InvoiceItem>[] = [
         {
             accessorKey: 'invoice_no',
-            header: 'Invoice No',
+            header: t('invoice_no_invoices'),
             cell: ({ row }) => (
                 <Badge
                     variant="outline"
@@ -244,7 +246,7 @@ export default function AdminFinanceInvoices({
         },
         {
             accessorKey: 'student.user.name',
-            header: 'Student',
+            header: t('student_name_payments'),
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
                     <p className="truncate text-sm font-medium text-foreground">
@@ -258,7 +260,7 @@ export default function AdminFinanceInvoices({
         },
         {
             accessorKey: 'title',
-            header: 'Fee Description',
+            header: t('invoice_title_invoices'),
             cell: ({ row }) => (
                 <div className="max-w-[220px]">
                     <p className="truncate text-xs font-medium text-foreground">
@@ -275,7 +277,7 @@ export default function AdminFinanceInvoices({
         },
         {
             accessorKey: 'amount',
-            header: 'Amount',
+            header: t('invoice_amount_invoices'),
             cell: ({ row }) => (
                 <span className="text-xs font-semibold text-foreground">
                     {formatCurrency(row.original.amount)}
@@ -284,7 +286,7 @@ export default function AdminFinanceInvoices({
         },
         {
             accessorKey: 'paid_amount',
-            header: 'Paid',
+            header: t('paid_amount_invoices'),
             cell: ({ row }) => (
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(row.original.paid_amount)}
@@ -293,7 +295,7 @@ export default function AdminFinanceInvoices({
         },
         {
             id: 'balance',
-            header: 'Balance Due',
+            header: t('balance_invoices'),
             cell: ({ row }) => {
                 const balance = Math.max(
                     0,
@@ -311,7 +313,7 @@ export default function AdminFinanceInvoices({
         },
         {
             accessorKey: 'due_date',
-            header: 'Due Date',
+            header: t('due_date_invoices'),
             cell: ({ row }) => {
                 const dueDate = row.original.due_date;
                 const isOverdue =
@@ -323,22 +325,22 @@ export default function AdminFinanceInvoices({
                     <span
                         className={`text-xs ${isOverdue ? 'font-semibold text-destructive' : 'text-muted-foreground'}`}
                     >
-                        {dueDate || 'No Due Date'}
-                        {isOverdue && ' (Overdue)'}
+                        {dueDate || t('no_due_date')}
+                        {isOverdue && ` (${t('overdue')})`}
                     </span>
                 );
             },
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('status_invoices'),
             cell: ({ row }) => {
                 const status = row.original.status;
 
                 if (status === 'paid') {
                     return (
                         <Badge className="border-emerald-200 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
-                            Paid
+                            {t('paid_invoice')}
                         </Badge>
                     );
                 }
@@ -346,17 +348,17 @@ export default function AdminFinanceInvoices({
                 if (status === 'partial') {
                     return (
                         <Badge className="border-amber-200 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
-                            Partial
+                            {t('partial_paid_invoice')}
                         </Badge>
                     );
                 }
 
-                return <Badge variant="destructive">Unpaid</Badge>;
+                return <Badge variant="destructive">{t('unpaid_status')}</Badge>;
             },
         },
         {
             id: 'items_count',
-            header: 'Items',
+            header: t('items'),
             cell: ({ row }) => (
                 <Badge variant="outline" className="font-mono text-[10px]">
                     <ListChecks className="mr-1 h-3 w-3" />
@@ -366,7 +368,7 @@ export default function AdminFinanceInvoices({
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">Actions</span>,
+            header: () => <span className="sr-only">{t('actions')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     <Button
@@ -379,7 +381,7 @@ export default function AdminFinanceInvoices({
                             href={`/admin/finance/invoices/${row.original.id}`}
                         >
                             <Eye className="mr-1 h-3.5 w-3.5" />
-                            View
+                            {t('view')}
                         </Link>
                     </Button>
                     <Button
@@ -402,21 +404,21 @@ export default function AdminFinanceInvoices({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'status',
-            title: 'Status',
+            title: t('status_invoices'),
             options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Paid', value: 'paid' },
-                { label: 'Partial', value: 'partial' },
-                { label: 'Unpaid', value: 'unpaid' },
-                { label: 'Overdue', value: 'overdue' },
+                { label: t('all_statuses_invoices'), value: 'all' },
+                { label: t('paid_invoice'), value: 'paid' },
+                { label: t('partial_paid_invoice'), value: 'partial' },
+                { label: t('unpaid_status'), value: 'unpaid' },
+                { label: t('overdue_invoice'), value: 'overdue' },
             ],
             value: filters.status || undefined,
         },
         {
             key: 'type',
-            title: 'Fee Type',
+            title: t('invoice_type_filter'),
             options: [
-                { label: 'All Types', value: 'all' },
+                { label: t('all_invoice_types'), value: 'all' },
                 { label: 'Tuition', value: 'tuition' },
                 { label: 'Admission', value: 'admission' },
                 { label: 'Examination', value: 'examination' },
@@ -430,31 +432,30 @@ export default function AdminFinanceInvoices({
 
     return (
         <>
-            <Head title="Student Invoices & Billing" />
+            <Head title={t('invoices_list_page')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Student Invoices & Billing
+                            {t('invoices_list_page')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Issue semester tuition assessments, lab fees,
-                            graduation invoices, and reconcile debtor balances.
+                            {t('invoices_description')}
                         </p>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/payments">Payments</Link>
+                            <Link href="/admin/finance/payments">{t('payments_roster')}</Link>
                         </Button>
                         <Button
                             size="sm"
                             onClick={() => setCreateModalOpen(true)}
                         >
                             <Plus className="mr-1.5 h-4 w-4" />
-                            Issue Invoice
+                            {t('create_invoice')}
                         </Button>
                     </div>
                 </div>
@@ -464,32 +465,32 @@ export default function AdminFinanceInvoices({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
                             <MetricCard
-                                title="Total Invoiced"
+                                title={t('total_invoiced')}
                                 value={formatCurrency(stats.total_billed)}
                                 icon={FileText}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Total Paid"
+                                title={t('total_paid')}
                                 value={formatCurrency(stats.total_paid)}
                                 icon={CheckCircle2}
                                 color="success"
                             />
                             <MetricCard
-                                title="Outstanding Due"
+                                title={t('outstanding_due')}
                                 value={formatCurrency(stats.total_balance)}
                                 icon={DollarSign}
                                 color="destructive"
                             />
                             <MetricCard
-                                title="Total Invoices"
-                                value={`${stats.total_invoices} bills`}
+                                title={t('total_invoices')}
+                                value={`${stats.total_invoices} ${t('bills')}`}
                                 icon={Receipt}
                                 color="accent"
                             />
                             <MetricCard
-                                title="Overdue Invoices"
-                                value={`${stats.overdue_count} bills`}
+                                title={t('overdue_invoices')}
+                                value={`${stats.overdue_count} ${t('bills')}`}
                                 icon={AlertCircle}
                                 color="destructive"
                             />
@@ -502,8 +503,8 @@ export default function AdminFinanceInvoices({
                     {invoices && (
                         <div className="rounded-md border border-border/60 bg-card p-4">
                             <DataTable
-                                title="Invoices Directory"
-                                searchTitle="Search by invoice no, student name, matric no..."
+                                title={t('invoices_list_label')}
+                                searchTitle={t('search_invoices')}
                                 columns={columns}
                                 data={invoices.data}
                                 pagination={{
@@ -555,11 +556,10 @@ export default function AdminFinanceInvoices({
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-base font-semibold">
-                                Issue Student Invoice
+                                {t('issue_student_invoice')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                Create an official invoice bill assigned to
-                                student fee ledger.
+                                {t('create_invoice_description')}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -572,7 +572,7 @@ export default function AdminFinanceInvoices({
                                     htmlFor="student_id"
                                     className="text-xs font-semibold"
                                 >
-                                    Student{' '}
+                                    {t('student')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <select
@@ -584,7 +584,7 @@ export default function AdminFinanceInvoices({
                                     }
                                     required
                                 >
-                                    <option value="">Select Student</option>
+                                    <option value="">{t('select_student')}</option>
                                     {students.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.matric_no})
@@ -603,7 +603,7 @@ export default function AdminFinanceInvoices({
                                     htmlFor="title"
                                     className="text-xs font-semibold"
                                 >
-                                    Invoice Title{' '}
+                                    {t('invoice_title')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
                                 <Input
@@ -629,7 +629,7 @@ export default function AdminFinanceInvoices({
                                         htmlFor="type"
                                         className="text-xs font-semibold"
                                     >
-                                        Fee Category{' '}
+                                        {t('fee_category')}{' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -667,7 +667,7 @@ export default function AdminFinanceInvoices({
                                         htmlFor="amount"
                                         className="text-xs font-semibold"
                                     >
-                                        Amount ($){' '}
+                                        {t('amount')} ($){' '}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -741,7 +741,7 @@ export default function AdminFinanceInvoices({
                                         htmlFor="due_date"
                                         className="text-xs font-semibold"
                                     >
-                                        Due Date
+                                        {t('due_date')}
                                     </Label>
                                     <Input
                                         id="due_date"
@@ -760,7 +760,7 @@ export default function AdminFinanceInvoices({
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xs font-semibold text-muted-foreground">
                                         <ListChecks className="mr-1 inline h-3.5 w-3.5" />
-                                        Line Items
+                                        {t('line_items')}
                                     </Label>
                                     <Button
                                         type="button"
@@ -770,13 +770,12 @@ export default function AdminFinanceInvoices({
                                         onClick={addItem}
                                     >
                                         <Plus className="mr-1 h-3 w-3" />
-                                        Add Item
+                                        {t('add_item')}
                                     </Button>
                                 </div>
                                 {data.items.length === 0 && (
                                     <p className="py-2 text-[11px] text-muted-foreground italic">
-                                        Add line items to itemize the invoice
-                                        charges.
+                                        {t('add_line_items_description')}
                                     </p>
                                 )}
                                 {data.items.map((item, index) => (
@@ -852,7 +851,7 @@ export default function AdminFinanceInvoices({
                                 ))}
                                 {data.items.length > 0 && (
                                     <p className="border-t border-border/30 pt-1 text-right text-[11px] text-muted-foreground">
-                                        Computed amount: $
+                                        {t('computed_amount')}: $
                                         {data.items
                                             .reduce(
                                                 (sum, it) =>
@@ -872,7 +871,7 @@ export default function AdminFinanceInvoices({
                                     size="sm"
                                     onClick={() => setCreateModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('cancel')}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -880,7 +879,7 @@ export default function AdminFinanceInvoices({
                                     disabled={processing}
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
-                                    {processing ? 'Saving...' : 'Issue Invoice'}
+                                    {processing ? t('saving') : t('issue_invoice')}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -891,8 +890,8 @@ export default function AdminFinanceInvoices({
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
-                    title="Delete Invoice"
-                    description="Are you sure you want to delete this invoice? Invoices with collected payments cannot be deleted."
+                    title={t('delete_invoice')}
+                    description={t('delete_invoice_description')}
                     itemName={
                         selectedForDelete
                             ? `${selectedForDelete.invoice_no} (${selectedForDelete.title})`
@@ -906,4 +905,4 @@ export default function AdminFinanceInvoices({
     );
 }
 
-AdminFinanceInvoices.layout = { breadcrumbs };
+AdminFinanceInvoices.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_invoices', href: '/admin/finance/invoices' }] };

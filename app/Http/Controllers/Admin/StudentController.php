@@ -98,6 +98,7 @@ class StudentController extends Controller
             'password' => ['nullable', 'string', 'min:8'],
             'matric_no' => ['nullable', 'string', 'max:50', 'unique:students,matric_no'],
             'program_id' => ['required', 'exists:programs,id'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
             'current_semester' => ['nullable', 'integer', 'min:1', 'max:12'],
             'phone' => ['nullable', 'string', 'max:30'],
             'gender' => ['nullable', 'string', 'in:Male,Female,Other'],
@@ -132,6 +133,7 @@ class StudentController extends Controller
                 'user_id' => $user->id,
                 'matric_no' => $matricNo,
                 'program_id' => $validated['program_id'],
+                'academic_year' => $validated['academic_year'] ?? null,
                 'current_semester' => $validated['current_semester'] ?? 1,
                 'phone' => $validated['phone'] ?? null,
                 'gender' => $validated['gender'] ?? null,
@@ -170,11 +172,30 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
+            'program' => ['nullable', 'string', 'max:255'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'enrollment_status' => ['nullable', 'string', 'in:enrolled,pending,suspended,graduated,withdrawn'],
         ]);
 
+        $academicYear = $validated['academic_year'] ?? null;
+
+        if ($academicYear === null || $academicYear === '') {
+            $fileName = $validated['file']->getClientOriginalName();
+
+            if (preg_match('/(?<!\d)(19|20)\d{2}(?!\d)/', $fileName, $match)) {
+                $academicYear = $match[0];
+            }
+        }
+
         try {
-            $rows = ExcelFacade::toCollection(new StudentImport, $validated['file'])->first() ?? collect();
-            $result = (new StudentImport)->processRows($rows);
+            $sheets = ExcelFacade::toArray(new StudentImport, $validated['file']);
+            $rows = reset($sheets) ?: [];
+            $result = (new StudentImport)->processRows(
+                $rows,
+                $validated['program'] ?? null,
+                $academicYear,
+                $validated['enrollment_status'] ?? null,
+            );
         } catch (Throwable $e) {
             return response()->json([
                 'imported' => 0,
@@ -279,6 +300,7 @@ class StudentController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$student->user_id],
             'matric_no' => ['required', 'string', 'max:50', 'unique:students,matric_no,'.$student->id],
             'program_id' => ['required', 'exists:programs,id'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
             'current_semester' => ['required', 'integer', 'min:1', 'max:12'],
             'phone' => ['nullable', 'string', 'max:30'],
             'gender' => ['nullable', 'string', 'in:Male,Female,Other'],
@@ -301,6 +323,7 @@ class StudentController extends Controller
             $student->update([
                 'matric_no' => $validated['matric_no'],
                 'program_id' => $validated['program_id'],
+                'academic_year' => $validated['academic_year'] ?? null,
                 'current_semester' => $validated['current_semester'],
                 'phone' => $validated['phone'] ?? null,
                 'gender' => $validated['gender'] ?? null,

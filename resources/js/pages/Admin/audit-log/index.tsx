@@ -2,6 +2,7 @@ import { Deferred, Head, Link, router } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Shield, Activity, Clock, User, Laptop } from 'lucide-react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -50,6 +51,7 @@ export default function AdminAuditLogIndex({
     logs = [],
     filters,
 }: AdminAuditLogIndexProps) {
+    const { t } = useTranslation();
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
             ...filters,
@@ -112,7 +114,7 @@ export default function AdminAuditLogIndex({
     const columns: ColumnDef<AuditLogItem>[] = [
         {
             accessorKey: 'user_name',
-            header: 'Initiator',
+            header: t('initiator_column'),
             cell: ({ row }) => (
                 <div className="max-w-[200px]">
                     <p className="truncate text-sm font-semibold text-foreground">
@@ -134,12 +136,12 @@ export default function AdminAuditLogIndex({
         },
         {
             accessorKey: 'event',
-            header: 'Event Action',
+            header: t('event_action_column'),
             cell: ({ row }) => getEventBadge(row.original.event),
         },
         {
             accessorKey: 'resource',
-            header: 'Target Entity / Resource',
+            header: t('target_entity_column'),
             cell: ({ row }) => (
                 <span className="font-mono text-xs font-medium text-foreground">
                     {row.original.resource}
@@ -148,7 +150,7 @@ export default function AdminAuditLogIndex({
         },
         {
             accessorKey: 'ip_address',
-            header: 'Network & Device',
+            header: t('network_device_column'),
             cell: ({ row }) => (
                 <div className="text-xs">
                     <span className="font-mono text-muted-foreground">
@@ -162,7 +164,7 @@ export default function AdminAuditLogIndex({
         },
         {
             accessorKey: 'status',
-            header: 'Status',
+            header: t('status_column_audit'),
             cell: ({ row }) => (
                 <Badge className="border-emerald-200 bg-emerald-500/10 text-[10px] font-bold text-emerald-700 uppercase">
                     {row.original.status}
@@ -171,7 +173,7 @@ export default function AdminAuditLogIndex({
         },
         {
             accessorKey: 'created_at',
-            header: 'Timestamp',
+            header: t('timestamp_column_audit'),
             cell: ({ row }) => (
                 <span className="text-xs text-muted-foreground">
                     {row.original.created_at}
@@ -183,16 +185,16 @@ export default function AdminAuditLogIndex({
     const serverFilters: DataTableServerFilter[] = [
         {
             key: 'event',
-            title: 'Event Category',
+            title: t('event_category_filter'),
             options: [
-                { label: 'All Events', value: 'all' },
-                { label: 'Settings Updated', value: 'Settings Updated' },
-                { label: 'Payment Verified', value: 'Payment Verified' },
-                { label: 'Course Created', value: 'Course Created' },
-                { label: 'Admission Approved', value: 'Admission Approved' },
-                { label: 'Grade Submitted', value: 'Grade Submitted' },
-                { label: 'Invoice Issued', value: 'Invoice Issued' },
-                { label: 'User Created', value: 'User Created' },
+                { label: t('all_events_filter'), value: 'all' },
+                { label: t('settings_updated'), value: 'Settings Updated' },
+                { label: t('payment_verified'), value: 'Payment Verified' },
+                { label: t('course_created'), value: 'Course Created' },
+                { label: t('admission_approved'), value: 'Admission Approved' },
+                { label: t('grade_submitted'), value: 'Grade Submitted' },
+                { label: t('invoice_issued'), value: 'Invoice Issued' },
+                { label: t('user_created_audit'), value: 'User Created' },
             ],
             value: filters.event || undefined,
         },
@@ -200,19 +202,17 @@ export default function AdminAuditLogIndex({
 
     return (
         <>
-            <Head title="System Audit Logs & Security Events" />
+            <Head title={t('security_audit_trail_log')} />
 
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            Security & Audit Trail Log
+                            {t('security_audit_trail_log')}
                         </h1>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                            Comprehensive ledger of all administrative events,
-                            user authentications, financial actions, and record
-                            modifications.
+                            {t('audit_log_description')}
                         </p>
                     </div>
 
@@ -220,7 +220,7 @@ export default function AdminAuditLogIndex({
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/settings/users">
                                 <User className="mr-1.5 h-4 w-4" />
-                                Users Roster
+                                {t('users_roster_link')}
                             </Link>
                         </Button>
                     </div>
@@ -231,25 +231,25 @@ export default function AdminAuditLogIndex({
                     {stats && (
                         <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
                             <MetricCard
-                                title="Total Logged Events"
+                                title={t('total_logged_events')}
                                 value={`${stats.total_logs} actions`}
                                 icon={Activity}
                                 color="primary"
                             />
                             <MetricCard
-                                title="Events Today"
+                                title={t('events_today')}
                                 value={`${stats.today_events} actions`}
                                 icon={Clock}
                                 color="success"
                             />
                             <MetricCard
-                                title="Security Events"
+                                title={t('security_events')}
                                 value={`${stats.security_events} alerts`}
                                 icon={Shield}
                                 color="warning"
                             />
                             <MetricCard
-                                title="Active Sessions"
+                                title={t('active_sessions')}
                                 value={`${stats.active_sessions} accounts`}
                                 icon={Laptop}
                                 color="accent"
@@ -261,8 +261,8 @@ export default function AdminAuditLogIndex({
                 {/* Audit Log Table */}
                 <div className="rounded-md border border-border/60 bg-card p-4">
                     <DataTable
-                        title="Security Audit Records"
-                        searchTitle="Search by initiator, resource, IP address..."
+                        title={t('security_audit_records')}
+                        searchTitle={t('search_audit_description')}
                         columns={columns}
                         data={logs}
                         serverFilters={serverFilters}

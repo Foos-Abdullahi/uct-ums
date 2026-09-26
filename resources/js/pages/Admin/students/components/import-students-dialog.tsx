@@ -18,6 +18,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface ImportResult {
     imported: number;
@@ -29,6 +37,7 @@ interface ImportStudentsDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onImported: () => void;
+    programs: { id: number; name: string }[];
 }
 
 function getCookie(name: string): string | null {
@@ -46,13 +55,16 @@ export function ImportStudentsDialog({
     open,
     onOpenChange,
     onImported,
+    programs,
 }: ImportStudentsDialogProps) {
     const [file, setFile] = useState<File | null>(null);
+    const [program, setProgram] = useState('');
     const [processing, setProcessing] = useState(false);
     const [result, setResult] = useState<ImportResult | null>(null);
 
     const resetState = useCallback(() => {
         setFile(null);
+        setProgram('');
         setResult(null);
     }, []);
 
@@ -68,6 +80,7 @@ export function ImportStudentsDialog({
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('program', program);
 
         try {
             const response = await fetch('/admin/students/import', {
@@ -175,6 +188,31 @@ export function ImportStudentsDialog({
                     description="Only .xlsx files up to 5MB"
                     onFilesChange={(files) => setFile(files[0] ?? null)}
                 />
+
+                <div className="space-y-1.5">
+                    <Label htmlFor="import-program" className="text-xs">
+                        Program{' '}
+                        <span className="font-normal text-muted-foreground">
+                            (required when the file has no Program column)
+                        </span>
+                    </Label>
+                    <Select
+                        value={program}
+                        onValueChange={setProgram}
+                        disabled={processing}
+                    >
+                        <SelectTrigger id="import-program">
+                            <SelectValue placeholder="Not specified — use the Program column in the file" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {programs.map((option) => (
+                                <SelectItem key={option.id} value={option.name}>
+                                    {option.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
 
                 {result && (
                     <div className="space-y-3">
