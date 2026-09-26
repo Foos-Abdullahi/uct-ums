@@ -6,6 +6,7 @@ use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\LecturerSeeder;
 use Database\Seeders\StudentSeeder;
+use Database\Seeders\UctSeeder;
 use Illuminate\Support\Facades\Hash;
 
 test('lecturer seeder creates lecturer user with staff profile', function () {
@@ -65,4 +66,30 @@ test('student can authenticate and access student dashboard', function () {
     $dashboardResponse = $this->get(route('student.dashboard'));
 
     $dashboardResponse->assertOk();
+});
+
+test('student seeder repairs a stale profile link for the demo account', function () {
+    $staleStudentUser = User::factory()->role(UserRole::Student)->create();
+    Student::factory()->create([
+        'user_id' => $staleStudentUser->id,
+        'matric_no' => 'UCT2026001',
+    ]);
+
+    $this->seed(StudentSeeder::class);
+
+    $studentUser = User::query()->where('email', 'student@uct.edu')->firstOrFail();
+    $student = Student::query()->where('matric_no', 'UCT2026001')->firstOrFail();
+
+    expect($student->user_id)->toBe($studentUser->id);
+});
+
+test('student seeders retain profiles for both student demo accounts', function () {
+    $this->seed(UctSeeder::class);
+    $this->seed(StudentSeeder::class);
+
+    $uctStudent = User::query()->where('email', 'student@uct.so')->firstOrFail();
+    $portalStudent = User::query()->where('email', 'student@uct.edu')->firstOrFail();
+
+    expect($uctStudent->student)->not->toBeNull()
+        ->and($portalStudent->student)->not->toBeNull();
 });
