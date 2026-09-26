@@ -77,6 +77,14 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * @return HasOne<Lecturer, $this>
+     */
+    public function lecturer(): HasOne
+    {
+        return $this->hasOne(Lecturer::class);
+    }
+
+    /**
      * Permission slugs granted to the user through the role they are assigned.
      *
      * Super administrators are granted every permission the system knows about.

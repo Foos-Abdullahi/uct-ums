@@ -77,3 +77,52 @@ export interface LecturerStats {
     full_time_lecturers: number;
     part_time_lecturers: number;
 }
+
+export interface CourseMaterial {
+    id: number;
+    course_id: number;
+    lecturer_id: number | null;
+    title: string;
+    description: string | null;
+    category: 'syllabus' | 'lecture_notes' | 'assignment' | 'lab_manual' | 'reading' | 'other';
+    file_path: string;
+    file_name: string | null;
+    file_size: number | null;
+    file_type: string | null;
+    academic_year: string | null;
+    semester: string | null;
+    is_published: boolean;
+    created_at: string;
+    course?: Course;
+    lecturer?: Lecturer;
+}
+
+export interface AttendanceRosterItem {
+    student_id: number;
+    matric_no: string;
+    name: string;
+    status: 'present' | 'absent' | 'late' | 'excused';
+    notes: string;
+    existing_id?: number | null;
+}
+
+export interface AttendanceSessionSummary {
+    date: string;
+    total: number;
+    present: number;
+    absent: number;
+    late: number;
+    excused: number;
+}
+
+export interface GradebookStudentItem {
+    student_id: number;
+    matric_no: string;
+    name: string;
+    credits: number;
+    grade: string;
+    grade_point: number | null;
+    status: 'passed' | 'failed' | 'in_progress';
+    grade_id?: number | null;
+}
+
