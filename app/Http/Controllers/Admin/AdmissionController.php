@@ -90,7 +90,7 @@ class AdmissionController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $nextId = (Admission::max('id') ?? 0) + 1;
+        $nextId = (Admission::withTrashed()->max('id') ?? 0) + 1;
         $applicationNo = 'ADM-'.date('Y').'-'.str_pad((string) $nextId, 5, '0', STR_PAD_LEFT);
 
         $admission = Admission::create([
