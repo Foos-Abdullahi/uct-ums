@@ -1,4 +1,4 @@
-import { Deferred, Head, Link, router } from '@inertiajs/react';
+import { Deferred, Head, Link, router, useForm } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
     Receipt,
@@ -8,8 +8,11 @@ import {
     DollarSign,
     Users,
     Eye,
+    Loader2,
+    Plus,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -19,6 +22,16 @@ import { TableSkeleton } from '@/components/tools/table-skeleton';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { BreadcrumbItem } from '@/types';
 
 export interface StudentFeeRecord {
@@ -66,6 +79,11 @@ interface AdminFinanceFeesProps {
         code: string | null;
         degree_level: string;
     }>;
+    recording_students: Array<{
+        id: number;
+        matric_no: string;
+        name: string;
+    }>;
     filters: {
         search: string;
         program_id: string;
@@ -78,9 +96,18 @@ export default function AdminFinanceFees({
     stats,
     students,
     programs = [],
+    recording_students: recordingStudents = [],
     filters,
 }: AdminFinanceFeesProps) {
     const { t } = useTranslation();
+    const [recordFeeOpen, setRecordFeeOpen] = useState(false);
+    const { data, setData, post, processing, errors, reset } = useForm({
+        student_id: '',
+        title: '',
+        type: 'tuition',
+        amount: '',
+        due_date: '',
+    });
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
@@ -107,6 +134,46 @@ export default function AdminFinanceFees({
         router.get('/admin/finance/fees', cleanQuery, {
             preserveState: true,
             preserveScroll: true,
+        });
+    };
+
+    const feeTypeLabels: Record<string, string> = {
+        tuition: 'Tuition',
+        registration: 'Registration',
+        exam: 'Examination',
+        lab: 'Laboratory / Technology',
+        library: 'Library',
+        graduation: 'Graduation',
+        hostel: 'Hostel',
+        other: 'Other charge',
+    };
+
+    const handleFeeTypeChange = (type: string) => {
+        setData((currentData) => ({
+            ...currentData,
+            type,
+            title:
+                currentData.title === '' ||
+                Object.values(feeTypeLabels).some(
+                    (label) => currentData.title === `${label} Fee`,
+                )
+                    ? `${feeTypeLabels[type]} Fee`
+                    : currentData.title,
+        }));
+    };
+
+    const handleRecordFee = (event: React.FormEvent) => {
+        event.preventDefault();
+
+        post('/admin/finance/invoices', {
+            onSuccess: () => {
+                toast.success('Fee recorded successfully.');
+                reset();
+                setRecordFeeOpen(false);
+            },
+            onError: () => {
+                toast.error('Please correct the highlighted fee details.');
+            },
         });
     };
 
@@ -211,7 +278,9 @@ export default function AdminFinanceFees({
                     );
                 }
 
-                return <Badge variant="destructive">{t('unpaid_status')}</Badge>;
+                return (
+                    <Badge variant="destructive">{t('unpaid_status')}</Badge>
+                );
             },
         },
         {
@@ -280,6 +349,13 @@ export default function AdminFinanceFees({
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            onClick={() => setRecordFeeOpen(true)}
+                        >
+                            <Plus className="mr-1.5 h-4 w-4" />
+                            Record fee
+                        </Button>
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/finance/invoices">
                                 <Receipt className="mr-1.5 h-4 w-4" />
@@ -465,9 +541,209 @@ export default function AdminFinanceFees({
                         </div>
                     )}
                 </Deferred>
+
+                <Dialog open={recordFeeOpen} onOpenChange={setRecordFeeOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-base font-semibold">
+                                Record student fee
+                            </DialogTitle>
+                            <DialogDescription className="text-xs">
+                                Select the student and fee category to issue a
+                                new charge.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form
+                            onSubmit={handleRecordFee}
+                            className="space-y-4 py-2"
+                        >
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="record-fee-student"
+                                    className="text-xs font-semibold"
+                                >
+                                    Student{' '}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <select
+                                    id="record-fee-student"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    value={data.student_id}
+                                    onChange={(event) =>
+                                        setData(
+                                            'student_id',
+                                            event.target.value,
+                                        )
+                                    }
+                                    required
+                                >
+                                    <option value="">Select student</option>
+                                    {recordingStudents.map((student) => (
+                                        <option
+                                            key={student.id}
+                                            value={student.id}
+                                        >
+                                            {student.name} ({student.matric_no})
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.student_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.student_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="record-fee-type"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Fee type{' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <select
+                                        id="record-fee-type"
+                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                        value={data.type}
+                                        onChange={(event) =>
+                                            handleFeeTypeChange(
+                                                event.target.value,
+                                            )
+                                        }
+                                    >
+                                        {Object.entries(feeTypeLabels).map(
+                                            ([value, label]) => (
+                                                <option
+                                                    key={value}
+                                                    value={value}
+                                                >
+                                                    {label}
+                                                </option>
+                                            ),
+                                        )}
+                                    </select>
+                                    {errors.type && (
+                                        <p className="text-[11px] text-destructive">
+                                            {errors.type}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="record-fee-amount"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Amount ($){' '}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </Label>
+                                    <Input
+                                        id="record-fee-amount"
+                                        type="number"
+                                        min="1"
+                                        step="0.01"
+                                        value={data.amount}
+                                        onChange={(event) =>
+                                            setData(
+                                                'amount',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {errors.amount && (
+                                        <p className="text-[11px] text-destructive">
+                                            {errors.amount}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="record-fee-title"
+                                    className="text-xs font-semibold"
+                                >
+                                    Charge title{' '}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="record-fee-title"
+                                    placeholder="e.g. Registration Fee - 2026/27"
+                                    value={data.title}
+                                    onChange={(event) =>
+                                        setData('title', event.target.value)
+                                    }
+                                    required
+                                />
+                                {errors.title && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.title}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="record-fee-due-date"
+                                    className="text-xs font-semibold"
+                                >
+                                    Due date
+                                </Label>
+                                <Input
+                                    id="record-fee-due-date"
+                                    type="date"
+                                    value={data.due_date}
+                                    onChange={(event) =>
+                                        setData('due_date', event.target.value)
+                                    }
+                                />
+                                {errors.due_date && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.due_date}
+                                    </p>
+                                )}
+                            </div>
+
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={processing}
+                                    onClick={() => setRecordFeeOpen(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={processing}
+                                >
+                                    {processing && (
+                                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                                    )}
+                                    Record fee
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </>
     );
 }
 
-AdminFinanceFees.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_fees', href: '/admin/finance/fees' }] };
+AdminFinanceFees.layout = {
+    breadcrumbs: [
+        { title: 'breadcrumb_dashboard', href: '/admin/dashboard' },
+        { title: 'breadcrumb_finance', href: '/admin/finance' },
+        { title: 'breadcrumb_fees', href: '/admin/finance/fees' },
+    ],
+};

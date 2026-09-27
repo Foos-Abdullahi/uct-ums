@@ -702,12 +702,17 @@ export default function AdminInvoiceDetails({
                                         }
                                     >
                                         <option value="tuition">Tuition</option>
+                                        <option value="registration">
+                                            Registration
+                                        </option>
                                         <option value="admission">
                                             Admission
                                         </option>
+                                        <option value="exam">Exam</option>
                                         <option value="examination">
                                             Examination
                                         </option>
+                                        <option value="lab">Lab</option>
                                         <option value="laboratory">
                                             Laboratory
                                         </option>
