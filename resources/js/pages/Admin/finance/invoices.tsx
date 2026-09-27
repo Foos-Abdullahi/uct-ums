@@ -643,37 +643,15 @@ export default function AdminFinanceInvoices({
                                             *
                                         </span>
                                     </Label>
-                                    <select
+                                    <Input
                                         id="type"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                        placeholder="e.g. Registration Fee"
                                         value={data.type}
                                         onChange={(e) =>
                                             setData('type', e.target.value)
                                         }
                                         required
-                                    >
-                                        <option value="tuition">Tuition</option>
-                                        <option value="registration">
-                                            Registration
-                                        </option>
-                                        <option value="admission">
-                                            Admission
-                                        </option>
-                                        <option value="exam">Exam</option>
-                                        <option value="examination">
-                                            Examination
-                                        </option>
-                                        <option value="lab">Lab</option>
-                                        <option value="laboratory">
-                                            Laboratory
-                                        </option>
-                                        <option value="library">Library</option>
-                                        <option value="graduation">
-                                            Graduation
-                                        </option>
-                                        <option value="hostel">Hostel</option>
-                                        <option value="other">Other</option>
-                                    </select>
+                                    />
                                 </div>
 
                                 <div className="space-y-1.5">

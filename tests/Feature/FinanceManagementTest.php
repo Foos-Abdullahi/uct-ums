@@ -298,7 +298,7 @@ test('admin can create an invoice with line items, tax, and discount', function 
         ->and($invoice->subtotal())->toBeGreaterThan(0);
 });
 
-test('admin can record a registration fee from the fees page', function () {
+test('admin can record a custom fee type from the fees page', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $student = Student::factory()->create();
     $this->actingAs($admin);
@@ -313,15 +313,15 @@ test('admin can record a registration fee from the fees page', function () {
 
     $this->post(route('admin.finance.invoices.store'), [
         'student_id' => $student->id,
-        'title' => 'Registration Fee - 2026/27',
-        'type' => 'registration',
+        'title' => 'Sports Club Fee - 2026/27',
+        'type' => 'sports club fee',
         'amount' => 50.00,
         'due_date' => '2026-10-15',
     ])->assertRedirect();
 
     expect(StudentInvoice::where('student_id', $student->id)
-        ->where('type', 'registration')
-        ->where('title', 'Registration Fee - 2026/27')
+        ->where('type', 'sports club fee')
+        ->where('title', 'Sports Club Fee - 2026/27')
         ->exists())->toBeTrue();
 });
 

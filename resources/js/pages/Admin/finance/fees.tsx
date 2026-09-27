@@ -137,31 +137,6 @@ export default function AdminFinanceFees({
         });
     };
 
-    const feeTypeLabels: Record<string, string> = {
-        tuition: 'Tuition',
-        registration: 'Registration',
-        exam: 'Examination',
-        lab: 'Laboratory / Technology',
-        library: 'Library',
-        graduation: 'Graduation',
-        hostel: 'Hostel',
-        other: 'Other charge',
-    };
-
-    const handleFeeTypeChange = (type: string) => {
-        setData((currentData) => ({
-            ...currentData,
-            type,
-            title:
-                currentData.title === '' ||
-                Object.values(feeTypeLabels).some(
-                    (label) => currentData.title === `${label} Fee`,
-                )
-                    ? `${feeTypeLabels[type]} Fee`
-                    : currentData.title,
-        }));
-    };
-
     const handleRecordFee = (event: React.FormEvent) => {
         event.preventDefault();
 
@@ -606,27 +581,15 @@ export default function AdminFinanceFees({
                                             *
                                         </span>
                                     </Label>
-                                    <select
+                                    <Input
                                         id="record-fee-type"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                        placeholder="e.g. Registration Fee"
                                         value={data.type}
                                         onChange={(event) =>
-                                            handleFeeTypeChange(
-                                                event.target.value,
-                                            )
+                                            setData('type', event.target.value)
                                         }
-                                    >
-                                        {Object.entries(feeTypeLabels).map(
-                                            ([value, label]) => (
-                                                <option
-                                                    key={value}
-                                                    value={value}
-                                                >
-                                                    {label}
-                                                </option>
-                                            ),
-                                        )}
-                                    </select>
+                                        required
+                                    />
                                     {errors.type && (
                                         <p className="text-[11px] text-destructive">
                                             {errors.type}
