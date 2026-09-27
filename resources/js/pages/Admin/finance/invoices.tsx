@@ -353,7 +353,9 @@ export default function AdminFinanceInvoices({
                     );
                 }
 
-                return <Badge variant="destructive">{t('unpaid_status')}</Badge>;
+                return (
+                    <Badge variant="destructive">{t('unpaid_status')}</Badge>
+                );
             },
         },
         {
@@ -420,8 +422,11 @@ export default function AdminFinanceInvoices({
             options: [
                 { label: t('all_invoice_types'), value: 'all' },
                 { label: 'Tuition', value: 'tuition' },
+                { label: 'Registration', value: 'registration' },
                 { label: 'Admission', value: 'admission' },
+                { label: 'Exam', value: 'exam' },
                 { label: 'Examination', value: 'examination' },
+                { label: 'Lab', value: 'lab' },
                 { label: 'Laboratory', value: 'laboratory' },
                 { label: 'Library', value: 'library' },
                 { label: 'Graduation', value: 'graduation' },
@@ -448,7 +453,9 @@ export default function AdminFinanceInvoices({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/payments">{t('payments_roster')}</Link>
+                            <Link href="/admin/finance/payments">
+                                {t('payments_roster')}
+                            </Link>
                         </Button>
                         <Button
                             size="sm"
@@ -584,7 +591,9 @@ export default function AdminFinanceInvoices({
                                     }
                                     required
                                 >
-                                    <option value="">{t('select_student')}</option>
+                                    <option value="">
+                                        {t('select_student')}
+                                    </option>
                                     {students.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.matric_no})
@@ -644,12 +653,17 @@ export default function AdminFinanceInvoices({
                                         required
                                     >
                                         <option value="tuition">Tuition</option>
+                                        <option value="registration">
+                                            Registration
+                                        </option>
                                         <option value="admission">
                                             Admission
                                         </option>
+                                        <option value="exam">Exam</option>
                                         <option value="examination">
                                             Examination
                                         </option>
+                                        <option value="lab">Lab</option>
                                         <option value="laboratory">
                                             Laboratory
                                         </option>
@@ -879,7 +893,9 @@ export default function AdminFinanceInvoices({
                                     disabled={processing}
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
-                                    {processing ? t('saving') : t('issue_invoice')}
+                                    {processing
+                                        ? t('saving')
+                                        : t('issue_invoice')}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -905,4 +921,10 @@ export default function AdminFinanceInvoices({
     );
 }
 
-AdminFinanceInvoices.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_invoices', href: '/admin/finance/invoices' }] };
+AdminFinanceInvoices.layout = {
+    breadcrumbs: [
+        { title: 'breadcrumb_dashboard', href: '/admin/dashboard' },
+        { title: 'breadcrumb_finance', href: '/admin/finance' },
+        { title: 'breadcrumb_invoices', href: '/admin/finance/invoices' },
+    ],
+};

@@ -298,6 +298,33 @@ test('admin can create an invoice with line items, tax, and discount', function 
         ->and($invoice->subtotal())->toBeGreaterThan(0);
 });
 
+test('admin can record a registration fee from the fees page', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $student = Student::factory()->create();
+    $this->actingAs($admin);
+
+    $this->get(route('admin.finance.fees'))
+        ->assertOk()
+        ->assertInertia(
+            fn ($page) => $page
+                ->component('Admin/finance/fees')
+                ->where('recording_students.0.id', $student->id)
+        );
+
+    $this->post(route('admin.finance.invoices.store'), [
+        'student_id' => $student->id,
+        'title' => 'Registration Fee - 2026/27',
+        'type' => 'registration',
+        'amount' => 50.00,
+        'due_date' => '2026-10-15',
+    ])->assertRedirect();
+
+    expect(StudentInvoice::where('student_id', $student->id)
+        ->where('type', 'registration')
+        ->where('title', 'Registration Fee - 2026/27')
+        ->exists())->toBeTrue();
+});
+
 test('admin can view invoice details with line items and payments', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);

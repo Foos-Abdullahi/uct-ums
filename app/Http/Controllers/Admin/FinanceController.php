@@ -19,6 +19,25 @@ use Inertia\Response;
 class FinanceController extends Controller
 {
     /**
+     * Fee categories available when issuing a student invoice.
+     *
+     * @var list<string>
+     */
+    private const FEE_TYPES = [
+        'tuition',
+        'registration',
+        'admission',
+        'exam',
+        'examination',
+        'lab',
+        'laboratory',
+        'library',
+        'graduation',
+        'hostel',
+        'other',
+    ];
+
+    /**
      * Display the Finance Overview control center.
      */
     public function overview(): Response
@@ -96,6 +115,15 @@ class FinanceController extends Controller
             ->orderBy('matric_no');
 
         $programs = Program::query()->orderBy('name')->get(['id', 'name', 'code', 'degree_level']);
+        $recordingStudents = Student::query()
+            ->with('user')
+            ->orderBy('matric_no')
+            ->get()
+            ->map(fn (Student $student) => [
+                'id' => $student->id,
+                'matric_no' => $student->matric_no,
+                'name' => $student->user?->name ?? 'Unknown',
+            ]);
 
         return Inertia::render('Admin/finance/fees', [
             'stats' => Inertia::defer(fn () => [
@@ -107,6 +135,7 @@ class FinanceController extends Controller
             ]),
             'students' => Inertia::defer(fn () => $studentsQuery->paginate($perPage)->withQueryString()),
             'programs' => $programs,
+            'recording_students' => $recordingStudents,
             'filters' => [
                 'search' => $search ?? '',
                 'program_id' => $programId ?? 'all',
@@ -317,7 +346,7 @@ class FinanceController extends Controller
             'student_id' => ['required', 'exists:students,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'type' => ['required', 'string', 'in:tuition,admission,examination,library,laboratory,graduation,hostel,other'],
+            'type' => ['required', 'string', 'in:'.implode(',', self::FEE_TYPES)],
             'amount' => ['required', 'numeric', 'min:1'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
@@ -385,7 +414,7 @@ class FinanceController extends Controller
 
         return Inertia::render('Admin/finance/invoice-details', [
             'invoice' => $invoice,
-            'invoice_types' => ['tuition', 'admission', 'examination', 'library', 'laboratory', 'graduation', 'hostel', 'other'],
+            'invoice_types' => self::FEE_TYPES,
         ]);
     }
 
@@ -401,7 +430,7 @@ class FinanceController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'type' => ['required', 'string', 'in:tuition,admission,examination,library,laboratory,graduation,hostel,other'],
+            'type' => ['required', 'string', 'in:'.implode(',', self::FEE_TYPES)],
             'amount' => ['required', 'numeric', 'min:1'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
