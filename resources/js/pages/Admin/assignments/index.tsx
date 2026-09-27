@@ -307,11 +307,16 @@ export default function AdminAssignmentsIndex({
     );
 }
 
-AdminAssignmentsIndex.layout = (page: any) => {
+function AdminAssignmentsLayout({ children }: { children: React.ReactNode }) {
     const { t } = useTranslation();
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('dashboard'), href: '/admin/dashboard' },
         { title: t('breadcrumb_assignments'), href: '/admin/assignments' },
     ];
-    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
-};
+
+    return <AppLayout breadcrumbs={breadcrumbs}>{children}</AppLayout>;
+}
+
+AdminAssignmentsIndex.layout = (page) => (
+    <AdminAssignmentsLayout>{page}</AdminAssignmentsLayout>
+);

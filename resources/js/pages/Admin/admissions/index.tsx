@@ -319,11 +319,16 @@ export default function AdminAdmissionsIndex({
     );
 }
 
-AdminAdmissionsIndex.layout = (page: any) => {
+function AdminAdmissionsLayout({ children }: { children: React.ReactNode }) {
     const { t } = useTranslation();
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('dashboard'), href: '/admin/dashboard' },
         { title: t('breadcrumb_admissions'), href: '/admin/admissions' },
     ];
-    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
-};
+
+    return <AppLayout breadcrumbs={breadcrumbs}>{children}</AppLayout>;
+}
+
+AdminAdmissionsIndex.layout = (page) => (
+    <AdminAdmissionsLayout>{page}</AdminAdmissionsLayout>
+);

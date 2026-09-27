@@ -72,7 +72,9 @@ export default function AdminLecturersIndex({
         router.delete(`/admin/lecturers/${selectedLecturerForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    t('lecturer_deleted', { name: selectedLecturerForDelete.user?.name }),
+                    t('lecturer_deleted', {
+                        name: selectedLecturerForDelete.user?.name,
+                    }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedLecturerForDelete(null);
@@ -91,8 +93,7 @@ export default function AdminLecturersIndex({
             {},
             {
                 preserveScroll: true,
-                onSuccess: () =>
-                    toast.success(t('lecturer_status_updated')),
+                onSuccess: () => toast.success(t('lecturer_status_updated')),
                 onError: () => toast.error(t('failed_update_lecturer_status')),
             },
         );
@@ -300,11 +301,16 @@ export default function AdminLecturersIndex({
     );
 }
 
-AdminLecturersIndex.layout = (page: any) => {
+function AdminLecturersLayout({ children }: { children: React.ReactNode }) {
     const { t } = useTranslation();
     const breadcrumbs: BreadcrumbItem[] = [
         { title: t('dashboard'), href: '/admin/dashboard' },
         { title: t('breadcrumb_lecturers'), href: '/admin/lecturers' },
     ];
-    return <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>;
-};
+
+    return <AppLayout breadcrumbs={breadcrumbs}>{children}</AppLayout>;
+}
+
+AdminLecturersIndex.layout = (page) => (
+    <AdminLecturersLayout>{page}</AdminLecturersLayout>
+);
