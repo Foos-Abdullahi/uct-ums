@@ -183,6 +183,8 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
                 ->middleware('permission:finance.view')->name('payments');
             Route::post('/payments', [FinanceController::class, 'storePayment'])
                 ->middleware('permission:finance.payments.create')->name('payments.store');
+            Route::post('/fees/semester', [FinanceController::class, 'storeSemesterFee'])
+                ->middleware('permission:finance.invoices.create')->name('fees.semester.store');
             Route::patch('/payments/{payment}/status', [FinanceController::class, 'updatePaymentStatus'])
                 ->middleware('permission:finance.payments.verify')->name('payments.status');
 

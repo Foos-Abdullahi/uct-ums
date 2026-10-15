@@ -35,7 +35,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { BreadcrumbItem } from '@/types';
 
 export interface InvoiceItem {
     id: number;
@@ -43,6 +42,8 @@ export interface InvoiceItem {
     invoice_no: string;
     title: string;
     type: string;
+    academic_year: string | null;
+    semester: number | null;
     amount: number;
     tax_amount: number;
     discount_amount: number;
@@ -102,12 +103,6 @@ export default function AdminFinanceInvoices({
         useState<InvoiceItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
-
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_finance'), href: '/admin/finance' },
-        { title: t('breadcrumb_invoices'), href: '/admin/finance/invoices' },
-    ];
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -271,6 +266,9 @@ export default function AdminFinanceInvoices({
                         className="mt-0.5 text-[10px] capitalize"
                     >
                         {row.original.type}
+                        {row.original.semester && row.original.academic_year
+                            ? ` · Semester ${row.original.semester} · ${row.original.academic_year}`
+                            : ''}
                     </Badge>
                 </div>
             ),

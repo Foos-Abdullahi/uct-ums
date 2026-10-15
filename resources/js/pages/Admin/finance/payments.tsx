@@ -10,6 +10,7 @@ import {
     X,
     Eye,
     Save,
+    CalendarRange,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +32,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { BreadcrumbItem } from '@/types';
 
 export interface PaymentItem {
     id: number;
@@ -76,7 +76,17 @@ export interface PaginatedData<T> {
 interface AdminFinancePaymentsProps {
     stats?: PaymentStats;
     payments?: PaginatedData<PaymentItem>;
-    students: Array<{ id: number; matric_no: string; name: string }>;
+    students: Array<{
+        id: number;
+        matric_no: string;
+        name: string;
+        invoices: Array<{
+            id: number;
+            invoice_no: string;
+            title: string;
+            balance: number;
+        }>;
+    }>;
     filters: {
         search: string;
         status: string;
@@ -94,23 +104,24 @@ export default function AdminFinancePayments({
     const { t } = useTranslation();
     const [createModalOpen, setCreateModalOpen] = useState(false);
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_finance'), href: '/admin/finance' },
-        { title: t('breadcrumb_payments'), href: '/admin/finance/payments' },
-    ];
-
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         student_id: '',
+        invoice_id: '',
         amount: '',
         payment_method: 'bank_transfer',
         payment_date: new Date().toISOString().split('T')[0],
         status: 'paid',
         notes: '',
     });
+    const selectedStudent = students.find(
+        (student) => student.id === Number(data.student_id),
+    );
+    const selectedInvoice = selectedStudent?.invoices.find(
+        (invoice) => invoice.id === Number(data.invoice_id),
+    );
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
@@ -232,7 +243,9 @@ export default function AdminFinancePayments({
                     );
                 }
 
-                return <Badge variant="destructive">{t('failed_payment')}</Badge>;
+                return (
+                    <Badge variant="destructive">{t('failed_payment')}</Badge>
+                );
             },
         },
         {
@@ -334,7 +347,15 @@ export default function AdminFinancePayments({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/invoices">{t('invoices_list_page')}</Link>
+                            <Link href="/admin/finance/fees">
+                                <CalendarRange className="mr-1.5 h-4 w-4" />
+                                Assign semester fees
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/admin/finance/invoices">
+                                {t('invoices_list_page')}
+                            </Link>
                         </Button>
                         <Button
                             size="sm"
@@ -439,7 +460,9 @@ export default function AdminFinancePayments({
                                 {t('record_payment')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('enter_payment_details')}
+                                Record money received from one student. To
+                                charge a whole semester, use Assign semester
+                                fees.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -459,12 +482,19 @@ export default function AdminFinancePayments({
                                     id="student_id"
                                     className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
                                     value={data.student_id}
-                                    onChange={(e) =>
-                                        setData('student_id', e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setData((currentData) => ({
+                                            ...currentData,
+                                            student_id: e.target.value,
+                                            invoice_id: '',
+                                            amount: '',
+                                        }));
+                                    }}
                                     required
                                 >
-                                    <option value="">{t('select_student')}</option>
+                                    <option value="">
+                                        {t('select_student')}
+                                    </option>
                                     {students.map((s) => (
                                         <option key={s.id} value={s.id}>
                                             {s.name} ({s.matric_no})
@@ -474,6 +504,67 @@ export default function AdminFinancePayments({
                                 {errors.student_id && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.student_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="invoice_id"
+                                    className="text-xs font-semibold"
+                                >
+                                    Apply to invoice
+                                </Label>
+                                <select
+                                    id="invoice_id"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={data.invoice_id}
+                                    disabled={!selectedStudent}
+                                    onChange={(e) => {
+                                        const invoice =
+                                            selectedStudent?.invoices.find(
+                                                (item) =>
+                                                    item.id ===
+                                                    Number(e.target.value),
+                                            );
+                                        setData((currentData) => ({
+                                            ...currentData,
+                                            invoice_id: e.target.value,
+                                            amount: invoice
+                                                ? String(invoice.balance)
+                                                : currentData.amount,
+                                        }));
+                                    }}
+                                >
+                                    <option value="">
+                                        Unallocated payment
+                                    </option>
+                                    {selectedStudent?.invoices.map(
+                                        (invoice) => (
+                                            <option
+                                                key={invoice.id}
+                                                value={invoice.id}
+                                            >
+                                                {invoice.invoice_no} —{' '}
+                                                {invoice.title} (
+                                                {formatCurrency(
+                                                    invoice.balance,
+                                                )}{' '}
+                                                due)
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
+                                {selectedStudent &&
+                                    selectedStudent.invoices.length === 0 && (
+                                        <p className="text-[11px] text-muted-foreground">
+                                            This student has no outstanding
+                                            invoices.
+                                        </p>
+                                    )}
+                                {errors.invoice_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.invoice_id}
                                     </p>
                                 )}
                             </div>
@@ -498,6 +589,14 @@ export default function AdminFinancePayments({
                                     className="text-xs"
                                     required
                                 />
+                                {selectedInvoice && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Remaining invoice balance:{' '}
+                                        {formatCurrency(
+                                            selectedInvoice.balance,
+                                        )}
+                                    </p>
+                                )}
                                 {errors.amount && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.amount}
@@ -617,4 +716,10 @@ export default function AdminFinancePayments({
     );
 }
 
-AdminFinancePayments.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_payments', href: '/admin/finance/payments' }] };
+AdminFinancePayments.layout = {
+    breadcrumbs: [
+        { title: 'breadcrumb_dashboard', href: '/admin/dashboard' },
+        { title: 'breadcrumb_finance', href: '/admin/finance' },
+        { title: 'breadcrumb_payments', href: '/admin/finance/payments' },
+    ],
+};

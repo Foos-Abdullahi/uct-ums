@@ -10,10 +10,11 @@ import {
     Eye,
     Loader2,
     Plus,
+    CalendarRange,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -32,7 +33,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { BreadcrumbItem } from '@/types';
 
 export interface StudentFeeRecord {
     id: number;
@@ -83,7 +83,12 @@ interface AdminFinanceFeesProps {
         id: number;
         matric_no: string;
         name: string;
+        program_id: number | null;
+        academic_year: string | null;
+        current_semester: number;
+        enrollment_status: string;
     }>;
+    academic_years: string[];
     filters: {
         search: string;
         program_id: string;
@@ -97,10 +102,12 @@ export default function AdminFinanceFees({
     students,
     programs = [],
     recording_students: recordingStudents = [],
+    academic_years: academicYears = [],
     filters,
 }: AdminFinanceFeesProps) {
     const { t } = useTranslation();
     const [recordFeeOpen, setRecordFeeOpen] = useState(false);
+    const [semesterFeeOpen, setSemesterFeeOpen] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         student_id: '',
         title: '',
@@ -108,12 +115,16 @@ export default function AdminFinanceFees({
         amount: '',
         due_date: '',
     });
-
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_finance'), href: '/admin/finance' },
-        { title: t('breadcrumb_fees'), href: '/admin/finance/fees' },
-    ];
+    const currentYear = new Date().getFullYear();
+    const semesterFeeForm = useForm({
+        academic_year: academicYears[0] ?? `${currentYear}/${currentYear + 1}`,
+        semester: '1',
+        program_id: '',
+        title: 'Tuition Fee',
+        type: 'tuition',
+        amount: '450.00',
+        due_date: '',
+    });
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -173,6 +184,30 @@ export default function AdminFinanceFees({
             },
             onError: () => {
                 toast.error('Please correct the highlighted fee details.');
+            },
+        });
+    };
+
+    const matchingSemesterStudents = recordingStudents.filter(
+        (student) =>
+            student.enrollment_status === 'enrolled' &&
+            student.academic_year === semesterFeeForm.data.academic_year &&
+            student.current_semester ===
+                Number(semesterFeeForm.data.semester) &&
+            (semesterFeeForm.data.program_id === '' ||
+                student.program_id === Number(semesterFeeForm.data.program_id)),
+    );
+
+    const handleAssignSemesterFee = (event: React.FormEvent) => {
+        event.preventDefault();
+
+        semesterFeeForm.post('/admin/finance/fees/semester', {
+            onSuccess: () => {
+                setSemesterFeeOpen(false);
+                toast.success('Semester fee assignment completed.');
+            },
+            onError: () => {
+                toast.error('Please correct the highlighted details.');
             },
         });
     };
@@ -350,6 +385,14 @@ export default function AdminFinanceFees({
 
                     <div className="flex items-center gap-2">
                         <Button
+                            size="sm"
+                            onClick={() => setSemesterFeeOpen(true)}
+                        >
+                            <CalendarRange className="mr-1.5 h-4 w-4" />
+                            Assign semester fee
+                        </Button>
+                        <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setRecordFeeOpen(true)}
                         >
@@ -730,6 +773,289 @@ export default function AdminFinanceFees({
                                         <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                                     )}
                                     Record fee
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog
+                    open={semesterFeeOpen}
+                    onOpenChange={setSemesterFeeOpen}
+                >
+                    <DialogContent className="sm:max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="text-base font-semibold">
+                                Assign semester fee
+                            </DialogTitle>
+                            <DialogDescription className="text-xs">
+                                Create the same charge for every enrolled
+                                student matching the academic year, semester,
+                                and optional program. Existing matching charges
+                                are skipped.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form
+                            onSubmit={handleAssignSemesterFee}
+                            className="space-y-4 py-2"
+                        >
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="semester-fee-year"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Academic year
+                                    </Label>
+                                    <Input
+                                        id="semester-fee-year"
+                                        list="academic-year-options"
+                                        placeholder="2026/2027"
+                                        value={
+                                            semesterFeeForm.data.academic_year
+                                        }
+                                        onChange={(event) =>
+                                            semesterFeeForm.setData(
+                                                'academic_year',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    <datalist id="academic-year-options">
+                                        {academicYears.map((year) => (
+                                            <option key={year} value={year} />
+                                        ))}
+                                    </datalist>
+                                    {semesterFeeForm.errors.academic_year && (
+                                        <p className="text-[11px] text-destructive">
+                                            {
+                                                semesterFeeForm.errors
+                                                    .academic_year
+                                            }
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="semester-fee-semester"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Semester
+                                    </Label>
+                                    <select
+                                        id="semester-fee-semester"
+                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                        value={semesterFeeForm.data.semester}
+                                        onChange={(event) =>
+                                            semesterFeeForm.setData(
+                                                'semester',
+                                                event.target.value,
+                                            )
+                                        }
+                                    >
+                                        {Array.from(
+                                            { length: 12 },
+                                            (_, index) => index + 1,
+                                        ).map((semester) => (
+                                            <option
+                                                key={semester}
+                                                value={semester}
+                                            >
+                                                Semester {semester}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="semester-fee-program"
+                                    className="text-xs font-semibold"
+                                >
+                                    Program
+                                </Label>
+                                <select
+                                    id="semester-fee-program"
+                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    value={semesterFeeForm.data.program_id}
+                                    onChange={(event) =>
+                                        semesterFeeForm.setData(
+                                            'program_id',
+                                            event.target.value,
+                                        )
+                                    }
+                                >
+                                    <option value="">
+                                        All programs in this semester
+                                    </option>
+                                    {programs.map((program) => (
+                                        <option
+                                            key={program.id}
+                                            value={program.id}
+                                        >
+                                            {program.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="semester-fee-type"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Fee type
+                                    </Label>
+                                    <select
+                                        id="semester-fee-type"
+                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                        value={semesterFeeForm.data.type}
+                                        onChange={(event) => {
+                                            const type = event.target.value;
+                                            semesterFeeForm.setData(
+                                                (currentData) => ({
+                                                    ...currentData,
+                                                    type,
+                                                    title: `${feeTypeLabels[type]} Fee`,
+                                                }),
+                                            );
+                                        }}
+                                    >
+                                        {Object.entries(feeTypeLabels).map(
+                                            ([value, label]) => (
+                                                <option
+                                                    key={value}
+                                                    value={value}
+                                                >
+                                                    {label}
+                                                </option>
+                                            ),
+                                        )}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label
+                                        htmlFor="semester-fee-amount"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Amount per student ($)
+                                    </Label>
+                                    <Input
+                                        id="semester-fee-amount"
+                                        type="number"
+                                        min="1"
+                                        step="0.01"
+                                        value={semesterFeeForm.data.amount}
+                                        onChange={(event) =>
+                                            semesterFeeForm.setData(
+                                                'amount',
+                                                event.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
+                                    {semesterFeeForm.errors.amount && (
+                                        <p className="text-[11px] text-destructive">
+                                            {semesterFeeForm.errors.amount}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="semester-fee-title"
+                                    className="text-xs font-semibold"
+                                >
+                                    Charge title
+                                </Label>
+                                <Input
+                                    id="semester-fee-title"
+                                    value={semesterFeeForm.data.title}
+                                    onChange={(event) =>
+                                        semesterFeeForm.setData(
+                                            'title',
+                                            event.target.value,
+                                        )
+                                    }
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="semester-fee-due-date"
+                                    className="text-xs font-semibold"
+                                >
+                                    Due date
+                                </Label>
+                                <Input
+                                    id="semester-fee-due-date"
+                                    type="date"
+                                    value={semesterFeeForm.data.due_date}
+                                    onChange={(event) =>
+                                        semesterFeeForm.setData(
+                                            'due_date',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                            </div>
+
+                            <div
+                                className={`rounded-md border p-3 text-xs ${
+                                    matchingSemesterStudents.length > 0
+                                        ? 'border-primary/30 bg-primary/5'
+                                        : 'border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/20'
+                                }`}
+                            >
+                                <p className="font-semibold">
+                                    {matchingSemesterStudents.length} enrolled
+                                    students will receive this charge
+                                </p>
+                                {matchingSemesterStudents.length > 0 && (
+                                    <p className="mt-1 text-muted-foreground">
+                                        Total billed:{' '}
+                                        {formatCurrency(
+                                            matchingSemesterStudents.length *
+                                                Number(
+                                                    semesterFeeForm.data
+                                                        .amount || 0,
+                                                ),
+                                        )}
+                                    </p>
+                                )}
+                            </div>
+
+                            <DialogFooter>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={semesterFeeForm.processing}
+                                    onClick={() => setSemesterFeeOpen(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={
+                                        semesterFeeForm.processing ||
+                                        matchingSemesterStudents.length === 0
+                                    }
+                                >
+                                    {semesterFeeForm.processing && (
+                                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                                    )}
+                                    Assign to {matchingSemesterStudents.length}{' '}
+                                    students
                                 </Button>
                             </DialogFooter>
                         </form>
