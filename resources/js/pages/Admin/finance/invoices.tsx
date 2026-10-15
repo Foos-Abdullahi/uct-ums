@@ -512,6 +512,13 @@ export default function AdminFinanceInvoices({
                             <DataTable
                                 title={t('invoices_list_label')}
                                 searchTitle={t('search_invoices')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={invoices.data}
                                 pagination={{

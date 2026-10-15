@@ -38,6 +38,8 @@ interface DataTableProps<TData, TValue> {
     title: string;
     searchTitle: string;
     searchable?: boolean;
+    searchValue?: string;
+    onSearchChange?: (search: string) => void;
     hidePagination?: boolean | true;
     hideFilter?: boolean;
     showToolbarOnly?: boolean;
@@ -78,6 +80,8 @@ export function DataTable<TData, TValue>({
     hideFilter,
     showToolbarOnly,
     searchable = true,
+    searchValue = '',
+    onSearchChange,
     onDeleteSelected,
     viewMode,
     onViewModeChange,
@@ -100,8 +104,22 @@ export function DataTable<TData, TValue>({
         React.useState<VisibilityState>({});
     const [columnFilters, setColumnFilters] =
         React.useState<ColumnFiltersState>([]);
-    const [globalFilter, setGlobalFilter] = React.useState('');
+    const [globalFilter, setGlobalFilter] = React.useState(searchValue);
     const [sorting, setSorting] = React.useState<SortingState>([]);
+
+    useEffect(() => {
+        setGlobalFilter(searchValue);
+    }, [searchValue]);
+
+    useEffect(() => {
+        if (!onSearchChange || globalFilter === searchValue) {
+            return;
+        }
+
+        const timeout = setTimeout(() => onSearchChange(globalFilter), 300);
+
+        return () => clearTimeout(timeout);
+    }, [globalFilter, searchValue, onSearchChange]);
 
     // Function to reset row selection
     const resetRowSelection = () => {
@@ -130,6 +148,7 @@ export function DataTable<TData, TValue>({
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
+        manualFiltering: Boolean(onSearchChange),
         onColumnVisibilityChange: setColumnVisibility,
         globalFilterFn: (row, _columnId, filterValue) => {
             const search = String(filterValue ?? '')

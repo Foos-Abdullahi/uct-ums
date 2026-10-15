@@ -118,7 +118,11 @@ export function DataTableToolbar<TData>({
         const columnId = columnToFilter();
         const column = table.getColumn(columnId);
 
-        return (column?.getFilterValue() as string) ?? '';
+        return (
+            (table.getState().globalFilter as string) ??
+            (column?.getFilterValue() as string) ??
+            ''
+        );
     });
 
     const selectedRows = table.getFilteredSelectedRowModel().rows;

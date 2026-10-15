@@ -292,6 +292,7 @@ class FinanceController extends Controller
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('invoice_no', 'like', "%{$search}%")
+                        ->orWhere('student_id', $search)
                         ->orWhere('title', 'like', "%{$search}%")
                         ->orWhereHas('student.user', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
                         ->orWhereHas('student', fn ($s) => $s->where('matric_no', 'like', "%{$search}%"));
