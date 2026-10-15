@@ -23,7 +23,7 @@ class StoreSemesterFeeRequest extends FormRequest
     {
         return [
             'academic_year' => ['required', 'string', 'max:20', 'regex:/^\d{4}\/\d{4}$/'],
-            'semester' => ['required', 'integer', 'min:1', 'max:12'],
+            'semester' => ['required', 'integer', 'min:1', 'max:'.config('academic.total_semesters')],
             'program_id' => ['nullable', 'integer', 'exists:programs,id'],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:tuition,registration,exam,lab,library,graduation,hostel,other'],

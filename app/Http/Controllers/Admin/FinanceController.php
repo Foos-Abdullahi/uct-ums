@@ -128,7 +128,6 @@ class FinanceController extends Controller
                 'matric_no' => $student->matric_no,
                 'name' => $student->user?->name ?? 'Unknown',
                 'program_id' => $student->program_id,
-                'academic_year' => $student->academic_year,
                 'current_semester' => $student->current_semester,
                 'enrollment_status' => $student->enrollment_status,
             ]);
@@ -149,6 +148,7 @@ class FinanceController extends Controller
                 ->distinct()
                 ->orderByDesc('academic_year')
                 ->pluck('academic_year'),
+            'available_semesters' => range(1, (int) config('academic.total_semesters')),
             'filters' => [
                 'search' => $search ?? '',
                 'program_id' => $programId ?? 'all',

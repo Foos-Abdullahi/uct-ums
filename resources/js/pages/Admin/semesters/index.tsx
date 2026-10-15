@@ -7,6 +7,13 @@ import { MetricCard } from '@/components/tools/MetricCard';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { BreadcrumbItem } from '@/types';
 
 export interface SemesterCourse {
@@ -87,20 +94,27 @@ export default function AdminSemestersIndex({
 
                     <div className="flex items-center gap-2">
                         {/* Program Filter */}
-                        <select
-                            className="h-8 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                        <Select
                             value={filters.program_id || 'all'}
-                            onChange={(e) =>
-                                handleProgramChange(e.target.value)
-                            }
+                            onValueChange={handleProgramChange}
                         >
-                            <option value="all">{t('all_programs_semesters')}</option>
-                            {programs.map((p) => (
-                                <option key={p.id} value={String(p.id)}>
-                                    {p.name}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger size="sm" className="w-56">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    {t('all_programs_semesters')}
+                                </SelectItem>
+                                {programs.map((program) => (
+                                    <SelectItem
+                                        key={program.id}
+                                        value={String(program.id)}
+                                    >
+                                        {program.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
 
                         <Button variant="outline" size="sm" asChild>
                             <Link href="/admin/courses">

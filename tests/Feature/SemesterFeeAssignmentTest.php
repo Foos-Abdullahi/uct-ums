@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\StudentInvoice;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->seed(RolePermissionSeeder::class);
@@ -97,6 +98,64 @@ test('semester fee can target all programs in the selected semester', function (
     ])->assertSessionHas('success');
 
     expect(StudentInvoice::where('semester', 4)->where('type', 'exam')->count())->toBe(2);
+});
+
+test('student semester eligibility does not depend on the stored academic year', function () {
+    $student = Student::factory()->create([
+        'academic_year' => null,
+        'current_semester' => 5,
+        'enrollment_status' => 'enrolled',
+    ]);
+
+    $this->post(route('admin.finance.fees.semester.store'), [
+        'academic_year' => '2026/2027',
+        'semester' => 5,
+        'title' => 'Semester 5 Tuition Fee',
+        'type' => 'tuition',
+        'amount' => 450,
+    ])->assertSessionHas('success');
+
+    $invoice = StudentInvoice::whereBelongsTo($student)->sole();
+
+    expect($invoice->academic_year)->toBe('2026/2027')
+        ->and($invoice->semester)->toBe(5);
+});
+
+test('semester fee rejects semester numbers outside the configured structure', function () {
+    $this->post(route('admin.finance.fees.semester.store'), [
+        'academic_year' => '2026/2027',
+        'semester' => 9,
+        'title' => 'Invalid Semester Fee',
+        'type' => 'tuition',
+        'amount' => 450,
+    ])->assertSessionHasErrors('semester');
+});
+
+test('finance and semester pages use the configured eight semester structure', function () {
+    $this->get(route('admin.finance.fees'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/finance/fees')
+            ->where('available_semesters', range(1, 8)));
+
+    $this->get(route('admin.semesters.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/semesters/index')
+            ->has('semesters', 8));
+});
+
+test('semester page student counts match fee assignment eligibility', function () {
+    Student::factory()->create([
+        'current_semester' => 2,
+        'enrollment_status' => 'enrolled',
+    ]);
+    Student::factory()->suspended()->create([
+        'current_semester' => 2,
+    ]);
+
+    $this->get(route('admin.semesters.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('semesters.1.semester_number', 2)
+            ->where('semesters.1.students_count', 1));
 });
 
 test('semester fee validates its academic context', function () {

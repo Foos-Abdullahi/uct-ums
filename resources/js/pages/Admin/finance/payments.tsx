@@ -32,6 +32,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface PaymentItem {
     id: number;
@@ -478,29 +485,34 @@ export default function AdminFinancePayments({
                                     {t('student')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="student_id"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
-                                    value={data.student_id}
-                                    onChange={(e) => {
+                                <Select
+                                    value={data.student_id || undefined}
+                                    onValueChange={(value) => {
                                         setData((currentData) => ({
                                             ...currentData,
-                                            student_id: e.target.value,
+                                            student_id: value,
                                             invoice_id: '',
                                             amount: '',
                                         }));
                                     }}
-                                    required
                                 >
-                                    <option value="">
-                                        {t('select_student')}
-                                    </option>
-                                    {students.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name} ({s.matric_no})
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger id="student_id" size="sm">
+                                        <SelectValue
+                                            placeholder={t('select_student')}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {students.map((student) => (
+                                            <SelectItem
+                                                key={student.id}
+                                                value={String(student.id)}
+                                            >
+                                                {student.name} (
+                                                {student.matric_no})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.student_id && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.student_id}
@@ -515,46 +527,53 @@ export default function AdminFinancePayments({
                                 >
                                     Apply to invoice
                                 </Label>
-                                <select
-                                    id="invoice_id"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                    value={data.invoice_id}
+                                <Select
+                                    value={data.invoice_id || 'unallocated'}
                                     disabled={!selectedStudent}
-                                    onChange={(e) => {
+                                    onValueChange={(value) => {
+                                        const invoiceId =
+                                            value === 'unallocated'
+                                                ? ''
+                                                : value;
                                         const invoice =
                                             selectedStudent?.invoices.find(
                                                 (item) =>
                                                     item.id ===
-                                                    Number(e.target.value),
+                                                    Number(invoiceId),
                                             );
                                         setData((currentData) => ({
                                             ...currentData,
-                                            invoice_id: e.target.value,
+                                            invoice_id: invoiceId,
                                             amount: invoice
                                                 ? String(invoice.balance)
                                                 : currentData.amount,
                                         }));
                                     }}
                                 >
-                                    <option value="">
-                                        Unallocated payment
-                                    </option>
-                                    {selectedStudent?.invoices.map(
-                                        (invoice) => (
-                                            <option
-                                                key={invoice.id}
-                                                value={invoice.id}
-                                            >
-                                                {invoice.invoice_no} —{' '}
-                                                {invoice.title} (
-                                                {formatCurrency(
-                                                    invoice.balance,
-                                                )}{' '}
-                                                due)
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
+                                    <SelectTrigger id="invoice_id" size="sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="unallocated">
+                                            Unallocated payment
+                                        </SelectItem>
+                                        {selectedStudent?.invoices.map(
+                                            (invoice) => (
+                                                <SelectItem
+                                                    key={invoice.id}
+                                                    value={String(invoice.id)}
+                                                >
+                                                    {invoice.invoice_no} —{' '}
+                                                    {invoice.title} (
+                                                    {formatCurrency(
+                                                        invoice.balance,
+                                                    )}{' '}
+                                                    due)
+                                                </SelectItem>
+                                            ),
+                                        )}
+                                    </SelectContent>
+                                </Select>
                                 {selectedStudent &&
                                     selectedStudent.invoices.length === 0 && (
                                         <p className="text-[11px] text-muted-foreground">
@@ -615,33 +634,39 @@ export default function AdminFinancePayments({
                                             *
                                         </span>
                                     </Label>
-                                    <select
-                                        id="payment_method"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={data.payment_method}
-                                        onChange={(e) =>
-                                            setData(
-                                                'payment_method',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('payment_method', value)
                                         }
-                                        required
                                     >
-                                        <option value="bank_transfer">
-                                            Bank Transfer
-                                        </option>
-                                        <option value="cash">Cash</option>
-                                        <option value="evc_plus">
-                                            EVC Plus
-                                        </option>
-                                        <option value="zaad">
-                                            Zaad Service
-                                        </option>
-                                        <option value="sahay">Sahay</option>
-                                        <option value="credit_card">
-                                            Credit / Debit Card
-                                        </option>
-                                    </select>
+                                        <SelectTrigger
+                                            id="payment_method"
+                                            size="sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="bank_transfer">
+                                                Bank Transfer
+                                            </SelectItem>
+                                            <SelectItem value="cash">
+                                                Cash
+                                            </SelectItem>
+                                            <SelectItem value="evc_plus">
+                                                EVC Plus
+                                            </SelectItem>
+                                            <SelectItem value="zaad">
+                                                Zaad Service
+                                            </SelectItem>
+                                            <SelectItem value="sahay">
+                                                Sahay
+                                            </SelectItem>
+                                            <SelectItem value="credit_card">
+                                                Credit / Debit Card
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-1.5">

@@ -33,6 +33,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface StudentFeeRecord {
     id: number;
@@ -84,11 +91,11 @@ interface AdminFinanceFeesProps {
         matric_no: string;
         name: string;
         program_id: number | null;
-        academic_year: string | null;
         current_semester: number;
         enrollment_status: string;
     }>;
     academic_years: string[];
+    available_semesters: number[];
     filters: {
         search: string;
         program_id: string;
@@ -103,6 +110,7 @@ export default function AdminFinanceFees({
     programs = [],
     recording_students: recordingStudents = [],
     academic_years: academicYears = [],
+    available_semesters: availableSemesters = [],
     filters,
 }: AdminFinanceFeesProps) {
     const { t } = useTranslation();
@@ -125,6 +133,9 @@ export default function AdminFinanceFees({
         amount: '450.00',
         due_date: '',
     });
+    const academicYearOptions = Array.from(
+        new Set([semesterFeeForm.data.academic_year, ...academicYears]),
+    ).filter(Boolean);
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -191,7 +202,6 @@ export default function AdminFinanceFees({
     const matchingSemesterStudents = recordingStudents.filter(
         (student) =>
             student.enrollment_status === 'enrolled' &&
-            student.academic_year === semesterFeeForm.data.academic_year &&
             student.current_semester ===
                 Number(semesterFeeForm.data.semester) &&
             (semesterFeeForm.data.program_id === '' ||
@@ -609,28 +619,30 @@ export default function AdminFinanceFees({
                                     Student{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="record-fee-student"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
-                                    value={data.student_id}
-                                    onChange={(event) =>
-                                        setData(
-                                            'student_id',
-                                            event.target.value,
-                                        )
+                                <Select
+                                    value={data.student_id || undefined}
+                                    onValueChange={(value) =>
+                                        setData('student_id', value)
                                     }
-                                    required
                                 >
-                                    <option value="">Select student</option>
-                                    {recordingStudents.map((student) => (
-                                        <option
-                                            key={student.id}
-                                            value={student.id}
-                                        >
-                                            {student.name} ({student.matric_no})
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger
+                                        id="record-fee-student"
+                                        size="sm"
+                                    >
+                                        <SelectValue placeholder="Select student" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {recordingStudents.map((student) => (
+                                            <SelectItem
+                                                key={student.id}
+                                                value={String(student.id)}
+                                            >
+                                                {student.name} (
+                                                {student.matric_no})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.student_id && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.student_id}
@@ -649,27 +661,29 @@ export default function AdminFinanceFees({
                                             *
                                         </span>
                                     </Label>
-                                    <select
-                                        id="record-fee-type"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={data.type}
-                                        onChange={(event) =>
-                                            handleFeeTypeChange(
-                                                event.target.value,
-                                            )
-                                        }
+                                        onValueChange={handleFeeTypeChange}
                                     >
-                                        {Object.entries(feeTypeLabels).map(
-                                            ([value, label]) => (
-                                                <option
-                                                    key={value}
-                                                    value={value}
-                                                >
-                                                    {label}
-                                                </option>
-                                            ),
-                                        )}
-                                    </select>
+                                        <SelectTrigger
+                                            id="record-fee-type"
+                                            size="sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.entries(feeTypeLabels).map(
+                                                ([value, label]) => (
+                                                    <SelectItem
+                                                        key={value}
+                                                        value={value}
+                                                    >
+                                                        {label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
                                     {errors.type && (
                                         <p className="text-[11px] text-destructive">
                                             {errors.type}
@@ -808,26 +822,34 @@ export default function AdminFinanceFees({
                                     >
                                         Academic year
                                     </Label>
-                                    <Input
-                                        id="semester-fee-year"
-                                        list="academic-year-options"
-                                        placeholder="2026/2027"
+                                    <Select
                                         value={
                                             semesterFeeForm.data.academic_year
                                         }
-                                        onChange={(event) =>
+                                        onValueChange={(value) =>
                                             semesterFeeForm.setData(
                                                 'academic_year',
-                                                event.target.value,
+                                                value,
                                             )
                                         }
-                                        required
-                                    />
-                                    <datalist id="academic-year-options">
-                                        {academicYears.map((year) => (
-                                            <option key={year} value={year} />
-                                        ))}
-                                    </datalist>
+                                    >
+                                        <SelectTrigger
+                                            id="semester-fee-year"
+                                            size="sm"
+                                        >
+                                            <SelectValue placeholder="Select academic year" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {academicYearOptions.map((year) => (
+                                                <SelectItem
+                                                    key={year}
+                                                    value={year}
+                                                >
+                                                    {year}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     {semesterFeeForm.errors.academic_year && (
                                         <p className="text-[11px] text-destructive">
                                             {
@@ -845,29 +867,34 @@ export default function AdminFinanceFees({
                                     >
                                         Semester
                                     </Label>
-                                    <select
-                                        id="semester-fee-semester"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={semesterFeeForm.data.semester}
-                                        onChange={(event) =>
+                                        onValueChange={(value) =>
                                             semesterFeeForm.setData(
                                                 'semester',
-                                                event.target.value,
+                                                value,
                                             )
                                         }
                                     >
-                                        {Array.from(
-                                            { length: 12 },
-                                            (_, index) => index + 1,
-                                        ).map((semester) => (
-                                            <option
-                                                key={semester}
-                                                value={semester}
-                                            >
-                                                Semester {semester}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <SelectTrigger
+                                            id="semester-fee-semester"
+                                            size="sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableSemesters.map(
+                                                (semester) => (
+                                                    <SelectItem
+                                                        key={semester}
+                                                        value={String(semester)}
+                                                    >
+                                                        Semester {semester}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
@@ -878,29 +905,37 @@ export default function AdminFinanceFees({
                                 >
                                     Program
                                 </Label>
-                                <select
-                                    id="semester-fee-program"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
-                                    value={semesterFeeForm.data.program_id}
-                                    onChange={(event) =>
+                                <Select
+                                    value={
+                                        semesterFeeForm.data.program_id || 'all'
+                                    }
+                                    onValueChange={(value) =>
                                         semesterFeeForm.setData(
                                             'program_id',
-                                            event.target.value,
+                                            value === 'all' ? '' : value,
                                         )
                                     }
                                 >
-                                    <option value="">
-                                        All programs in this semester
-                                    </option>
-                                    {programs.map((program) => (
-                                        <option
-                                            key={program.id}
-                                            value={program.id}
-                                        >
-                                            {program.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger
+                                        id="semester-fee-program"
+                                        size="sm"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            All programs in this semester
+                                        </SelectItem>
+                                        {programs.map((program) => (
+                                            <SelectItem
+                                                key={program.id}
+                                                value={String(program.id)}
+                                            >
+                                                {program.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -911,12 +946,9 @@ export default function AdminFinanceFees({
                                     >
                                         Fee type
                                     </Label>
-                                    <select
-                                        id="semester-fee-type"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={semesterFeeForm.data.type}
-                                        onChange={(event) => {
-                                            const type = event.target.value;
+                                        onValueChange={(type) => {
                                             semesterFeeForm.setData(
                                                 (currentData) => ({
                                                     ...currentData,
@@ -926,17 +958,25 @@ export default function AdminFinanceFees({
                                             );
                                         }}
                                     >
-                                        {Object.entries(feeTypeLabels).map(
-                                            ([value, label]) => (
-                                                <option
-                                                    key={value}
-                                                    value={value}
-                                                >
-                                                    {label}
-                                                </option>
-                                            ),
-                                        )}
-                                    </select>
+                                        <SelectTrigger
+                                            id="semester-fee-type"
+                                            size="sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.entries(feeTypeLabels).map(
+                                                ([value, label]) => (
+                                                    <SelectItem
+                                                        key={value}
+                                                        value={value}
+                                                    >
+                                                        {label}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-1.5">

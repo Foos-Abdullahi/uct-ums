@@ -35,6 +35,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface InvoiceItem {
     id: number;
@@ -587,24 +594,29 @@ export default function AdminFinanceInvoices({
                                     {t('student')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="student_id"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
-                                    value={data.student_id}
-                                    onChange={(e) =>
-                                        setData('student_id', e.target.value)
+                                <Select
+                                    value={data.student_id || undefined}
+                                    onValueChange={(value) =>
+                                        setData('student_id', value)
                                     }
-                                    required
                                 >
-                                    <option value="">
-                                        {t('select_student')}
-                                    </option>
-                                    {students.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name} ({s.matric_no})
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger id="student_id" size="sm">
+                                        <SelectValue
+                                            placeholder={t('select_student')}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {students.map((student) => (
+                                            <SelectItem
+                                                key={student.id}
+                                                value={String(student.id)}
+                                            >
+                                                {student.name} (
+                                                {student.matric_no})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.student_id && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.student_id}
@@ -648,37 +660,51 @@ export default function AdminFinanceInvoices({
                                             *
                                         </span>
                                     </Label>
-                                    <select
-                                        id="type"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={data.type}
-                                        onChange={(e) =>
-                                            setData('type', e.target.value)
+                                        onValueChange={(value) =>
+                                            setData('type', value)
                                         }
-                                        required
                                     >
-                                        <option value="tuition">Tuition</option>
-                                        <option value="registration">
-                                            Registration
-                                        </option>
-                                        <option value="admission">
-                                            Admission
-                                        </option>
-                                        <option value="exam">Exam</option>
-                                        <option value="examination">
-                                            Examination
-                                        </option>
-                                        <option value="lab">Lab</option>
-                                        <option value="laboratory">
-                                            Laboratory
-                                        </option>
-                                        <option value="library">Library</option>
-                                        <option value="graduation">
-                                            Graduation
-                                        </option>
-                                        <option value="hostel">Hostel</option>
-                                        <option value="other">Other</option>
-                                    </select>
+                                        <SelectTrigger id="type" size="sm">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="tuition">
+                                                Tuition
+                                            </SelectItem>
+                                            <SelectItem value="registration">
+                                                Registration
+                                            </SelectItem>
+                                            <SelectItem value="admission">
+                                                Admission
+                                            </SelectItem>
+                                            <SelectItem value="exam">
+                                                Exam
+                                            </SelectItem>
+                                            <SelectItem value="examination">
+                                                Examination
+                                            </SelectItem>
+                                            <SelectItem value="lab">
+                                                Lab
+                                            </SelectItem>
+                                            <SelectItem value="laboratory">
+                                                Laboratory
+                                            </SelectItem>
+                                            <SelectItem value="library">
+                                                Library
+                                            </SelectItem>
+                                            <SelectItem value="graduation">
+                                                Graduation
+                                            </SelectItem>
+                                            <SelectItem value="hostel">
+                                                Hostel
+                                            </SelectItem>
+                                            <SelectItem value="other">
+                                                Other
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-1.5">

@@ -31,6 +31,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { BreadcrumbItem } from '@/types';
 
 interface InvoiceItem {
@@ -693,36 +700,54 @@ export default function AdminInvoiceDetails({
                                     >
                                         Fee Type
                                     </Label>
-                                    <select
-                                        id="edit_type"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={data.type}
-                                        onChange={(e) =>
-                                            setData('type', e.target.value)
+                                        onValueChange={(value) =>
+                                            setData('type', value)
                                         }
                                     >
-                                        <option value="tuition">Tuition</option>
-                                        <option value="registration">
-                                            Registration
-                                        </option>
-                                        <option value="admission">
-                                            Admission
-                                        </option>
-                                        <option value="exam">Exam</option>
-                                        <option value="examination">
-                                            Examination
-                                        </option>
-                                        <option value="lab">Lab</option>
-                                        <option value="laboratory">
-                                            Laboratory
-                                        </option>
-                                        <option value="library">Library</option>
-                                        <option value="graduation">
-                                            Graduation
-                                        </option>
-                                        <option value="hostel">Hostel</option>
-                                        <option value="other">Other</option>
-                                    </select>
+                                        <SelectTrigger
+                                            id="edit_type"
+                                            className="w-full text-xs"
+                                        >
+                                            <SelectValue placeholder="Select fee type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="tuition">
+                                                Tuition
+                                            </SelectItem>
+                                            <SelectItem value="registration">
+                                                Registration
+                                            </SelectItem>
+                                            <SelectItem value="admission">
+                                                Admission
+                                            </SelectItem>
+                                            <SelectItem value="exam">
+                                                Exam
+                                            </SelectItem>
+                                            <SelectItem value="examination">
+                                                Examination
+                                            </SelectItem>
+                                            <SelectItem value="lab">
+                                                Lab
+                                            </SelectItem>
+                                            <SelectItem value="laboratory">
+                                                Laboratory
+                                            </SelectItem>
+                                            <SelectItem value="library">
+                                                Library
+                                            </SelectItem>
+                                            <SelectItem value="graduation">
+                                                Graduation
+                                            </SelectItem>
+                                            <SelectItem value="hostel">
+                                                Hostel
+                                            </SelectItem>
+                                            <SelectItem value="other">
+                                                Other
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
@@ -778,18 +803,30 @@ export default function AdminInvoiceDetails({
                                     >
                                         Status
                                     </Label>
-                                    <select
-                                        id="edit_status"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={data.status}
-                                        onChange={(e) =>
-                                            setData('status', e.target.value)
+                                        onValueChange={(value) =>
+                                            setData('status', value)
                                         }
                                     >
-                                        <option value="unpaid">Unpaid</option>
-                                        <option value="partial">Partial</option>
-                                        <option value="paid">Paid</option>
-                                    </select>
+                                        <SelectTrigger
+                                            id="edit_status"
+                                            className="w-full text-xs"
+                                        >
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="unpaid">
+                                                Unpaid
+                                            </SelectItem>
+                                            <SelectItem value="partial">
+                                                Partial
+                                            </SelectItem>
+                                            <SelectItem value="paid">
+                                                Paid
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 

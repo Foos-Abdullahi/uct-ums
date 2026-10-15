@@ -282,7 +282,7 @@ class StudentImport implements ToArray
             'matric_no' => ['nullable', 'string', 'max:50', 'unique:students,matric_no'],
             'program' => ['required', 'string'],
             'academic_year' => ['nullable', 'string', 'max:20'],
-            'current_semester' => ['nullable', 'integer', 'min:1', 'max:12'],
+            'current_semester' => ['nullable', 'integer', 'min:1', 'max:'.config('academic.total_semesters')],
             'phone' => ['nullable', 'string', 'max:30'],
             'gender' => ['nullable', 'string', 'in:Male,Female,Other'],
             'date_of_birth' => ['nullable', 'date'],

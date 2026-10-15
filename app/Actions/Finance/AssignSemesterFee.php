@@ -18,7 +18,6 @@ class AssignSemesterFee
     {
         $eligibleStudents = Student::query()
             ->where('enrollment_status', 'enrolled')
-            ->where('academic_year', $data['academic_year'])
             ->where('current_semester', $data['semester'])
             ->when(
                 $data['program_id'] ?? null,

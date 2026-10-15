@@ -145,6 +145,18 @@ test('import reports failed rows with their errors', function () {
     $this->assertDatabaseMissing('users', ['email' => 'missing-name@example.com']);
 });
 
+test('student import rejects semester numbers above eight', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create();
+
+    $rows = [['Future Student', 'future.student@example.com', '', '', $program->name, '9', '', '', '', '', '', '', '', '', '']];
+
+    $this->post(route('admin.students.import'), ['file' => makeStudentImportFile($rows)])
+        ->assertOk()
+        ->assertJson(['imported' => 0, 'failed' => 1]);
+});
+
 test('import requires an xlsx file', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
@@ -664,6 +676,20 @@ test('admin can add a grade record for a student', function () {
         'course_code' => 'CS101',
         'grade' => 'A',
     ]);
+});
+
+test('admin cannot add a grade outside the eight semester structure', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $student = Student::factory()->create();
+
+    $this->post(route('admin.students.grades.store', $student), [
+        'course_name' => 'Future Course',
+        'course_code' => 'FUT901',
+        'semester' => 9,
+        'credits' => 3,
+        'status' => 'in_progress',
+    ])->assertSessionHasErrors('semester');
 });
 
 test('admin can delete a grade record', function () {
