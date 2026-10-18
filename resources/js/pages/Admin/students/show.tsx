@@ -166,7 +166,7 @@ export default function AdminStudentsShow({
 
     const handlePaymentStatusChange = (
         paymentId: number,
-        status: 'approved' | 'rejected',
+        status: 'paid' | 'rejected',
     ) => {
         if (paymentBusy !== null) {
             return;
@@ -181,7 +181,7 @@ export default function AdminStudentsShow({
                 onSuccess: () => {
                     setPaymentBusy(null);
                     toast.success(
-                        `Payment ${status === 'approved' ? 'approved' : 'rejected'}.`,
+                        `Payment ${status === 'paid' ? 'paid' : 'rejected'}.`,
                     );
                 },
                 onError: () => {
@@ -368,14 +368,14 @@ export default function AdminStudentsShow({
     ];
 
     const renderPaymentStatusBadge = (status: string) => {
-        if (status === 'approved') {
+        if (status === 'paid') {
             return (
                 <Badge
                     variant="outline"
                     className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 >
                     <Check className="mr-1 h-3 w-3" />
-                    Approved
+                    Paid
                 </Badge>
             );
         }
@@ -473,7 +473,7 @@ export default function AdminStudentsShow({
                                         e.stopPropagation();
                                         handlePaymentStatusChange(
                                             row.original.id,
-                                            'approved',
+                                            'paid',
                                         );
                                     }}
                                 >
@@ -482,7 +482,7 @@ export default function AdminStudentsShow({
                                     ) : (
                                         <Check className="mr-1 h-3 w-3" />
                                     )}
-                                    Approve
+                                    Mark Paid
                                 </Button>
                                 <Button
                                     size="sm"

@@ -432,7 +432,7 @@ test('admin can view a student profile page', function () {
     $this->actingAs($admin);
     $student = Student::factory()->create();
     $invoice = StudentInvoice::factory()->create(['student_id' => $student->id]);
-    StudentPayment::factory()->approved()->create([
+    StudentPayment::factory()->paid()->create([
         'student_id' => $student->id,
         'invoice_id' => $invoice->id,
     ]);
@@ -600,7 +600,7 @@ test('admin can record a student payment', function () {
         ->and($invoice->status)->toBe('partial');
 });
 
-test('a pending payment is not applied to the invoice until approved', function () {
+test('a pending payment is not applied to the invoice until paid', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
     $student = Student::factory()->create();
@@ -628,7 +628,7 @@ test('a pending payment is not applied to the invoice until approved', function 
         ->and($invoice->status)->toBe('unpaid');
 });
 
-test('admin can approve a pending payment', function () {
+test('admin can mark a pending payment as paid', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
     $student = Student::factory()->create();
@@ -642,14 +642,17 @@ test('admin can approve a pending payment', function () {
     $response = $this->patch(route('admin.students.payments.status', [
         'student' => $student->id,
         'payment' => $payment->id,
-    ]), ['status' => 'approved']);
+    ]), ['status' => 'paid']);
 
     $response->assertRedirect();
 
     $this->assertDatabaseHas('student_payments', [
         'id' => $payment->id,
-        'status' => 'approved',
+        'status' => 'paid',
     ]);
+
+    expect($invoice->fresh()->paid_amount)->toBe('1000.00')
+        ->and($invoice->fresh()->status)->toBe('paid');
 });
 
 // ─── Grades ───────────────────────────────────────────────────────────────────

@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Models\Student;
 use App\Models\StudentPayment;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,17 +24,17 @@ class StudentPaymentFactory extends Factory
             'invoice_id' => null,
             'transaction_no' => 'TXN-'.strtoupper(Str::random(8)),
             'amount' => fake()->randomFloat(2, 100, 1500),
-            'payment_method' => fake()->randomElement(['cash', 'bank_transfer', 'card']),
+            'payment_method' => fake()->randomElement(PaymentMethod::values()),
             'payment_date' => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
-            'status' => 'pending',
+            'status' => PaymentStatus::Pending->value,
             'notes' => null,
         ];
     }
 
-    public function approved(): static
+    public function paid(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'approved',
+            'status' => PaymentStatus::Paid->value,
         ]);
     }
 }

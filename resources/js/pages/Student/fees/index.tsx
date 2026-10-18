@@ -70,7 +70,7 @@ const invoiceStatusVariant = (status: string) => {
 };
 
 const paymentStatusVariant = (status: string) => {
-    if (status === 'approved') return 'default';
+    if (status === 'paid') return 'default';
     if (status === 'rejected') return 'destructive';
     return 'secondary';
 };

@@ -8,7 +8,7 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::Finance->value])
     ->prefix('finance')
     ->name('finance.')
     ->group(function () {
-        Route::get('dashboard', [FinanceController::class, 'dashboard'])->name('dashboard');
+        Route::redirect('dashboard', '/admin/finance')->name('dashboard');
         Route::inertia('fee-structures', 'finance/fee-structures/index')
             ->middleware('permission:finance.view')->name('fee-structures.index');
         Route::inertia('overrides', 'finance/overrides/index')

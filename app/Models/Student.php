@@ -215,12 +215,12 @@ class Student extends Model
     }
 
     /**
-     * Calculate and sync fee status according to invoices and approved payments.
+     * Calculate and sync fee status from reconciled invoice balances.
      */
     public function recalculateFinancials(): void
     {
         $totalInvoiced = (float) $this->invoices()->sum('amount');
-        $totalPaid = (float) $this->payments()->where('status', 'approved')->sum('amount');
+        $totalPaid = (float) $this->invoices()->sum('paid_amount');
 
         if ($totalInvoiced <= 0) {
             $this->update(['fee_status' => FeeStatus::Paid]);

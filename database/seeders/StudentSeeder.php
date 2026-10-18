@@ -91,7 +91,7 @@ class StudentSeeder extends Seeder
                 'amount' => 1200.00,
                 'payment_method' => 'bank_transfer',
                 'payment_date' => now()->subMonths(5)->addDays(3)->toDateString(),
-                'status' => 'approved',
+                'status' => 'paid',
                 'notes' => 'Full tuition paid via Premier Bank.',
             ],
         );
@@ -115,9 +115,9 @@ class StudentSeeder extends Seeder
                 'student_id' => $student->id,
                 'invoice_id' => $inv2->id,
                 'amount' => 1200.00,
-                'payment_method' => 'card',
+                'payment_method' => 'credit_card',
                 'payment_date' => now()->subDays(10)->toDateString(),
-                'status' => 'approved',
+                'status' => 'paid',
                 'notes' => 'Early bird online payment.',
             ],
         );
@@ -329,7 +329,7 @@ class StudentSeeder extends Seeder
                         'amount' => 600.00,
                         'payment_method' => 'cash',
                         'payment_date' => now()->subDays(15)->toDateString(),
-                        'status' => 'approved',
+                        'status' => 'paid',
                         'notes' => 'Partial cash payment made at finance desk.',
                     ],
                 );

@@ -39,7 +39,7 @@ class DashboardController extends StudentBaseController
 
         // Finance summary
         $totalInvoiced = (float) $student->invoices()->sum('amount');
-        $totalPaid = (float) $student->payments()->where('status', 'approved')->sum('amount');
+        $totalPaid = (float) $student->invoices()->sum('paid_amount');
         $outstandingBalance = max(0, $totalInvoiced - $totalPaid);
 
         // Next due invoice

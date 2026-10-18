@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Actions\Finance\ManageStudentPayment;
 use App\Enums\ExpenseStatus;
 use App\Enums\ExpenseType;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\ExpenseApproval;
@@ -13,6 +15,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -396,35 +399,19 @@ class FinanceController extends Controller
     /**
      * Update payment verification status from the finance portal.
      */
-    public function updatePaymentStatus(Request $request, StudentPayment $payment): RedirectResponse
-    {
+    public function updatePaymentStatus(
+        Request $request,
+        StudentPayment $payment,
+        ManageStudentPayment $manageStudentPayment,
+    ): RedirectResponse {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:paid,pending,rejected'],
+            'status' => ['required', 'string', Rule::in(PaymentStatus::values())],
         ]);
 
-        $oldStatus = $payment->status;
-        $payment->update(['status' => $validated['status']]);
-
-        if ($oldStatus !== 'paid' && $validated['status'] === 'paid' && $payment->invoice_id) {
-            $invoice = $payment->invoice;
-            if ($invoice) {
-                $newPaid = $invoice->paid_amount + $payment->amount;
-                $invoice->update([
-                    'paid_amount' => $newPaid,
-                    'status' => $newPaid >= $invoice->amount ? 'paid' : 'partial',
-                ]);
-            }
-
-            $student = $payment->student;
-            if ($student) {
-                $totalBilled = (float) $student->invoices()->sum('amount');
-                $totalPaid = (float) $student->invoices()->sum('paid_amount');
-                $status = $totalBilled > 0
-                    ? ($totalPaid >= $totalBilled ? 'paid' : ($totalPaid > 0 ? 'partial' : 'unpaid'))
-                    : $student->fee_status;
-                $student->update(['fee_status' => $status]);
-            }
-        }
+        $manageStudentPayment->changeStatus(
+            $payment,
+            PaymentStatus::from($validated['status']),
+        );
 
         return back()->with('success', "Payment {$payment->transaction_no} marked as {$validated['status']}.");
     }

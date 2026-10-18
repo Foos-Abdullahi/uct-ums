@@ -102,7 +102,7 @@ test('invoice selected for payment must belong to the student', function () {
     expect(StudentPayment::count())->toBe(0);
 });
 
-test('pending payment cannot be approved after the invoice balance has been filled', function () {
+test('pending payment cannot be marked paid after the invoice balance has been filled', function () {
     $student = Student::factory()->create();
     $invoice = StudentInvoice::factory()->create([
         'student_id' => $student->id,

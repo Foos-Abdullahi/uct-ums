@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Finance\AssignSemesterFee;
+use App\Actions\Finance\ManageStudentPayment;
 use App\Enums\FeeStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreSemesterFeeRequest;
 use App\Models\Expense;
@@ -16,7 +19,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -245,108 +247,45 @@ class FinanceController extends Controller
     /**
      * Record a new student payment.
      */
-    public function storePayment(Request $request): RedirectResponse
+    public function storePayment(Request $request, ManageStudentPayment $manageStudentPayment): RedirectResponse
     {
         $validated = $request->validate([
             'student_id' => ['required', 'exists:students,id'],
             'invoice_id' => [
-                'nullable',
+                'required',
                 Rule::exists('student_invoices', 'id')->where(
                     fn ($query) => $query->where('student_id', $request->integer('student_id')),
                 ),
             ],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'payment_method' => ['required', 'string', 'in:bank_transfer,cash,evc_plus,zaad,sahay,credit_card'],
+            'payment_method' => ['required', 'string', Rule::in(PaymentMethod::values())],
             'payment_date' => ['required', 'date'],
-            'status' => ['required', 'string', 'in:paid,pending,rejected'],
+            'status' => ['required', 'string', Rule::in(PaymentStatus::values())],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $student = Student::find((int) $validated['student_id']);
-        $transactionNo = 'TXN-'.date('Ymd').'-'.strtoupper(substr(uniqid(), -5));
+        $student = Student::findOrFail((int) $validated['student_id']);
+        $payment = $manageStudentPayment->record($student, $validated);
 
-        $payment = DB::transaction(function () use ($validated, $transactionNo, $student): StudentPayment {
-            $invoice = isset($validated['invoice_id'])
-                ? StudentInvoice::query()->lockForUpdate()->find((int) $validated['invoice_id'])
-                : null;
-
-            if ($invoice && (float) $validated['amount'] > $invoice->balance()) {
-                throw ValidationException::withMessages([
-                    'amount' => 'The payment cannot exceed the selected invoice balance of $'.number_format($invoice->balance(), 2).'.',
-                ]);
-            }
-
-            $payment = StudentPayment::create([
-                ...$validated,
-                'transaction_no' => $transactionNo,
-            ]);
-
-            if ($invoice && $payment->status === 'paid') {
-                $newPaid = (float) $invoice->paid_amount + (float) $payment->amount;
-                $invoice->update([
-                    'paid_amount' => $newPaid,
-                    'status' => $newPaid >= (float) $invoice->amount ? 'paid' : 'partial',
-                ]);
-            }
-
-            if ($student) {
-                $this->refreshStudentFeeStatus($student);
-            }
-
-            return $payment;
-        });
-
-        return back()->with('success', "Payment {$transactionNo} of \${$payment->amount} recorded successfully.");
+        return back()->with('success', "Payment {$payment->transaction_no} of \${$payment->amount} recorded successfully.");
     }
 
     /**
      * Update payment verification status (Approve / Reject).
      */
-    public function updatePaymentStatus(Request $request, StudentPayment $payment): RedirectResponse
-    {
+    public function updatePaymentStatus(
+        Request $request,
+        StudentPayment $payment,
+        ManageStudentPayment $manageStudentPayment,
+    ): RedirectResponse {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:paid,pending,rejected'],
+            'status' => ['required', 'string', Rule::in(PaymentStatus::values())],
         ]);
 
-        $oldStatus = $payment->status;
-        $newStatus = $validated['status'];
+        $newStatus = PaymentStatus::from($validated['status']);
+        $manageStudentPayment->changeStatus($payment, $newStatus);
 
-        DB::transaction(function () use ($payment, $oldStatus, $newStatus): void {
-            $payment->update(['status' => $newStatus]);
-
-            if ($payment->invoice_id) {
-                $invoice = StudentInvoice::query()->lockForUpdate()->find($payment->invoice_id);
-
-                if ($invoice && $oldStatus !== 'paid' && $newStatus === 'paid') {
-                    if ((float) $payment->amount > $invoice->balance()) {
-                        throw ValidationException::withMessages([
-                            'status' => 'This payment exceeds the invoice remaining balance and cannot be approved.',
-                        ]);
-                    }
-
-                    $newPaid = (float) $invoice->paid_amount + (float) $payment->amount;
-                } elseif ($invoice && $oldStatus === 'paid' && $newStatus !== 'paid') {
-                    $newPaid = max(0, (float) $invoice->paid_amount - (float) $payment->amount);
-                }
-
-                if (isset($invoice, $newPaid)) {
-                    $invoice->update([
-                        'paid_amount' => $newPaid,
-                        'status' => $newPaid >= (float) $invoice->amount
-                            ? 'paid'
-                            : ($newPaid > 0 ? 'partial' : 'unpaid'),
-                    ]);
-                }
-            }
-
-            $student = $payment->student;
-
-            if ($student) {
-                $this->refreshStudentFeeStatus($student);
-            }
-        });
-
-        return back()->with('success', "Payment {$payment->transaction_no} marked as {$newStatus}.");
+        return back()->with('success', "Payment {$payment->transaction_no} marked as {$newStatus->value}.");
     }
 
     /**
@@ -575,20 +514,6 @@ class FinanceController extends Controller
     private function nextInvoiceNo(): string
     {
         return 'INV-'.date('Y').'-'.str_pad((string) (StudentInvoice::count() + 1), 5, '0', STR_PAD_LEFT);
-    }
-
-    private function refreshStudentFeeStatus(Student $student): void
-    {
-        $totalBilled = (float) $student->invoices()->sum('amount');
-        $totalPaid = (float) $student->invoices()->sum('paid_amount');
-
-        $status = match (true) {
-            $totalBilled > 0 && $totalPaid >= $totalBilled => FeeStatus::Paid,
-            $totalPaid > 0 => FeeStatus::Partial,
-            default => FeeStatus::Unpaid,
-        };
-
-        $student->update(['fee_status' => $status]);
     }
 
     /**

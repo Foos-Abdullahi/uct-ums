@@ -38,10 +38,18 @@ export interface StudentPayment {
     invoice_id?: number | null;
     transaction_no: string;
     amount: number | string;
-    payment_method: 'bank_transfer' | 'cash' | 'card' | 'online' | 'cheque';
+    payment_method:
+        | 'bank_transfer'
+        | 'cash'
+        | 'evc_plus'
+        | 'zaad'
+        | 'sahay'
+        | 'credit_card'
+        | 'cheque'
+        | 'online';
     payment_date: string;
     receipt_path?: string | null;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'paid' | 'rejected';
     notes?: string | null;
     created_at: string;
     invoice?: StudentInvoice;

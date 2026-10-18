@@ -377,14 +377,13 @@ test('admin can update an invoice with no payments collected', function () {
 
 // ─── Finance Portal ───────────────────────────────────────────────────────────
 
-test('finance user can view the finance dashboard', function () {
+test('finance user is routed to the shared admin finance dashboard', function () {
     $finance = User::factory()->role(UserRole::Finance)->create();
     $this->actingAs($finance);
 
     $response = $this->get(route('finance.dashboard'));
 
-    $response->assertOk()
-        ->assertInertia(fn ($page) => $page->component('finance/dashboard'));
+    $response->assertRedirect(route('admin.finance.overview'));
 });
 
 test('finance user can view the expense roster', function () {

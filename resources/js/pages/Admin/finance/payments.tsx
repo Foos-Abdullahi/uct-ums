@@ -331,6 +331,8 @@ export default function AdminFinancePayments({
                 { label: 'Zaad', value: 'zaad' },
                 { label: 'Sahay', value: 'sahay' },
                 { label: 'Credit Card', value: 'credit_card' },
+                { label: 'Cheque', value: 'cheque' },
+                { label: 'Online', value: 'online' },
             ],
             value: filters.payment_method || undefined,
         },
@@ -528,13 +530,10 @@ export default function AdminFinancePayments({
                                     Apply to invoice
                                 </Label>
                                 <Select
-                                    value={data.invoice_id || 'unallocated'}
+                                    value={data.invoice_id}
                                     disabled={!selectedStudent}
                                     onValueChange={(value) => {
-                                        const invoiceId =
-                                            value === 'unallocated'
-                                                ? ''
-                                                : value;
+                                        const invoiceId = value;
                                         const invoice =
                                             selectedStudent?.invoices.find(
                                                 (item) =>
@@ -554,9 +553,6 @@ export default function AdminFinancePayments({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="unallocated">
-                                            Unallocated payment
-                                        </SelectItem>
                                         {selectedStudent?.invoices.map(
                                             (invoice) => (
                                                 <SelectItem
@@ -665,6 +661,12 @@ export default function AdminFinancePayments({
                                             <SelectItem value="credit_card">
                                                 Credit / Debit Card
                                             </SelectItem>
+                                            <SelectItem value="cheque">
+                                                Cheque
+                                            </SelectItem>
+                                            <SelectItem value="online">
+                                                Online
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -725,7 +727,7 @@ export default function AdminFinancePayments({
                                 <Button
                                     type="submit"
                                     size="sm"
-                                    disabled={processing}
+                                    disabled={processing || !data.invoice_id}
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Finance\ManageStudentPayment;
 use App\Enums\FeeStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Imports\StudentImport;
@@ -21,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel as ExcelFacade;
@@ -225,7 +229,7 @@ class StudentController extends Controller
         ]);
 
         $totalInvoiced = (float) $student->invoices->sum('amount');
-        $totalPaid = (float) $student->payments->where('status', 'approved')->sum('amount');
+        $totalPaid = (float) $student->invoices->sum('paid_amount');
         $totalOutstanding = max(0, $totalInvoiced - $totalPaid);
         $overdueCount = $student->invoices
             ->filter(fn ($invoice) => $invoice->status !== 'paid'
@@ -408,7 +412,7 @@ class StudentController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:tuition,registration,exam,lab,library,other'],
-            'amount' => ['required', 'numeric', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
             'due_date' => ['nullable', 'date'],
         ]);
 
@@ -433,16 +437,24 @@ class StudentController extends Controller
     /**
      * Record a payment for the student.
      */
-    public function storePayment(Request $request, int $id): RedirectResponse
-    {
+    public function storePayment(
+        Request $request,
+        int $id,
+        ManageStudentPayment $manageStudentPayment,
+    ): RedirectResponse {
         $student = Student::findOrFail($id);
 
         $validated = $request->validate([
-            'invoice_id' => ['nullable', 'exists:student_invoices,id'],
+            'invoice_id' => [
+                'required',
+                Rule::exists('student_invoices', 'id')->where(
+                    fn ($query) => $query->where('student_id', $student->id),
+                ),
+            ],
             'amount' => ['required', 'numeric', 'min:1'],
-            'payment_method' => ['required', 'string', 'in:bank_transfer,cash,card,online,cheque'],
+            'payment_method' => ['required', 'string', Rule::in(PaymentMethod::values())],
             'payment_date' => ['required', 'date'],
-            'status' => ['nullable', 'string', 'in:pending,approved'],
+            'status' => ['nullable', 'string', Rule::in(PaymentStatus::values())],
             'notes' => ['nullable', 'string', 'max:500'],
             'receipt' => ['nullable', 'file', 'max:5120'], // 5MB max
         ]);
@@ -452,38 +464,11 @@ class StudentController extends Controller
             $receiptPath = $request->file('receipt')->store('receipts', 'public');
         }
 
-        $status = $validated['status'] ?? 'approved';
-
-        $transactionNo = 'TXN-'.strtoupper(Str::random(8));
-
-        DB::transaction(function () use ($student, $validated, $transactionNo, $receiptPath, $status) {
-            $payment = StudentPayment::create([
-                'student_id' => $student->id,
-                'invoice_id' => $validated['invoice_id'] ?? null,
-                'transaction_no' => $transactionNo,
-                'amount' => $validated['amount'],
-                'payment_method' => $validated['payment_method'],
-                'payment_date' => $validated['payment_date'],
-                'receipt_path' => $receiptPath,
-                'status' => $status,
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            if (! empty($validated['invoice_id']) && $status === 'approved') {
-                $invoice = StudentInvoice::find((int) $validated['invoice_id']);
-                if ($invoice) {
-                    $newPaidAmount = (float) $invoice->paid_amount + (float) $validated['amount'];
-                    $invoice->update([
-                        'paid_amount' => $newPaidAmount,
-                        'status' => $newPaidAmount >= (float) $invoice->amount ? 'paid' : ($newPaidAmount > 0 ? 'partial' : 'unpaid'),
-                    ]);
-                }
-            }
-
-            if ($status === 'approved') {
-                $student->recalculateFinancials();
-            }
-        });
+        $manageStudentPayment->record($student, [
+            ...$validated,
+            'status' => $validated['status'] ?? PaymentStatus::Paid->value,
+            'receipt_path' => $receiptPath,
+        ]);
 
         return back()->with('success', 'Payment recorded successfully.');
     }
@@ -491,38 +476,23 @@ class StudentController extends Controller
     /**
      * Update payment approval status.
      */
-    public function updatePaymentStatus(Request $request, int $id, int $paymentId): RedirectResponse
-    {
+    public function updatePaymentStatus(
+        Request $request,
+        int $id,
+        int $paymentId,
+        ManageStudentPayment $manageStudentPayment,
+    ): RedirectResponse {
         $student = Student::findOrFail($id);
         $payment = StudentPayment::where('student_id', $student->id)->findOrFail($paymentId);
 
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:approved,rejected,pending'],
+            'status' => ['required', 'string', Rule::in(PaymentStatus::values())],
         ]);
 
-        DB::transaction(function () use ($student, $payment, $validated) {
-            $oldStatus = $payment->status;
-            $newStatus = $validated['status'];
-            $payment->update(['status' => $newStatus]);
-
-            if ($payment->invoice_id && $payment->invoice) {
-                $invoice = $payment->invoice;
-                if ($oldStatus !== 'approved' && $newStatus === 'approved') {
-                    $newPaid = (float) $invoice->paid_amount + (float) $payment->amount;
-                } elseif ($oldStatus === 'approved' && $newStatus !== 'approved') {
-                    $newPaid = max(0, (float) $invoice->paid_amount - (float) $payment->amount);
-                } else {
-                    $newPaid = (float) $invoice->paid_amount;
-                }
-
-                $invoice->update([
-                    'paid_amount' => $newPaid,
-                    'status' => $newPaid >= (float) $invoice->amount ? 'paid' : ($newPaid > 0 ? 'partial' : 'unpaid'),
-                ]);
-            }
-
-            $student->recalculateFinancials();
-        });
+        $manageStudentPayment->changeStatus(
+            $payment,
+            PaymentStatus::from($validated['status']),
+        );
 
         return back()->with('success', "Payment {$validated['status']} successfully.");
     }

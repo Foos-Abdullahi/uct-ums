@@ -49,7 +49,7 @@ class FeesController extends StudentBaseController
             ->get();
 
         $totalInvoiced = (float) $student->invoices()->sum('amount');
-        $totalPaid = (float) $student->payments()->where('status', 'approved')->sum('amount');
+        $totalPaid = (float) $student->invoices()->sum('paid_amount');
         $outstandingBalance = max(0, $totalInvoiced - $totalPaid);
 
         return Inertia::render('Student/fees/index', [

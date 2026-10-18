@@ -24,7 +24,7 @@ enum UserRole: string
         return match ($this) {
             self::SuperAdmin => 'admin.dashboard',
             self::Registrar => 'registrar.dashboard',
-            self::Finance => 'finance.dashboard',
+            self::Finance => 'admin.finance.overview',
             self::Hr => 'hr.dashboard',
             self::Lecturer => 'lecturer.dashboard',
             self::Student => 'student.dashboard',
