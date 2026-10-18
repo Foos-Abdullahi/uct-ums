@@ -111,6 +111,7 @@ export interface Student {
     program_id?: number | null;
     academic_year?: string | null;
     current_semester: number;
+    section?: string | null;
     phone?: string | null;
     gender?: string | null;
     date_of_birth?: string | null;

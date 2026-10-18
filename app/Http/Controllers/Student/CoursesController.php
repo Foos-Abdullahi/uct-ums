@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Student;
 
+use App\Actions\Academics\GetStudentWeeklyTimetable;
 use App\Models\Course;
 use App\Models\CourseMaterial;
 use Illuminate\Http\Request;
@@ -13,10 +14,12 @@ class CoursesController extends StudentBaseController
     /**
      * Display the student's enrolled courses for the current semester.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, GetStudentWeeklyTimetable $getStudentWeeklyTimetable): Response
     {
         $student = $this->getStudent($request);
         $student->load(['program']);
+        $timetable = $getStudentWeeklyTimetable->handle($student);
+        $assignmentsByCourse = $timetable->keyBy('course_id');
 
         $courses = Course::query()
             ->with(['assignments' => function ($q) {
@@ -26,8 +29,8 @@ class CoursesController extends StudentBaseController
             ->where('semester', $student->current_semester)
             ->where('status', 'active')
             ->get()
-            ->map(function (Course $course) {
-                $assignment = $course->assignments->first();
+            ->map(function (Course $course) use ($assignmentsByCourse) {
+                $assignment = $assignmentsByCourse->get($course->id);
 
                 $materials = CourseMaterial::query()
                     ->where('course_id', $course->id)
@@ -43,8 +46,9 @@ class CoursesController extends StudentBaseController
                     'semester' => $course->semester,
                     'description' => $course->description,
                     'lecturer_name' => $assignment?->lecturer?->user?->name,
-                    'schedule_day' => $assignment?->schedule_day,
-                    'schedule_time' => $assignment?->schedule_time,
+                    'weekday' => $assignment?->weekday,
+                    'start_time' => $assignment?->start_time,
+                    'end_time' => $assignment?->end_time,
                     'room' => $assignment?->room,
                     'section' => $assignment?->section,
                     'materials' => $materials,
@@ -54,6 +58,18 @@ class CoursesController extends StudentBaseController
         return Inertia::render('Student/courses/index', [
             'student' => $student,
             'courses' => $courses,
+            'timetable' => $timetable->map(fn ($assignment) => [
+                'id' => $assignment->id,
+                'course_code' => $assignment->course->code,
+                'course_name' => $assignment->course->name,
+                'lecturer_name' => $assignment->lecturer?->user?->name,
+                'program_name' => $student->program?->name,
+                'section' => $assignment->section,
+                'room' => $assignment->room,
+                'weekday' => $assignment->weekday,
+                'start_time' => $assignment->start_time,
+                'end_time' => $assignment->end_time,
+            ]),
         ]);
     }
 }

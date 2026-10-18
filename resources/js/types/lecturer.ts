@@ -62,6 +62,9 @@ export interface CourseAssignment {
     status: 'assigned' | 'active' | 'completed' | 'cancelled';
     workload_hours: number;
     room: string | null;
+    weekday: string | null;
+    start_time: string | null;
+    end_time: string | null;
     schedule_day: string | null;
     schedule_time: string | null;
     notes: string | null;

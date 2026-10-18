@@ -125,6 +125,7 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
             Route::get('/', [AssignmentController::class, 'index'])->name('index');
             Route::get('/create', [AssignmentController::class, 'create'])->name('create');
             Route::post('/', [AssignmentController::class, 'store'])->name('store');
+            Route::get('/timetable', [AssignmentController::class, 'timetable'])->name('timetable');
             Route::get('/{assignment}', [AssignmentController::class, 'show'])->name('show');
             Route::get('/{assignment}/edit', [AssignmentController::class, 'edit'])->name('edit');
             Route::put('/{assignment}', [AssignmentController::class, 'update'])->name('update');

@@ -27,6 +27,7 @@ class Student extends Model
         'program_id',
         'academic_year',
         'current_semester',
+        'section',
         'phone',
         'gender',
         'date_of_birth',

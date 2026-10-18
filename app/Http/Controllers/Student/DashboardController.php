@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Student;
 
+use App\Actions\Academics\GetStudentWeeklyTimetable;
+use App\Models\CourseAssignment;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,10 +14,11 @@ class DashboardController extends StudentBaseController
     /**
      * Display the student dashboard.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, GetStudentWeeklyTimetable $getStudentWeeklyTimetable): Response
     {
         $student = $this->getStudent($request);
         $student->load(['user', 'program']);
+        $timetable = $getStudentWeeklyTimetable->handle($student);
 
         // Courses for the student's current program & semester
         $courses = Course::query()
@@ -65,6 +68,18 @@ class DashboardController extends StudentBaseController
                 'fee_status' => $student->fee_status->value,
             ],
             'courses' => $courses,
+            'timetable' => $timetable->map(fn (CourseAssignment $assignment) => [
+                'id' => $assignment->id,
+                'course_code' => $assignment->course->code,
+                'course_name' => $assignment->course->name,
+                'lecturer_name' => $assignment->lecturer?->user?->name,
+                'program_name' => $student->program?->name,
+                'section' => $assignment->section,
+                'room' => $assignment->room,
+                'weekday' => $assignment->weekday,
+                'start_time' => $assignment->start_time,
+                'end_time' => $assignment->end_time,
+            ]),
             'recent_grades' => $recentGrades,
             'next_due_invoice' => $nextDueInvoice,
         ]);

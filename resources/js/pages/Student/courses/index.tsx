@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
+import {
+    WeeklyTimetable,
+    type TimetableEntry,
+} from '@/components/timetable/weekly-timetable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,8 +44,9 @@ interface Course {
     semester: number;
     description: string | null;
     lecturer_name: string | null;
-    schedule_day: string | null;
-    schedule_time: string | null;
+    weekday: string | null;
+    start_time: string | null;
+    end_time: string | null;
     room: string | null;
     section: string | null;
     materials: CourseMaterial[];
@@ -50,6 +55,7 @@ interface Course {
 interface Props {
     student: Student;
     courses: Course[];
+    timetable: TimetableEntry[];
 }
 
 function formatFileSize(bytes: number | null): string {
@@ -104,12 +110,14 @@ function CourseCard({ course }: { course: Course }) {
                         <span>{course.lecturer_name}</span>
                     </div>
                 )}
-                {(course.schedule_day || course.schedule_time) && (
+                {(course.weekday || course.start_time) && (
                     <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
                         <span>
-                            {course.schedule_day ?? 'Day TBA'} &bull;{' '}
-                            {course.schedule_time ?? 'Time TBA'}
+                            {course.weekday ?? 'Day TBA'} &bull;{' '}
+                            {course.start_time && course.end_time
+                                ? `${course.start_time.slice(0, 5)} - ${course.end_time.slice(0, 5)}`
+                                : 'Time TBA'}
                         </span>
                     </div>
                 )}
@@ -192,7 +200,11 @@ function CourseCard({ course }: { course: Course }) {
     );
 }
 
-export default function StudentCoursesIndex({ student, courses }: Props) {
+export default function StudentCoursesIndex({
+    student,
+    courses,
+    timetable,
+}: Props) {
     return (
         <>
             <Head title="My Courses" />
@@ -202,6 +214,21 @@ export default function StudentCoursesIndex({ student, courses }: Props) {
                     title="My Courses"
                     description={`Semester ${student.current_semester} · ${student.program?.name ?? 'Your Program'}`}
                 />
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">
+                            Weekly Timetable
+                        </CardTitle>
+                        <CardDescription>
+                            {student.academic_year} ·{' '}
+                            {student.section ?? 'Section A'}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <WeeklyTimetable entries={timetable} />
+                    </CardContent>
+                </Card>
 
                 {courses.length === 0 ? (
                     <Card>

@@ -59,8 +59,9 @@ export default function AdminAssignmentsEdit({
         status: assignment.status,
         workload_hours: assignment.workload_hours,
         room: assignment.room || '',
-        schedule_day: assignment.schedule_day || '',
-        schedule_time: assignment.schedule_time || '',
+        weekday: assignment.weekday || 'Monday',
+        start_time: assignment.start_time?.slice(0, 5) || '08:00',
+        end_time: assignment.end_time?.slice(0, 5) || '10:00',
         notes: assignment.notes || '',
     });
 
@@ -378,37 +379,69 @@ export default function AdminAssignmentsEdit({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="schedule_day">
-                                    Schedule Day
-                                </Label>
-                                <Input
-                                    id="schedule_day"
-                                    value={data.schedule_day}
-                                    onChange={(e) =>
-                                        setData('schedule_day', e.target.value)
+                                <Label htmlFor="weekday">Weekday</Label>
+                                <Select
+                                    value={data.weekday}
+                                    onValueChange={(value) =>
+                                        setData('weekday', value)
                                     }
-                                />
-                                {errors.schedule_day && (
+                                >
+                                    <SelectTrigger id="weekday">
+                                        <SelectValue placeholder="Select weekday" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[
+                                            'Saturday',
+                                            'Sunday',
+                                            'Monday',
+                                            'Tuesday',
+                                            'Wednesday',
+                                            'Thursday',
+                                            'Friday',
+                                        ].map((day) => (
+                                            <SelectItem key={day} value={day}>
+                                                {day}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.weekday && (
                                     <p className="text-xs text-destructive">
-                                        {errors.schedule_day}
+                                        {errors.weekday}
                                     </p>
                                 )}
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="schedule_time">
-                                    Schedule Time
-                                </Label>
+                                <Label htmlFor="start_time">Start Time</Label>
                                 <Input
-                                    id="schedule_time"
-                                    value={data.schedule_time}
+                                    id="start_time"
+                                    type="time"
+                                    value={data.start_time}
                                     onChange={(e) =>
-                                        setData('schedule_time', e.target.value)
+                                        setData('start_time', e.target.value)
                                     }
                                 />
-                                {errors.schedule_time && (
+                                {errors.start_time && (
                                     <p className="text-xs text-destructive">
-                                        {errors.schedule_time}
+                                        {errors.start_time}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="end_time">End Time</Label>
+                                <Input
+                                    id="end_time"
+                                    type="time"
+                                    value={data.end_time}
+                                    onChange={(e) =>
+                                        setData('end_time', e.target.value)
+                                    }
+                                />
+                                {errors.end_time && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.end_time}
                                     </p>
                                 )}
                             </div>

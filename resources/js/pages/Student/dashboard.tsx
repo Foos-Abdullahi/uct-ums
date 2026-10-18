@@ -3,7 +3,6 @@ import {
     ArrowRight,
     Award,
     BookOpen,
-    Calendar,
     CheckCircle2,
     CreditCard,
     GraduationCap,
@@ -11,6 +10,10 @@ import {
     TrendingUp,
     Wallet,
 } from 'lucide-react';
+import {
+    WeeklyTimetable,
+    type TimetableEntry,
+} from '@/components/timetable/weekly-timetable';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,10 +31,6 @@ interface Course {
     code: string;
     name: string;
     credit_hours: number;
-    lecturer_name: string | null;
-    schedule_day: string | null;
-    schedule_time: string | null;
-    room: string | null;
 }
 
 interface Invoice {
@@ -57,6 +56,7 @@ interface Props {
     student: Student;
     stats: Stats;
     courses: Course[];
+    timetable: TimetableEntry[];
     recent_grades: StudentGrade[];
     next_due_invoice: Invoice | null;
 }
@@ -77,6 +77,7 @@ export default function StudentDashboard({
     student,
     stats,
     courses,
+    timetable,
     recent_grades,
     next_due_invoice,
 }: Props) {
@@ -253,6 +254,20 @@ export default function StudentDashboard({
                     </Card>
                 </div>
 
+                <Card className="border-slate-200/80 shadow-sm dark:border-border">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Weekly Timetable</CardTitle>
+                        <CardDescription>
+                            {student.academic_year} · Semester{' '}
+                            {student.current_semester} ·{' '}
+                            {student.section ?? 'Section A'}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <WeeklyTimetable entries={timetable} />
+                    </CardContent>
+                </Card>
+
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="space-y-4 lg:col-span-2">
                         <div className="flex items-center justify-between">
@@ -314,32 +329,6 @@ export default function StudentDashboard({
                                                 {course.name}
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="space-y-1 pt-0 text-xs text-muted-foreground">
-                                            {course.lecturer_name && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                                                    <span>
-                                                        {course.lecturer_name}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {(course.schedule_day ||
-                                                course.schedule_time) && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <Calendar className="h-3.5 w-3.5 text-primary" />
-                                                    <span>
-                                                        {course.schedule_day ??
-                                                            'TBA'}{' '}
-                                                        &bull;{' '}
-                                                        {course.schedule_time ??
-                                                            'TBA'}
-                                                        {course.room
-                                                            ? ` · ${course.room}`
-                                                            : ''}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </CardContent>
                                     </Card>
                                 ))}
                             </div>
