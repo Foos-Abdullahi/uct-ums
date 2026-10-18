@@ -22,6 +22,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { Program } from '@/types/student';
+import { StudentPhotoField } from './components/student-photo-field';
 
 interface AdminStudentsCreateProps {
     programs: Program[];
@@ -51,11 +52,13 @@ export default function AdminStudentsCreate({
         enrollment_status: 'enrolled',
         enrollment_date: new Date().toISOString().split('T')[0],
         initial_fee_amount: '1200',
+        photo: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/admin/students', {
+            forceFormData: true,
             onError: () => {
                 toast.error('Please review the form for validation errors.');
             },
@@ -90,6 +93,12 @@ export default function AdminStudentsCreate({
                         icon={User}
                         type="default"
                     >
+                        <div className="mb-6">
+                            <StudentPhotoField
+                                error={errors.photo}
+                                onChange={(photo) => setData('photo', photo)}
+                            />
+                        </div>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="name">

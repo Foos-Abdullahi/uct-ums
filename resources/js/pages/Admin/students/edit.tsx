@@ -21,6 +21,7 @@ import type {
     Student,
     StudentFeeStatus,
 } from '@/types/student';
+import { StudentPhotoField } from './components/student-photo-field';
 
 interface AdminStudentsEditProps {
     student: Student;
@@ -31,7 +32,8 @@ export default function AdminStudentsEdit({
     student,
     programs = [],
 }: AdminStudentsEditProps) {
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
+        _method: 'put',
         name: student.user?.name ?? '',
         email: student.user?.email ?? '',
         matric_no: student.matric_no ?? '',
@@ -52,11 +54,13 @@ export default function AdminStudentsEdit({
         graduation_date: student.graduation_date
             ? String(student.graduation_date).split('T')[0]
             : '',
+        photo: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(`/admin/students/${student.id}`, {
+        post(`/admin/students/${student.id}`, {
+            forceFormData: true,
             onError: () => {
                 toast.error('Please fix errors in the form.');
             },
@@ -91,6 +95,13 @@ export default function AdminStudentsEdit({
                         icon={User}
                         type="default"
                     >
+                        <div className="mb-6">
+                            <StudentPhotoField
+                                currentPhotoUrl={student.photo_url}
+                                error={errors.photo}
+                                onChange={(photo) => setData('photo', photo)}
+                            />
+                        </div>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="name">

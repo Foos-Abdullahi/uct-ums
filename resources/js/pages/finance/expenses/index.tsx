@@ -303,6 +303,7 @@ export default function FinanceExpensesIndex({
                             <MetricCard
                                 title="Total Expense"
                                 value={formatCurrency(stats.total_spent)}
+                                description="Includes pending, approved, and paid expenses"
                                 icon={DollarSign}
                                 color="destructive"
                             />

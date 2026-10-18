@@ -7,7 +7,7 @@ import {
     DataTableRowActionItem,
     DataTableRowActionItemDestructive,
 } from '@/components/tools/table/data-table-row-actions-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Student } from '@/types/student';
 import { StudentFeeBadge } from './student-fee-badge';
 import { StudentStatusBadge } from './student-status-badge';
@@ -41,6 +41,10 @@ export function getStudentColumns({
                 return (
                     <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9 border border-border">
+                            <AvatarImage
+                                src={student.photo_url ?? undefined}
+                                alt={name}
+                            />
                             <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
                                 {initials || 'ST'}
                             </AvatarFallback>

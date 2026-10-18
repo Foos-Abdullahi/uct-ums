@@ -28,6 +28,7 @@ class StudentFactory extends Factory
             'gender' => fake()->randomElement(['Male', 'Female']),
             'date_of_birth' => fake()->dateTimeBetween('-25 years', '-18 years')->format('Y-m-d'),
             'address' => fake()->address(),
+            'photo_path' => null,
             'fee_status' => FeeStatus::Unpaid,
             'enrollment_status' => 'enrolled',
             'gpa' => fake()->randomFloat(2, 2.0, 4.0),

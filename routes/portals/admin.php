@@ -42,6 +42,8 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
                 ->middleware('permission:students.create')->name('store');
             Route::post('/import', [StudentController::class, 'import'])
                 ->middleware('permission:students.create')->name('import');
+            Route::get('/{student}/finance-statement', [StudentController::class, 'financeStatement'])
+                ->middleware('permission:finance.view')->name('finance-statement');
             Route::get('/{student}', [StudentController::class, 'show'])
                 ->middleware('permission:students.view')->name('show');
             Route::get('/{student}/edit', [StudentController::class, 'edit'])

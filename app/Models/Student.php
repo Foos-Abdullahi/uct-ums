@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Student extends Model
 {
@@ -30,12 +31,18 @@ class Student extends Model
         'gender',
         'date_of_birth',
         'address',
+        'photo_path',
         'fee_status',
         'enrollment_status',
         'gpa',
         'enrollment_date',
         'graduation_date',
     ];
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['photo_url'];
 
     /**
      * @return array<string, string>
@@ -66,6 +73,13 @@ class Student extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path
+            ? Storage::disk('public')->url($this->photo_path)
+            : null;
     }
 
     /**

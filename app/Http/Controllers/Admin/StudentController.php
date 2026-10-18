@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel as ExcelFacade;
@@ -112,7 +113,10 @@ class StudentController extends Controller
             'enrollment_status' => ['nullable', 'string', 'in:enrolled,pending,suspended,graduated,withdrawn'],
             'enrollment_date' => ['nullable', 'date'],
             'initial_fee_amount' => ['nullable', 'numeric', 'min:0'],
+            'photo' => ['nullable', File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max('2mb')],
         ]);
+
+        $photoPath = $request->file('photo')?->store('student-photos', 'public');
 
         $matricNo = $validated['matric_no'] ?? null;
         if (! $matricNo) {
@@ -123,47 +127,56 @@ class StudentController extends Controller
         $password = $validated['password'] ?? 'password123';
         $enrollmentStatus = $validated['enrollment_status'] ?? 'enrolled';
 
-        $student = DB::transaction(function () use ($validated, $matricNo, $password, $enrollmentStatus) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($password),
-                'role' => UserRole::Student,
-                'is_active' => $enrollmentStatus !== 'suspended',
-                'email_verified_at' => now(),
-            ]);
-
-            $student = Student::create([
-                'user_id' => $user->id,
-                'matric_no' => $matricNo,
-                'program_id' => $validated['program_id'],
-                'academic_year' => $validated['academic_year'] ?? null,
-                'current_semester' => $validated['current_semester'] ?? 1,
-                'phone' => $validated['phone'] ?? null,
-                'gender' => $validated['gender'] ?? null,
-                'date_of_birth' => $validated['date_of_birth'] ?? null,
-                'address' => $validated['address'] ?? null,
-                'fee_status' => $validated['fee_status'] ?? FeeStatus::Unpaid->value,
-                'enrollment_status' => $enrollmentStatus,
-                'enrollment_date' => $validated['enrollment_date'] ?? now()->toDateString(),
-            ]);
-
-            if (! empty($validated['initial_fee_amount']) && (float) $validated['initial_fee_amount'] > 0) {
-                StudentInvoice::create([
-                    'student_id' => $student->id,
-                    'invoice_no' => 'INV-'.date('Y').'-'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT),
-                    'title' => 'Semester 1 Registration & Tuition Fee',
-                    'type' => 'tuition',
-                    'amount' => (float) $validated['initial_fee_amount'],
-                    'paid_amount' => 0.00,
-                    'due_date' => now()->addMonth()->toDateString(),
-                    'status' => 'unpaid',
+        try {
+            $student = DB::transaction(function () use ($validated, $matricNo, $password, $enrollmentStatus, $photoPath) {
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($password),
+                    'role' => UserRole::Student,
+                    'is_active' => $enrollmentStatus !== 'suspended',
+                    'email_verified_at' => now(),
                 ]);
-                $student->recalculateFinancials();
+
+                $student = Student::create([
+                    'user_id' => $user->id,
+                    'matric_no' => $matricNo,
+                    'program_id' => $validated['program_id'],
+                    'academic_year' => $validated['academic_year'] ?? null,
+                    'current_semester' => $validated['current_semester'] ?? 1,
+                    'phone' => $validated['phone'] ?? null,
+                    'gender' => $validated['gender'] ?? null,
+                    'date_of_birth' => $validated['date_of_birth'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                    'photo_path' => $photoPath,
+                    'fee_status' => $validated['fee_status'] ?? FeeStatus::Unpaid->value,
+                    'enrollment_status' => $enrollmentStatus,
+                    'enrollment_date' => $validated['enrollment_date'] ?? now()->toDateString(),
+                ]);
+
+                if (! empty($validated['initial_fee_amount']) && (float) $validated['initial_fee_amount'] > 0) {
+                    StudentInvoice::create([
+                        'student_id' => $student->id,
+                        'invoice_no' => 'INV-'.date('Y').'-'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT),
+                        'title' => 'Semester 1 Registration & Tuition Fee',
+                        'type' => 'tuition',
+                        'amount' => (float) $validated['initial_fee_amount'],
+                        'paid_amount' => 0.00,
+                        'due_date' => now()->addMonth()->toDateString(),
+                        'status' => 'unpaid',
+                    ]);
+                    $student->recalculateFinancials();
+                }
+
+                return $student;
+            });
+        } catch (Throwable $exception) {
+            if ($photoPath) {
+                Storage::disk('public')->delete($photoPath);
             }
 
-            return $student;
-        });
+            throw $exception;
+        }
 
         return redirect()->route('admin.students.show', $student->id)
             ->with('success', "Student {$student->matric_no} created successfully.");
@@ -293,6 +306,55 @@ class StudentController extends Controller
     }
 
     /**
+     * Display a printable student finance statement.
+     */
+    public function financeStatement(Student $student): Response
+    {
+        $student->load(['user', 'program', 'invoices', 'payments.invoice']);
+
+        $entries = $student->invoices
+            ->map(fn (StudentInvoice $invoice) => [
+                'reference' => $invoice->invoice_no,
+                'date' => $invoice->issue_date?->format('Y-m-d') ?? $invoice->created_at->format('Y-m-d'),
+                'paid' => 0.0,
+                'charged' => (float) $invoice->amount,
+                'reason' => $invoice->title,
+                'sort_order' => 0,
+            ])
+            ->concat($student->payments
+                ->where('status', PaymentStatus::Paid->value)
+                ->map(fn (StudentPayment $payment) => [
+                    'reference' => $payment->transaction_no,
+                    'date' => $payment->payment_date?->format('Y-m-d') ?? $payment->created_at->format('Y-m-d'),
+                    'paid' => (float) $payment->amount,
+                    'charged' => 0.0,
+                    'reason' => $payment->invoice?->title ?? 'Student payment',
+                    'sort_order' => 1,
+                ]))
+            ->sortBy([['date', 'asc'], ['sort_order', 'asc']]);
+
+        $balance = 0.0;
+        $statement = $entries->map(function (array $entry) use (&$balance): array {
+            $balance += $entry['paid'] - $entry['charged'];
+
+            return [...$entry, 'balance' => $balance];
+        })->values();
+
+        return Inertia::render('Admin/students/finance-statement', [
+            'student' => $student,
+            'statement' => $statement,
+            'totals' => [
+                'charged' => (float) $student->invoices->sum('amount'),
+                'paid' => (float) $student->payments
+                    ->where('status', PaymentStatus::Paid->value)
+                    ->sum('amount'),
+                'balance' => $balance,
+            ],
+            'generatedAt' => now()->format('d M Y'),
+        ]);
+    }
+
+    /**
      * Update student details.
      */
     public function update(Request $request, int $id): RedirectResponse
@@ -315,31 +377,48 @@ class StudentController extends Controller
             'gpa' => ['nullable', 'numeric', 'min:0', 'max:4.00'],
             'enrollment_date' => ['nullable', 'date'],
             'graduation_date' => ['nullable', 'date'],
+            'photo' => ['nullable', File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max('2mb')],
         ]);
 
-        DB::transaction(function () use ($student, $validated) {
-            $student->user->update([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'is_active' => $validated['enrollment_status'] !== 'suspended',
-            ]);
+        $oldPhotoPath = $student->photo_path;
+        $newPhotoPath = $request->file('photo')?->store('student-photos', 'public');
 
-            $student->update([
-                'matric_no' => $validated['matric_no'],
-                'program_id' => $validated['program_id'],
-                'academic_year' => $validated['academic_year'] ?? null,
-                'current_semester' => $validated['current_semester'],
-                'phone' => $validated['phone'] ?? null,
-                'gender' => $validated['gender'] ?? null,
-                'date_of_birth' => $validated['date_of_birth'] ?? null,
-                'address' => $validated['address'] ?? null,
-                'fee_status' => $validated['fee_status'],
-                'enrollment_status' => $validated['enrollment_status'],
-                'gpa' => $validated['gpa'] ?? null,
-                'enrollment_date' => $validated['enrollment_date'] ?? null,
-                'graduation_date' => $validated['graduation_date'] ?? null,
-            ]);
-        });
+        try {
+            DB::transaction(function () use ($student, $validated, $newPhotoPath) {
+                $student->user->update([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'is_active' => $validated['enrollment_status'] !== 'suspended',
+                ]);
+
+                $student->update([
+                    'matric_no' => $validated['matric_no'],
+                    'program_id' => $validated['program_id'],
+                    'academic_year' => $validated['academic_year'] ?? null,
+                    'current_semester' => $validated['current_semester'],
+                    'phone' => $validated['phone'] ?? null,
+                    'gender' => $validated['gender'] ?? null,
+                    'date_of_birth' => $validated['date_of_birth'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                    'photo_path' => $newPhotoPath ?? $student->photo_path,
+                    'fee_status' => $validated['fee_status'],
+                    'enrollment_status' => $validated['enrollment_status'],
+                    'gpa' => $validated['gpa'] ?? null,
+                    'enrollment_date' => $validated['enrollment_date'] ?? null,
+                    'graduation_date' => $validated['graduation_date'] ?? null,
+                ]);
+            });
+        } catch (Throwable $exception) {
+            if ($newPhotoPath) {
+                Storage::disk('public')->delete($newPhotoPath);
+            }
+
+            throw $exception;
+        }
+
+        if ($newPhotoPath && $oldPhotoPath) {
+            Storage::disk('public')->delete($oldPhotoPath);
+        }
 
         return redirect()->route('admin.students.show', $student->id)
             ->with('success', 'Student details updated successfully.');

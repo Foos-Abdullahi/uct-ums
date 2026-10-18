@@ -33,12 +33,12 @@ class FinanceController extends Controller
                 'total_collected' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
                 'total_billed' => (float) StudentInvoice::sum('amount'),
                 'outstanding' => (float) StudentInvoice::selectRaw('COALESCE(SUM(amount - paid_amount), 0) as balance')->value('balance'),
-                'total_expenses' => (float) Expense::whereIn('status', ['approved', 'paid'])->sum('amount'),
+                'total_expenses' => (float) Expense::includedInTotals()->sum('amount'),
                 'pending_approvals' => (int) ExpenseApproval::where('approver_id', $financeUser->id)
                     ->where('action', 'pending')
                     ->count(),
                 'net_flow' => (float) StudentPayment::where('status', 'paid')->sum('amount')
-                    - Expense::whereIn('status', ['approved', 'paid'])->sum('amount'),
+                    - Expense::where('status', ExpenseStatus::Paid->value)->sum('amount'),
             ]),
             'recent_payments' => Inertia::defer(fn () => StudentPayment::with(['student.user', 'student.program', 'invoice'])
                 ->latest('payment_date')
@@ -55,7 +55,7 @@ class FinanceController extends Controller
                 ->take(6)
                 ->get()
             ),
-            'expenses_by_type' => Inertia::defer(fn () => Expense::whereIn('status', ['approved', 'paid'])
+            'expenses_by_type' => Inertia::defer(fn () => Expense::includedInTotals()
                 ->select('expense_type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
                 ->groupBy('expense_type')
                 ->get()
@@ -137,10 +137,10 @@ class FinanceController extends Controller
 
         return Inertia::render('finance/expenses/index', [
             'stats' => Inertia::defer(fn () => [
-                'total_spent' => (float) Expense::whereIn('status', ['approved', 'paid'])->sum('amount'),
+                'total_spent' => (float) Expense::includedInTotals()->sum('amount'),
                 'pending_approval' => (int) Expense::where('status', 'pending_approval')->count(),
                 'total_expenses' => (int) Expense::count(),
-                'month_expenses' => (float) Expense::whereIn('status', ['approved', 'paid'])
+                'month_expenses' => (float) Expense::includedInTotals()
                     ->where('expense_date', '>=', now()->startOfMonth())
                     ->sum('amount'),
                 'rejected_count' => (int) Expense::where('status', 'rejected')->count(),

@@ -79,11 +79,11 @@ class FinanceController extends Controller
                 ->get()
             ),
             'expense_stats' => Inertia::defer(fn () => [
-                'total_spent' => (float) Expense::whereIn('status', ['approved', 'paid'])->sum('amount'),
+                'total_spent' => (float) Expense::includedInTotals()->sum('amount'),
                 'pending_approval' => (int) Expense::where('status', 'pending_approval')->count(),
                 'total_expenses' => (int) Expense::count(),
             ]),
-            'expenses_by_type' => Inertia::defer(fn () => Expense::whereIn('status', ['approved', 'paid'])
+            'expenses_by_type' => Inertia::defer(fn () => Expense::includedInTotals()
                 ->select('expense_type', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
                 ->groupBy('expense_type')
                 ->get()

@@ -165,6 +165,7 @@ export default function FinanceDashboard({
                             <MetricCard
                                 title="Total Expenses"
                                 value={formatCurrency(stats.total_expenses)}
+                                description="Includes pending, approved, and paid expenses"
                                 icon={DollarSign}
                                 color="destructive"
                             />
@@ -428,7 +429,7 @@ export default function FinanceDashboard({
                         {/* Expenses by Type */}
                         <UctPanelCard
                             title="Expense Distribution"
-                            description="Operational spending by category."
+                            description="Recorded expenses by category."
                             icon={Receipt}
                         >
                             <Deferred
