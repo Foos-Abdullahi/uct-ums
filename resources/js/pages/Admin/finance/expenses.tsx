@@ -870,6 +870,12 @@ export default function AdminFinanceExpenses({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
+                                                value="pending_approval"
+                                                className="text-xs"
+                                            >
+                                                {t('pending_approval_status')}
+                                            </SelectItem>
+                                            <SelectItem
                                                 value="paid"
                                                 className="text-xs"
                                             >
@@ -970,7 +976,9 @@ export default function AdminFinanceExpenses({
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing
                                         ? t('saving')
-                                        : t('record_expense_button')}
+                                        : data.status === 'pending_approval'
+                                          ? t('submit_for_approval')
+                                          : t('record_expense_button')}
                                 </Button>
                             </DialogFooter>
                         </form>
