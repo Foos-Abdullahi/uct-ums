@@ -139,6 +139,9 @@ export default function AdminFinanceExpenses({
         useState<ExpenseItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
+    const [approveTarget, setApproveTarget] = useState<ExpenseItem | null>(null);
+    const [approveComment, setApproveComment] = useState('');
+    const [approveProcessing, setApproveProcessing] = useState(false);
     const [rejectTarget, setRejectTarget] = useState<ExpenseItem | null>(null);
     const [rejectComment, setRejectComment] = useState('');
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -223,16 +226,30 @@ export default function AdminFinanceExpenses({
     };
 
     const handleApprove = (expense: ExpenseItem) => {
+        setApproveTarget(expense);
+        setApproveComment('');
+    };
+
+    const confirmApprove = () => {
+        if (!approveTarget) {
+            return;
+        }
+
+        setApproveProcessing(true);
         router.post(
-            `/admin/expenses/${expense.id}/approve`,
-            {},
+            `/admin/expenses/${approveTarget.id}/approve`,
+            { comment: approveComment.trim() || null },
             {
-                onSuccess: () =>
-                    toast.success(t('expense_approved', { expense_no: expense.expense_no })),
+                onSuccess: () => {
+                    toast.success(t('expense_approved', { expense_no: approveTarget.expense_no }));
+                    setApproveTarget(null);
+                    setApproveComment('');
+                },
                 onError: (errs) => {
                     const msg = Object.values(errs)[0] ?? t('approval_failed');
                     toast.error(String(msg));
                 },
+                onFinish: () => setApproveProcessing(false),
             },
         );
     };
@@ -979,6 +996,70 @@ export default function AdminFinanceExpenses({
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Approve Modal */}
+                <Dialog
+                    open={Boolean(approveTarget)}
+                    onOpenChange={(open) => {
+                        if (!open && !approveProcessing) {
+                            setApproveTarget(null);
+                            setApproveComment('');
+                        }
+                    }}
+                >
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="text-base font-semibold">
+                                {t('approve_expense_title')}
+                            </DialogTitle>
+                            <DialogDescription className="text-xs">
+                                {t('approve_expense_description', {
+                                    expense_no: approveTarget?.expense_no,
+                                })}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-3 py-2">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="approval_comment" className="text-xs font-semibold">
+                                    {t('approval_comment_label')}
+                                </Label>
+                                <Textarea
+                                    id="approval_comment"
+                                    className="min-h-[90px] text-xs"
+                                    placeholder={t('approval_comment_placeholder')}
+                                    value={approveComment}
+                                    maxLength={1000}
+                                    onChange={(event) => setApproveComment(event.target.value)}
+                                />
+                            </div>
+
+                            <DialogFooter className="pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={approveProcessing}
+                                    onClick={() => {
+                                        setApproveTarget(null);
+                                        setApproveComment('');
+                                    }}
+                                >
+                                    {t('cancel_button')}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={approveProcessing}
+                                    onClick={confirmApprove}
+                                >
+                                    <Check className="mr-1.5 h-4 w-4" />
+                                    {approveProcessing ? t('saving') : t('approve_expense')}
+                                </Button>
+                            </DialogFooter>
+                        </div>
                     </DialogContent>
                 </Dialog>
 
