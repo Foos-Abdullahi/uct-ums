@@ -29,6 +29,7 @@ class FeeGateMiddleware
         $allowedRoutes = [
             'student.fees.locked',
             'student.fees.index',
+            'student.fees.statement',
             'profile.edit',
             'logout',
         ];

@@ -10,10 +10,8 @@ import {
     TrendingUp,
     Wallet,
 } from 'lucide-react';
-import {
-    WeeklyTimetable,
-    type TimetableEntry,
-} from '@/components/timetable/weekly-timetable';
+import { WeeklyTimetable } from '@/components/timetable/weekly-timetable';
+import type { TimetableEntry } from '@/components/timetable/weekly-timetable';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -256,7 +254,9 @@ export default function StudentDashboard({
 
                 <Card className="border-slate-200/80 shadow-sm dark:border-border">
                     <CardHeader>
-                        <CardTitle className="text-lg">Weekly Timetable</CardTitle>
+                        <CardTitle className="text-lg">
+                            Weekly Timetable
+                        </CardTitle>
                         <CardDescription>
                             {student.academic_year} · Semester{' '}
                             {student.current_semester} ·{' '}

@@ -10,7 +10,6 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import AppLayout from '@/layouts/app-layout';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -18,6 +17,7 @@ import { DataTable } from '@/components/tools/table/main-table';
 import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { TableSkeleton } from '@/components/tools/table-skeleton';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type {
     CourseAssignment,
@@ -51,10 +51,6 @@ export default function AdminAssignmentsIndex({
 }: AdminAssignmentsIndexProps) {
     const { t } = useTranslation();
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_assignments'), href: '/admin/assignments' },
-    ];
     const [selectedAssignment, setSelectedAssignment] =
         useState<CourseAssignment | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);

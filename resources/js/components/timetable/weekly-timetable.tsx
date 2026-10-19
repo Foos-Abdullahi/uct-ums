@@ -60,8 +60,13 @@ export function WeeklyTimetable({ entries }: { entries: TimetableEntry[] }) {
                                             <div className="mt-2 space-y-1 text-[10px] text-muted-foreground">
                                                 <p className="flex items-center gap-1">
                                                     <Clock3 className="size-3" />
-                                                    {shortTime(session.start_time)}–
-                                                    {shortTime(session.end_time)}
+                                                    {shortTime(
+                                                        session.start_time,
+                                                    )}
+                                                    –
+                                                    {shortTime(
+                                                        session.end_time,
+                                                    )}
                                                 </p>
                                                 <p className="flex items-center gap-1">
                                                     <MapPin className="size-3" />
@@ -71,7 +76,9 @@ export function WeeklyTimetable({ entries }: { entries: TimetableEntry[] }) {
                                                     <p className="flex items-center gap-1">
                                                         <UserRound className="size-3" />
                                                         <span className="truncate">
-                                                            {session.lecturer_name}
+                                                            {
+                                                                session.lecturer_name
+                                                            }
                                                         </span>
                                                     </p>
                                                 )}

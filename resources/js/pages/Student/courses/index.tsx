@@ -11,10 +11,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
-import {
-    WeeklyTimetable,
-    type TimetableEntry,
-} from '@/components/timetable/weekly-timetable';
+import { WeeklyTimetable } from '@/components/timetable/weekly-timetable';
+import type { TimetableEntry } from '@/components/timetable/weekly-timetable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,18 +57,32 @@ interface Props {
 }
 
 function formatFileSize(bytes: number | null): string {
-    if (!bytes) return '';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (!bytes) {
+        return '';
+    }
+
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 const categoryColors: Record<string, string> = {
-    syllabus: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    lecture_notes: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-    assignment: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    lab_manual: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    reading: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    syllabus:
+        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    lecture_notes:
+        'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+    assignment:
+        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    lab_manual:
+        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    reading:
+        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
 };
 
@@ -78,7 +90,7 @@ function CourseCard({ course }: { course: Course }) {
     const [showMaterials, setShowMaterials] = useState(false);
 
     return (
-        <Card className="overflow-hidden hover:border-primary/50 transition-colors">
+        <Card className="overflow-hidden transition-colors hover:border-primary/50">
             <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -86,18 +98,23 @@ function CourseCard({ course }: { course: Course }) {
                             {course.code}
                         </Badge>
                         {course.section && (
-                            <Badge variant="secondary" className="text-xs capitalize">
+                            <Badge
+                                variant="secondary"
+                                className="text-xs capitalize"
+                            >
                                 {course.section}
                             </Badge>
                         )}
                     </div>
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="shrink-0 text-xs text-muted-foreground">
                         {course.credit_hours} credit hrs
                     </span>
                 </div>
-                <CardTitle className="text-base line-clamp-1">{course.name}</CardTitle>
+                <CardTitle className="line-clamp-1 text-base">
+                    {course.name}
+                </CardTitle>
                 {course.description && (
-                    <CardDescription className="text-xs line-clamp-2">
+                    <CardDescription className="line-clamp-2 text-xs">
                         {course.description}
                     </CardDescription>
                 )}
@@ -106,13 +123,13 @@ function CourseCard({ course }: { course: Course }) {
             <CardContent className="space-y-2 pt-0 text-xs text-muted-foreground">
                 {course.lecturer_name && (
                     <div className="flex items-center gap-1.5">
-                        <GraduationCap className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <GraduationCap className="h-3.5 w-3.5 shrink-0 text-primary" />
                         <span>{course.lecturer_name}</span>
                     </div>
                 )}
                 {(course.weekday || course.start_time) && (
                     <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <Calendar className="h-3.5 w-3.5 shrink-0 text-primary" />
                         <span>
                             {course.weekday ?? 'Day TBA'} &bull;{' '}
                             {course.start_time && course.end_time
@@ -123,17 +140,17 @@ function CourseCard({ course }: { course: Course }) {
                 )}
                 {course.room && (
                     <div className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
                         <span>{course.room}</span>
                     </div>
                 )}
 
                 {/* Materials toggle */}
-                <div className="border-t pt-2 mt-3">
+                <div className="mt-3 border-t pt-2">
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full text-xs h-8 justify-between"
+                        className="h-8 w-full justify-between text-xs"
                         onClick={() => setShowMaterials(!showMaterials)}
                     >
                         <span className="flex items-center gap-1.5">
@@ -150,7 +167,7 @@ function CourseCard({ course }: { course: Course }) {
                     {showMaterials && (
                         <div className="mt-2 space-y-1.5">
                             {course.materials.length === 0 ? (
-                                <p className="text-[11px] text-center text-muted-foreground py-2">
+                                <p className="py-2 text-center text-[11px] text-muted-foreground">
                                     No materials uploaded yet.
                                 </p>
                             ) : (
@@ -160,17 +177,26 @@ function CourseCard({ course }: { course: Course }) {
                                         className="flex items-center justify-between rounded border p-2 text-[11px] hover:bg-muted/50"
                                     >
                                         <div className="flex items-center gap-2 truncate">
-                                            <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
+                                            <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
                                             <div className="truncate">
-                                                <div className="font-medium truncate">{mat.title}</div>
+                                                <div className="truncate font-medium">
+                                                    {mat.title}
+                                                </div>
                                                 <div className="flex items-center gap-1.5 text-muted-foreground">
                                                     <span
                                                         className={`inline-flex items-center rounded px-1 py-0.5 text-[10px] font-medium capitalize ${categoryColors[mat.category] ?? categoryColors.other}`}
                                                     >
-                                                        {mat.category.replace('_', ' ')}
+                                                        {mat.category.replace(
+                                                            '_',
+                                                            ' ',
+                                                        )}
                                                     </span>
                                                     {mat.file_size && (
-                                                        <span>{formatFileSize(mat.file_size)}</span>
+                                                        <span>
+                                                            {formatFileSize(
+                                                                mat.file_size,
+                                                            )}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -179,7 +205,7 @@ function CourseCard({ course }: { course: Course }) {
                                             asChild
                                             variant="ghost"
                                             size="sm"
-                                            className="h-7 px-2 ml-2 shrink-0"
+                                            className="ml-2 h-7 shrink-0 px-2"
                                         >
                                             <a
                                                 href={`/lecturer/materials/${mat.id}/download`}
@@ -233,11 +259,13 @@ export default function StudentCoursesIndex({
                 {courses.length === 0 ? (
                     <Card>
                         <CardContent className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground">
-                            <BookOpen className="h-12 w-12 stroke-1 mb-3 text-muted-foreground/60" />
-                            <h3 className="text-base font-semibold text-foreground">No courses found</h3>
-                            <p className="text-sm mt-1">
-                                No active courses are assigned to your program for semester{' '}
-                                {student.current_semester}.
+                            <BookOpen className="mb-3 h-12 w-12 stroke-1 text-muted-foreground/60" />
+                            <h3 className="text-base font-semibold text-foreground">
+                                No courses found
+                            </h3>
+                            <p className="mt-1 text-sm">
+                                No active courses are assigned to your program
+                                for semester {student.current_semester}.
                             </p>
                         </CardContent>
                     </Card>

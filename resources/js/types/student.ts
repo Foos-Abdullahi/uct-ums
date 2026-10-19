@@ -55,6 +55,28 @@ export interface StudentPayment {
     invoice?: StudentInvoice;
 }
 
+export interface StatementEntry {
+    reference: string;
+    date: string;
+    paid: number;
+    charged: number;
+    reason: string;
+    balance: number;
+    sort_order?: number;
+}
+
+export interface StatementTotals {
+    charged: number;
+    paid: number;
+    balance: number;
+}
+
+export interface FinanceStatementData {
+    statement: StatementEntry[];
+    totals: StatementTotals;
+    generatedAt: string;
+}
+
 export interface StudentInvoice {
     id: number;
     student_id: number;

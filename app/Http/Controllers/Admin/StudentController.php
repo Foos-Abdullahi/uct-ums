@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Finance\GenerateStudentFinanceStatement;
 use App\Actions\Finance\ManageStudentPayment;
 use App\Enums\FeeStatus;
 use App\Enums\PaymentMethod;
@@ -229,8 +230,10 @@ class StudentController extends Controller
     /**
      * Display full student profile.
      */
-    public function show(Student $student): Response
-    {
+    public function show(
+        Student $student,
+        GenerateStudentFinanceStatement $generateStatement,
+    ): Response {
         $student->load([
             'user',
             'program',
@@ -242,6 +245,8 @@ class StudentController extends Controller
             'certificates' => fn ($q) => $q->latest(),
             'attendances' => fn ($q) => $q->latest('date')->take(50),
         ]);
+
+        $statementData = $generateStatement->execute($student);
 
         $totalInvoiced = (float) $student->invoices->sum('amount');
         $totalPaid = (float) $student->invoices->sum('paid_amount');
@@ -276,6 +281,7 @@ class StudentController extends Controller
                 'total_outstanding' => $totalOutstanding,
                 'overdue_count' => $overdueCount,
             ],
+            'financeStatement' => $statementData,
             'academicSummary' => [
                 'total_credits' => $totalCredits,
                 'completed_credits' => $completedCredits,
@@ -310,49 +316,18 @@ class StudentController extends Controller
     /**
      * Display a printable student finance statement.
      */
-    public function financeStatement(Student $student): Response
-    {
+    public function financeStatement(
+        Student $student,
+        GenerateStudentFinanceStatement $generateStatement,
+    ): Response {
         $student->load(['user', 'program', 'invoices', 'payments.invoice']);
-
-        $entries = $student->invoices
-            ->map(fn (StudentInvoice $invoice) => [
-                'reference' => $invoice->invoice_no,
-                'date' => $invoice->issue_date?->format('Y-m-d') ?? $invoice->created_at->format('Y-m-d'),
-                'paid' => 0.0,
-                'charged' => (float) $invoice->amount,
-                'reason' => $invoice->title,
-                'sort_order' => 0,
-            ])
-            ->concat($student->payments
-                ->where('status', PaymentStatus::Paid->value)
-                ->map(fn (StudentPayment $payment) => [
-                    'reference' => $payment->transaction_no,
-                    'date' => $payment->payment_date?->format('Y-m-d') ?? $payment->created_at->format('Y-m-d'),
-                    'paid' => (float) $payment->amount,
-                    'charged' => 0.0,
-                    'reason' => $payment->invoice?->title ?? 'Student payment',
-                    'sort_order' => 1,
-                ]))
-            ->sortBy([['date', 'asc'], ['sort_order', 'asc']]);
-
-        $balance = 0.0;
-        $statement = $entries->map(function (array $entry) use (&$balance): array {
-            $balance += $entry['paid'] - $entry['charged'];
-
-            return [...$entry, 'balance' => $balance];
-        })->values();
+        $statementData = $generateStatement->execute($student);
 
         return Inertia::render('Admin/students/finance-statement', [
             'student' => $student,
-            'statement' => $statement,
-            'totals' => [
-                'charged' => (float) $student->invoices->sum('amount'),
-                'paid' => (float) $student->payments
-                    ->where('status', PaymentStatus::Paid->value)
-                    ->sum('amount'),
-                'balance' => $balance,
-            ],
-            'generatedAt' => now()->format('d M Y'),
+            'statement' => $statementData['statement'],
+            'totals' => $statementData['totals'],
+            'generatedAt' => $statementData['generatedAt'],
         ]);
     }
 

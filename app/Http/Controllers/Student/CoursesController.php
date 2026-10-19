@@ -65,7 +65,7 @@ class CoursesController extends StudentBaseController
                 'lecturer_name' => $assignment->lecturer?->user?->name,
                 'program_name' => $student->program?->name,
                 'section' => $assignment->section,
-                'room' => $assignment->room,
+                'room' => $assignment->room ?? 'Room TBA',
                 'weekday' => $assignment->weekday,
                 'start_time' => $assignment->start_time,
                 'end_time' => $assignment->end_time,

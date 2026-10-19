@@ -27,6 +27,7 @@ class CourseAssignmentFactory extends Factory
             ['15:00', '17:00'],
         ];
         $time = fake()->randomElement($times);
+        $day = fake()->randomElement($days);
 
         return [
             'lecturer_id' => Lecturer::factory(),
@@ -38,9 +39,11 @@ class CourseAssignmentFactory extends Factory
             'status' => 'active',
             'workload_hours' => fake()->randomElement([2, 3, 4, 6]),
             'room' => 'Hall '.fake()->numberBetween(1, 10).', Room '.fake()->numberBetween(101, 305),
-            'weekday' => fake()->randomElement($days),
+            'weekday' => $day,
             'start_time' => $time[0],
             'end_time' => $time[1],
+            'schedule_day' => $day,
+            'schedule_time' => $time[0].' - '.$time[1],
             'notes' => fake()->optional()->sentence(),
         ];
     }

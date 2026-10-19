@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Student;
 
 use App\Actions\Academics\GetStudentWeeklyTimetable;
-use App\Models\CourseAssignment;
 use App\Models\Course;
+use App\Models\CourseAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -75,7 +75,7 @@ class DashboardController extends StudentBaseController
                 'lecturer_name' => $assignment->lecturer?->user?->name,
                 'program_name' => $student->program?->name,
                 'section' => $assignment->section,
-                'room' => $assignment->room,
+                'room' => $assignment->room ?? 'Room TBA',
                 'weekday' => $assignment->weekday,
                 'start_time' => $assignment->start_time,
                 'end_time' => $assignment->end_time,

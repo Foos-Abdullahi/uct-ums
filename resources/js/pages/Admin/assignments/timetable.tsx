@@ -1,9 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, CalendarDays, Plus } from 'lucide-react';
-import {
-    WeeklyTimetable,
-    type TimetableEntry,
-} from '@/components/timetable/weekly-timetable';
+import type { ReactNode } from 'react';
+import { WeeklyTimetable } from '@/components/timetable/weekly-timetable';
+import type { TimetableEntry } from '@/components/timetable/weekly-timetable';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,7 +61,10 @@ export default function AdminTimetable({
         end_time: assignment.end_time ?? '',
     }));
 
-    const updateFilter = (key: keyof TimetableProps['filters'], value: string) => {
+    const updateFilter = (
+        key: keyof TimetableProps['filters'],
+        value: string,
+    ) => {
         router.get(
             '/admin/assignments/timetable',
             { ...filters, [key]: value },
@@ -80,8 +82,8 @@ export default function AdminTimetable({
                             Weekly Timetable
                         </h1>
                         <p className="text-xs text-muted-foreground">
-                            Filter teaching sessions by academic period, program,
-                            and student section.
+                            Filter teaching sessions by academic period,
+                            program, and student section.
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -136,17 +138,20 @@ export default function AdminTimetable({
                                 <SelectValue placeholder="Semester" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All semesters</SelectItem>
-                                {Array.from({ length: 8 }, (_, index) => index + 1).map(
-                                    (semester) => (
-                                        <SelectItem
-                                            key={semester}
-                                            value={`Semester ${semester}`}
-                                        >
-                                            Semester {semester}
-                                        </SelectItem>
-                                    ),
-                                )}
+                                <SelectItem value="all">
+                                    All semesters
+                                </SelectItem>
+                                {Array.from(
+                                    { length: 8 },
+                                    (_, index) => index + 1,
+                                ).map((semester) => (
+                                    <SelectItem
+                                        key={semester}
+                                        value={`Semester ${semester}`}
+                                    >
+                                        Semester {semester}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
 
@@ -160,7 +165,9 @@ export default function AdminTimetable({
                                 <SelectValue placeholder="Program" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All programs</SelectItem>
+                                <SelectItem value="all">
+                                    All programs
+                                </SelectItem>
                                 {programs.map((program) => (
                                     <SelectItem
                                         key={program.id}
@@ -182,7 +189,9 @@ export default function AdminTimetable({
                                 <SelectValue placeholder="Section" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All sections</SelectItem>
+                                <SelectItem value="all">
+                                    All sections
+                                </SelectItem>
                                 {sections.map((section) => (
                                     <SelectItem key={section} value={section}>
                                         {section}
@@ -206,6 +215,6 @@ export default function AdminTimetable({
     );
 }
 
-AdminTimetable.layout = (page: React.ReactNode) => (
+AdminTimetable.layout = (page: ReactNode) => (
     <AppLayout breadcrumbs={breadcrumbs}>{page}</AppLayout>
 );

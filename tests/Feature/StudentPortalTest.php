@@ -3,6 +3,7 @@
 use App\Enums\FeeStatus;
 use App\Enums\UserRole;
 use App\Models\Course;
+use App\Models\CourseAssignment;
 use App\Models\Program;
 use App\Models\Student;
 use App\Models\StudentAttendance;
@@ -22,7 +23,9 @@ beforeEach(function () {
     $this->student = Student::factory()->paid()->create([
         'user_id' => $this->studentUser->id,
         'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
         'current_semester' => 1,
+        'section' => 'Section A',
     ]);
 });
 
@@ -101,6 +104,43 @@ test('student can view their enrolled courses', function () {
                 ->component('Student/courses/index')
                 ->has('courses', 3)
         );
+});
+
+test('student dashboard and courses show only the matching weekly timetable', function () {
+    $course = Course::factory()->create([
+        'program_id' => $this->program->id,
+        'semester' => 1,
+        'status' => 'active',
+    ]);
+    $matching = CourseAssignment::factory()->create([
+        'course_id' => $course->id,
+        'academic_year' => '2026/2027',
+        'semester' => 'Semester 1',
+        'section' => 'Section A',
+        'weekday' => 'Tuesday',
+        'start_time' => '08:00',
+        'end_time' => '10:00',
+    ]);
+    CourseAssignment::factory()->create([
+        'course_id' => $course->id,
+        'academic_year' => '2026/2027',
+        'semester' => 'Semester 1',
+        'section' => 'Section B',
+        'weekday' => 'Wednesday',
+        'start_time' => '10:00',
+        'end_time' => '12:00',
+    ]);
+
+    foreach ([route('student.dashboard'), route('student.courses.index')] as $route) {
+        $this->actingAs($this->studentUser)
+            ->get($route)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('timetable', 1)
+                ->where('timetable.0.id', $matching->id)
+                ->where('timetable.0.weekday', 'Tuesday')
+                ->where('timetable.0.section', 'Section A'));
+    }
 });
 
 // ── Grades ───────────────────────────────────────────────────────────────────
