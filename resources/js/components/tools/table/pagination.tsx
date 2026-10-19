@@ -50,6 +50,8 @@ export function DataTablePagination<TData>({
     const canNext = isServerSide
         ? currentPage < totalPages
         : table.getCanNextPage();
+    const pageSizes = [...new Set([pageSize, 10, 25, 50, 100, 200, 300, 400, 500])]
+        .sort((left, right) => left - right);
 
     const handlePageSizeChange = (value: string) => {
         const newSize = Number(value);
@@ -102,11 +104,11 @@ export function DataTablePagination<TData>({
                     value={String(pageSize)}
                     onValueChange={handlePageSizeChange}
                 >
-                    <SelectTrigger className="h-8 w-[70px]">
+                    <SelectTrigger className="h-8 w-[120px] shrink-0">
                         <SelectValue placeholder={pageSize} />
                     </SelectTrigger>
                     <SelectContent side="top">
-                        {[50, 100, 200, 300, 400, 500].map((size) => (
+                        {pageSizes.map((size) => (
                             <SelectItem key={size} value={`${size}`}>
                                 {size}
                             </SelectItem>

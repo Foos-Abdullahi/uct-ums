@@ -135,7 +135,20 @@ export const adminNav: NavItem[] = [
             },
         ],
     },
-    { title: 'nav_reports', href: '/admin/reports', icon: BarChart3, permission: 'reports.view' },
+    {
+        title: 'nav_reports',
+        icon: BarChart3,
+        permission: 'reports.view',
+        items: [
+            { title: 'reports_nav_dashboard', href: '/admin/reports', icon: LayoutGrid },
+            { title: 'reports_nav_fees', href: '/admin/reports/fees-collections', icon: Receipt },
+            { title: 'reports_nav_revenue', href: '/admin/reports/income-revenue', icon: CreditCard },
+            { title: 'reports_nav_expenses', href: '/admin/reports/expenses', icon: FileText },
+            { title: 'reports_nav_cash_flow', href: '/admin/reports/cash-flow', icon: CreditCard },
+            { title: 'reports_nav_budget', href: '/admin/reports/budget-vs-actual', icon: BarChart3 },
+            { title: 'reports_nav_income_statement', href: '/admin/reports/income-statement', icon: ScrollText },
+        ],
+    },
     {
         title: 'nav_settings',
         icon: Settings,

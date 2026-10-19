@@ -48,7 +48,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
 
 export interface ExpenseItem {
     id: number;
@@ -152,12 +151,6 @@ export default function AdminFinanceExpenses({
         paid_at: new Date().toISOString().split('T')[0],
     });
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('dashboard_breadcrumb'), href: '/admin/dashboard' },
-        { title: t('finance_breadcrumb'), href: '/admin/finance' },
-        { title: t('breadcrumb_expenses'), href: '/admin/expenses' },
-    ];
-
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -252,7 +245,11 @@ export default function AdminFinanceExpenses({
 
     const confirmMarkPaid = (event: React.FormEvent) => {
         event.preventDefault();
-        if (!markPaidTarget) return;
+
+        if (!markPaidTarget) {
+            return;
+        }
+
         markPaidForm.post(`/admin/expenses/${markPaidTarget.id}/mark-paid`, {
             onSuccess: () => {
                 toast.success(t('expense_marked_paid', { expense_no: markPaidTarget.expense_no }));
@@ -870,6 +867,12 @@ export default function AdminFinanceExpenses({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
+                                                value="pending_approval"
+                                                className="text-xs"
+                                            >
+                                                {t('pending_approval_status')}
+                                            </SelectItem>
+                                            <SelectItem
                                                 value="paid"
                                                 className="text-xs"
                                             >
@@ -970,7 +973,9 @@ export default function AdminFinanceExpenses({
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing
                                         ? t('saving')
-                                        : t('record_expense_button')}
+                                        : data.status === 'pending_approval'
+                                          ? t('submit_for_approval')
+                                          : t('record_expense_button')}
                                 </Button>
                             </DialogFooter>
                         </form>
