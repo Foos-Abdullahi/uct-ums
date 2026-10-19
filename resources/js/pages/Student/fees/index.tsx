@@ -1,11 +1,14 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     CreditCard,
     FileText,
+    Printer,
+    Receipt,
     Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
+import StudentStatementSheet from '@/components/finance/student-statement-sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +25,13 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import type { Student, StudentPayment } from '@/types/student';
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from '@/components/ui/tabs';
+import type { FinanceStatementData, Student, StudentPayment } from '@/types/student';
 
 interface InvoicePayment {
     id: number;
@@ -60,6 +69,7 @@ interface Props {
     invoices: Invoice[];
     payments: StudentPayment[];
     summary: Summary;
+    financeStatement?: FinanceStatementData;
 }
 
 const invoiceStatusVariant = (status: string) => {
@@ -81,7 +91,13 @@ const feeStatusVariant = (status: string) => {
     return 'destructive';
 };
 
-export default function StudentFeesIndex({ student, invoices, payments, summary }: Props) {
+export default function StudentFeesIndex({
+    student,
+    invoices,
+    payments,
+    summary,
+    financeStatement,
+}: Props) {
     const [expandedInvoice, setExpandedInvoice] = useState<number | null>(null);
 
     return (
@@ -89,10 +105,20 @@ export default function StudentFeesIndex({ student, invoices, payments, summary 
             <Head title="Fees & Payments" />
 
             <div className="flex flex-col gap-6 p-4 md:p-6">
-                <Heading
-                    title="Fees & Payments"
-                    description="View your outstanding balance, invoices, and payment history."
-                />
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <Heading
+                        title="Fees & Payments"
+                        description="View your official financial statement, invoices, and payments."
+                    />
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/student/fees/statement">
+                                <Printer className="mr-2 h-4 w-4" />
+                                Official Statement
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
 
                 {/* Balance Summary */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -145,194 +171,232 @@ export default function StudentFeesIndex({ student, invoices, payments, summary 
                     </Card>
                 </div>
 
-                {/* Invoices */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base">Invoices</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        {invoices.length === 0 ? (
-                            <div className="p-12 text-center text-sm text-muted-foreground">
-                                No invoices issued yet.
-                            </div>
+                {/* Tabs: Statement Ledger, Invoices, Payment History */}
+                <Tabs defaultValue="statement" className="space-y-4">
+                    <TabsList>
+                        <TabsTrigger value="statement">
+                            <Receipt className="mr-2 h-4 w-4" />
+                            Financial Statement
+                        </TabsTrigger>
+                        <TabsTrigger value="invoices">
+                            <FileText className="mr-2 h-4 w-4" />
+                            Invoices ({invoices.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="payments">
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Payment History ({payments.length})
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* Tab 1: Financial Statement */}
+                    <TabsContent value="statement" className="space-y-4">
+                        {financeStatement ? (
+                            <StudentStatementSheet
+                                student={student}
+                                statement={financeStatement.statement}
+                                totals={financeStatement.totals}
+                                generatedAt={financeStatement.generatedAt}
+                                printUrl="/student/fees/statement"
+                            />
                         ) : (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Invoice #</TableHead>
-                                            <TableHead>Title</TableHead>
-                                            <TableHead>Type</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
-                                            <TableHead className="text-right">Paid</TableHead>
-                                            <TableHead className="text-right">Balance</TableHead>
-                                            <TableHead>Due Date</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="w-[80px]" />
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {invoices.map((invoice) => (
-                                            <>
-                                                <TableRow
-                                                    key={invoice.id}
-                                                    className="cursor-pointer hover:bg-muted/50"
-                                                    onClick={() =>
-                                                        setExpandedInvoice(
-                                                            expandedInvoice === invoice.id
-                                                                ? null
-                                                                : invoice.id,
-                                                        )
-                                                    }
-                                                >
-                                                    <TableCell className="font-mono text-xs font-semibold">
-                                                        {invoice.invoice_no}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs">
-                                                        {invoice.title}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline" className="capitalize text-[10px]">
-                                                            {invoice.type}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right text-xs font-medium">
-                                                        ${Number(invoice.amount).toLocaleString()}
-                                                    </TableCell>
-                                                    <TableCell className="text-right text-xs text-emerald-600">
-                                                        ${Number(invoice.paid_amount).toLocaleString()}
-                                                    </TableCell>
-                                                    <TableCell
-                                                        className={`text-right text-xs font-semibold ${invoice.balance > 0 ? 'text-destructive' : 'text-emerald-600'}`}
-                                                    >
-                                                        ${Number(invoice.balance).toLocaleString()}
-                                                    </TableCell>
-                                                    <TableCell className="text-xs">
-                                                        {invoice.due_date ?? '—'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            variant={invoiceStatusVariant(invoice.status)}
-                                                            className="capitalize text-[10px]"
-                                                        >
-                                                            {invoice.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">
-                                                        {invoice.payments.length > 0
-                                                            ? `${invoice.payments.length} pmt${invoice.payments.length !== 1 ? 's' : ''}`
-                                                            : ''}
-                                                    </TableCell>
+                            <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
+                                Statement details currently unavailable.
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    {/* Tab 2: Invoices */}
+                    <TabsContent value="invoices" className="space-y-4">
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base">Invoices</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {invoices.length === 0 ? (
+                                    <div className="p-12 text-center text-sm text-muted-foreground">
+                                        No invoices issued yet.
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Invoice #</TableHead>
+                                                    <TableHead>Title</TableHead>
+                                                    <TableHead>Type</TableHead>
+                                                    <TableHead className="text-right">Amount</TableHead>
+                                                    <TableHead className="text-right">Paid</TableHead>
+                                                    <TableHead className="text-right">Balance</TableHead>
+                                                    <TableHead>Due Date</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead className="w-[80px]" />
                                                 </TableRow>
-                                                {expandedInvoice === invoice.id &&
-                                                    invoice.payments.length > 0 && (
-                                                        <TableRow key={`${invoice.id}-payments`}>
-                                                            <TableCell colSpan={9} className="bg-muted/30 p-4">
-                                                                <div className="text-xs font-semibold mb-2">
-                                                                    Payments for {invoice.invoice_no}
-                                                                </div>
-                                                                <table className="w-full text-xs">
-                                                                    <thead>
-                                                                        <tr className="text-muted-foreground">
-                                                                            <th className="text-left pb-1">Txn #</th>
-                                                                            <th className="text-left pb-1">Date</th>
-                                                                            <th className="text-left pb-1">Method</th>
-                                                                            <th className="text-right pb-1">Amount</th>
-                                                                            <th className="text-left pb-1 pl-3">Status</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {invoice.payments.map((pmt) => (
-                                                                            <tr key={pmt.id} className="border-t border-border/30">
-                                                                                <td className="font-mono py-1">{pmt.transaction_no}</td>
-                                                                                <td className="py-1">{pmt.payment_date}</td>
-                                                                                <td className="capitalize py-1">
-                                                                                    {pmt.payment_method.replace('_', ' ')}
-                                                                                </td>
-                                                                                <td className="text-right py-1 font-medium">
-                                                                                    ${Number(pmt.amount).toLocaleString()}
-                                                                                </td>
-                                                                                <td className="py-1 pl-3">
-                                                                                    <Badge
-                                                                                        variant={paymentStatusVariant(pmt.status)}
-                                                                                        className="capitalize text-[10px]"
-                                                                                    >
-                                                                                        {pmt.status}
-                                                                                    </Badge>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {invoices.map((invoice) => (
+                                                    <div key={invoice.id} className="contents">
+                                                        <TableRow
+                                                            className="cursor-pointer hover:bg-muted/50"
+                                                            onClick={() =>
+                                                                setExpandedInvoice(
+                                                                    expandedInvoice === invoice.id
+                                                                        ? null
+                                                                        : invoice.id,
+                                                                )
+                                                            }
+                                                        >
+                                                            <TableCell className="font-mono text-xs font-semibold">
+                                                                {invoice.invoice_no}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs">
+                                                                {invoice.title}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="outline" className="capitalize text-[10px]">
+                                                                    {invoice.type}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="text-right text-xs font-medium">
+                                                                ${Number(invoice.amount).toLocaleString()}
+                                                            </TableCell>
+                                                            <TableCell className="text-right text-xs text-emerald-600">
+                                                                ${Number(invoice.paid_amount).toLocaleString()}
+                                                            </TableCell>
+                                                            <TableCell
+                                                                className={`text-right text-xs font-semibold ${invoice.balance > 0 ? 'text-destructive' : 'text-emerald-600'}`}
+                                                            >
+                                                                ${Number(invoice.balance).toLocaleString()}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs">
+                                                                {invoice.due_date ?? '—'}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge
+                                                                    variant={invoiceStatusVariant(invoice.status)}
+                                                                    className="capitalize text-[10px]"
+                                                                >
+                                                                    {invoice.status}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="text-xs text-muted-foreground">
+                                                                {invoice.payments.length > 0
+                                                                    ? `${invoice.payments.length} pmt${invoice.payments.length !== 1 ? 's' : ''}`
+                                                                    : ''}
                                                             </TableCell>
                                                         </TableRow>
-                                                    )}
-                                            </>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                                                        {expandedInvoice === invoice.id &&
+                                                            invoice.payments.length > 0 && (
+                                                                <TableRow>
+                                                                    <TableCell colSpan={9} className="bg-muted/30 p-4">
+                                                                        <div className="text-xs font-semibold mb-2">
+                                                                            Payments for {invoice.invoice_no}
+                                                                        </div>
+                                                                        <table className="w-full text-xs">
+                                                                            <thead>
+                                                                                <tr className="text-muted-foreground">
+                                                                                    <th className="text-left pb-1">Txn #</th>
+                                                                                    <th className="text-left pb-1">Date</th>
+                                                                                    <th className="text-left pb-1">Method</th>
+                                                                                    <th className="text-right pb-1">Amount</th>
+                                                                                    <th className="text-left pb-1 pl-3">Status</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {invoice.payments.map((pmt) => (
+                                                                                    <tr key={pmt.id} className="border-t border-border/30">
+                                                                                        <td className="font-mono py-1">{pmt.transaction_no}</td>
+                                                                                        <td className="py-1">{pmt.payment_date}</td>
+                                                                                        <td className="capitalize py-1">
+                                                                                            {pmt.payment_method.replace('_', ' ')}
+                                                                                        </td>
+                                                                                        <td className="text-right py-1 font-medium">
+                                                                                            ${Number(pmt.amount).toLocaleString()}
+                                                                                        </td>
+                                                                                        <td className="py-1 pl-3">
+                                                                                            <Badge
+                                                                                                variant={paymentStatusVariant(pmt.status)}
+                                                                                                className="capitalize text-[10px]"
+                                                                                            >
+                                                                                                {pmt.status}
+                                                                                            </Badge>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )}
+                                                    </div>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                {/* All Payments History */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base">Payment History</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        {payments.length === 0 ? (
-                            <div className="p-8 text-center text-sm text-muted-foreground">
-                                No payments recorded yet.
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Transaction #</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Method</TableHead>
-                                            <TableHead className="text-right">Amount</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Notes</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {payments.map((pmt) => (
-                                            <TableRow key={pmt.id}>
-                                                <TableCell className="font-mono text-xs font-semibold">
-                                                    {pmt.transaction_no}
-                                                </TableCell>
-                                                <TableCell className="text-xs">
-                                                    {pmt.payment_date}
-                                                </TableCell>
-                                                <TableCell className="text-xs capitalize">
-                                                    {String(pmt.payment_method).replace('_', ' ')}
-                                                </TableCell>
-                                                <TableCell className="text-right text-xs font-medium">
-                                                    ${Number(pmt.amount).toLocaleString()}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge
-                                                        variant={paymentStatusVariant(pmt.status)}
-                                                        className="capitalize text-[10px]"
-                                                    >
-                                                        {pmt.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
-                                                    {pmt.notes ?? '—'}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                    {/* Tab 3: Payment History */}
+                    <TabsContent value="payments" className="space-y-4">
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base">Payment History</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {payments.length === 0 ? (
+                                    <div className="p-8 text-center text-sm text-muted-foreground">
+                                        No payments recorded yet.
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Transaction #</TableHead>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Method</TableHead>
+                                                    <TableHead className="text-right">Amount</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead>Notes</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {payments.map((pmt) => (
+                                                    <TableRow key={pmt.id}>
+                                                        <TableCell className="font-mono text-xs font-semibold">
+                                                            {pmt.transaction_no}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs">
+                                                            {pmt.payment_date}
+                                                        </TableCell>
+                                                        <TableCell className="text-xs capitalize">
+                                                            {String(pmt.payment_method).replace('_', ' ')}
+                                                        </TableCell>
+                                                        <TableCell className="text-right text-xs font-medium">
+                                                            ${Number(pmt.amount).toLocaleString()}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge
+                                                                variant={paymentStatusVariant(pmt.status)}
+                                                                className="capitalize text-[10px]"
+                                                            >
+                                                                {pmt.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                                                            {pmt.notes ?? '—'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
         </>
     );

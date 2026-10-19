@@ -41,7 +41,9 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StudentStatementSheet from '@/components/finance/student-statement-sheet';
 import type {
+    FinanceStatementData,
     Student,
     StudentGrade,
     StudentInvoice,
@@ -85,6 +87,7 @@ interface AdminStudentsShowProps {
     financialSummary: FinancialSummary;
     academicSummary: AcademicSummary;
     attendanceSummary: AttendanceSummary;
+    financeStatement?: FinanceStatementData;
 }
 
 export default function AdminStudentsShow({
@@ -92,6 +95,7 @@ export default function AdminStudentsShow({
     financialSummary,
     academicSummary,
     attendanceSummary,
+    financeStatement,
 }: AdminStudentsShowProps) {
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [feeModalOpen, setFeeModalOpen] = useState(false);
@@ -1032,6 +1036,27 @@ export default function AdminStudentsShow({
                                 </div>
                             </Card>
                         </div>
+
+                        {/* Chronological Finance Statement */}
+                        {financeStatement && (
+                            <div className="space-y-3">
+                                <div>
+                                    <h4 className="text-sm font-semibold text-foreground">
+                                        Finance Statement
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground">
+                                        Official chronological ledger showing charges, payments, and running balance.
+                                    </p>
+                                </div>
+                                <StudentStatementSheet
+                                    student={student}
+                                    statement={financeStatement.statement}
+                                    totals={financeStatement.totals}
+                                    generatedAt={financeStatement.generatedAt}
+                                    printUrl={`/admin/students/${student.id}/finance-statement`}
+                                />
+                            </div>
+                        )}
 
                         {/* Invoices Section */}
                         <div className="space-y-3">
