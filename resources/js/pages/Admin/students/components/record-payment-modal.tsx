@@ -145,7 +145,7 @@ export function RecordPaymentModal({
                         )}
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="grid gap-2">
+                            <div className="grid min-w-0 gap-2">
                                 <Label htmlFor="amount">Amount ($ USD)</Label>
                                 <Input
                                     id="amount"
@@ -166,7 +166,7 @@ export function RecordPaymentModal({
                                 )}
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid min-w-0 gap-2">
                                 <Label htmlFor="payment_method">
                                     Payment Method
                                 </Label>
@@ -176,8 +176,8 @@ export function RecordPaymentModal({
                                         setData('payment_method', val)
                                     }
                                 >
-                                    <SelectTrigger id="payment_method">
-                                        <SelectValue placeholder="Payment Method" />
+                                    <SelectTrigger id="payment_method" className="min-w-0">
+                                        <SelectValue className="min-w-0 flex-1 truncate" placeholder="Payment Method" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="bank_transfer">
@@ -215,7 +215,7 @@ export function RecordPaymentModal({
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="grid gap-2">
+                            <div className="grid min-w-0 gap-2">
                                 <Label htmlFor="payment_date">
                                     Payment Date
                                 </Label>
@@ -234,7 +234,7 @@ export function RecordPaymentModal({
                                 )}
                             </div>
 
-                            <div className="grid gap-2">
+                            <div className="grid min-w-0 gap-2">
                                 <Label htmlFor="status">Payment Status</Label>
                                 <Select
                                     value={data.status}
@@ -242,8 +242,8 @@ export function RecordPaymentModal({
                                         setData('status', val)
                                     }
                                 >
-                                    <SelectTrigger id="status">
-                                        <SelectValue placeholder="Select status" />
+                                    <SelectTrigger id="status" className="min-w-0">
+                                        <SelectValue className="min-w-0 flex-1 truncate" placeholder="Select status" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="paid">

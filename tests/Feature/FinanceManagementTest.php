@@ -220,13 +220,24 @@ test('marked expense as paid only when approved', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
 
+    $paymentAccount = Account::factory()
+        ->expenseAccount(AccountCategoryType::Assets, 1010)
+        ->create();
+
     $pending = Expense::factory()->create(['status' => 'pending_approval']);
     $response = $this->post(route('admin.expenses.mark-paid', $pending));
     $response->assertRedirect();
     expect($pending->refresh()->status)->toBe('pending_approval');
 
     $approved = Expense::factory()->approved()->create();
-    $response = $this->post(route('admin.expenses.mark-paid', $approved));
+    $response = $this->post(route('admin.expenses.mark-paid', $approved), [
+        'payment_method' => 'cash',
+        'payment_account_id' => $paymentAccount->id,
+        'paid_at' => '2026-09-01',
+    ]);
+
+    $response->assertRedirect();
+
     expect($approved->refresh()->status)->toBe('paid');
 });
 

@@ -543,11 +543,16 @@ test('admin can reset a student user password', function () {
 test('admin can create a student fee invoice', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
-    $student = Student::factory()->create();
+    $student = Student::factory()->create([
+        'academic_year' => '2026/2027',
+        'current_semester' => 2,
+    ]);
 
     $response = $this->post(route('admin.students.invoices.store', $student), [
         'title' => 'Semester 2 Tuition Fee',
         'type' => 'tuition',
+        'academic_year' => '2026/2027',
+        'semester' => 2,
         'amount' => 1500.00,
         'due_date' => now()->addDays(30)->toDateString(),
     ]);

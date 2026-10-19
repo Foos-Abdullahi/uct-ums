@@ -91,8 +91,14 @@ interface AdminFinanceFeesProps {
         matric_no: string;
         name: string;
         program_id: number | null;
+        academic_year: string | null;
         current_semester: number;
         enrollment_status: string;
+        invoices: Array<{
+            academic_year: string | null;
+            semester: number | null;
+            type: string;
+        }>;
     }>;
     academic_years: string[];
     available_semesters: number[];
@@ -116,14 +122,16 @@ export default function AdminFinanceFees({
     const { t } = useTranslation();
     const [recordFeeOpen, setRecordFeeOpen] = useState(false);
     const [semesterFeeOpen, setSemesterFeeOpen] = useState(false);
+    const currentYear = new Date().getFullYear();
     const { data, setData, post, processing, errors, reset } = useForm({
         student_id: '',
         title: '',
         type: 'tuition',
+        academic_year: academicYears[0] ?? `${currentYear}/${currentYear + 1}`,
+        semester: '1',
         amount: '',
         due_date: '',
     });
-    const currentYear = new Date().getFullYear();
     const semesterFeeForm = useForm({
         academic_year: academicYears[0] ?? `${currentYear}/${currentYear + 1}`,
         semester: '1',
@@ -193,6 +201,26 @@ export default function AdminFinanceFees({
             (semesterFeeForm.data.program_id === '' ||
                 student.program_id === Number(semesterFeeForm.data.program_id)),
     );
+    const alreadyChargedStudents = matchingSemesterStudents.filter((student) =>
+        student.invoices.some(
+            (invoice) =>
+                (invoice.academic_year === semesterFeeForm.data.academic_year ||
+                    invoice.academic_year === null) &&
+                invoice.semester === Number(semesterFeeForm.data.semester) &&
+                invoice.type === semesterFeeForm.data.type,
+        ),
+    );
+    const studentsToCharge = matchingSemesterStudents.length - alreadyChargedStudents.length;
+    const selectedRecordStudent = recordingStudents.find(
+        (student) => student.id === Number(data.student_id),
+    );
+    const recordFeeDuplicate = selectedRecordStudent?.invoices.some(
+        (invoice) =>
+            invoice.type === data.type &&
+            invoice.semester === Number(data.semester) &&
+            (invoice.academic_year === data.academic_year ||
+                invoice.academic_year === null),
+    ) ?? false;
 
     const handleAssignSemesterFee = (event: React.FormEvent) => {
         event.preventDefault();
@@ -607,9 +635,17 @@ export default function AdminFinanceFees({
                                 </Label>
                                 <Select
                                     value={data.student_id || undefined}
-                                    onValueChange={(value) =>
-                                        setData('student_id', value)
-                                    }
+                                    onValueChange={(value) => {
+                                        const selectedStudent = recordingStudents.find(
+                                            (student) => student.id === Number(value),
+                                        );
+                                        setData((currentData) => ({
+                                            ...currentData,
+                                            student_id: value,
+                                            academic_year: selectedStudent?.academic_year ?? currentData.academic_year,
+                                            semester: String(selectedStudent?.current_semester ?? 1),
+                                        }));
+                                    }}
                                 >
                                     <SelectTrigger
                                         id="record-fee-student"
@@ -694,6 +730,25 @@ export default function AdminFinanceFees({
                                 </div>
                             </div>
 
+                            {recordFeeDuplicate && (
+                                <p className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
+                                    This student already has this fee type for the selected academic year and semester.
+                                </p>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="record-fee-year" className="text-xs font-semibold">Academic year *</Label>
+                                    <Input id="record-fee-year" value={data.academic_year} onChange={(event) => setData('academic_year', event.target.value)} placeholder="2026/2027" required />
+                                    {errors.academic_year && <p className="text-[11px] text-destructive">{errors.academic_year}</p>}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="record-fee-semester" className="text-xs font-semibold">Semester *</Label>
+                                    <Input id="record-fee-semester" type="number" min="1" max="8" value={data.semester} onChange={(event) => setData('semester', event.target.value)} required />
+                                    {errors.semester && <p className="text-[11px] text-destructive">{errors.semester}</p>}
+                                </div>
+                            </div>
+
                             <div className="space-y-1.5">
                                 <Label
                                     htmlFor="record-fee-title"
@@ -745,7 +800,7 @@ export default function AdminFinanceFees({
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    disabled={processing}
+                                    disabled={processing || recordFeeDuplicate}
                                     onClick={() => setRecordFeeOpen(false)}
                                 >
                                     Cancel
@@ -1028,14 +1083,16 @@ export default function AdminFinanceFees({
                                 }`}
                             >
                                 <p className="font-semibold">
-                                    {matchingSemesterStudents.length} enrolled
-                                    students will receive this charge
+                                    {studentsToCharge} students will receive this charge
                                 </p>
-                                {matchingSemesterStudents.length > 0 && (
+                                <p className="mt-1 text-muted-foreground">
+                                    {alreadyChargedStudents.length} already charged · {recordingStudents.length - matchingSemesterStudents.length} excluded by semester, enrollment, or program
+                                </p>
+                                {studentsToCharge > 0 && (
                                     <p className="mt-1 text-muted-foreground">
-                                        Total billed:{' '}
+                                        New charges total:{' '}
                                         {formatCurrency(
-                                            matchingSemesterStudents.length *
+                                            studentsToCharge *
                                                 Number(
                                                     semesterFeeForm.data
                                                         .amount || 0,
@@ -1060,13 +1117,13 @@ export default function AdminFinanceFees({
                                     size="sm"
                                     disabled={
                                         semesterFeeForm.processing ||
-                                        matchingSemesterStudents.length === 0
+                                        studentsToCharge === 0
                                     }
                                 >
                                     {semesterFeeForm.processing && (
                                         <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                                     )}
-                                    Assign to {matchingSemesterStudents.length}{' '}
+                                    Assign to {studentsToCharge}{' '}
                                     students
                                 </Button>
                             </DialogFooter>

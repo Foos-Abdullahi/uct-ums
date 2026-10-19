@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Finance\AssignSemesterFee;
+use App\Actions\Finance\CreateStudentInvoice;
 use App\Actions\Finance\ManageStudentPayment;
-use App\Enums\FeeStatus;
+use App\Enums\AccountType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreSemesterFeeRequest;
+use App\Models\Account;
 use App\Models\Expense;
 use App\Models\Program;
 use App\Models\Student;
@@ -235,6 +237,11 @@ class FinanceController extends Controller
             ]),
             'payments' => Inertia::defer(fn () => $query->paginate($perPage)->withQueryString()),
             'students' => $students,
+            'payment_accounts' => Account::query()
+                ->where('status', 'active')
+                ->where('type', AccountType::Asset->value)
+                ->orderBy('code')
+                ->get(['id', 'code', 'name']),
             'filters' => [
                 'search' => $search ?? '',
                 'status' => $status ?? 'all',
@@ -259,10 +266,18 @@ class FinanceController extends Controller
             ],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'payment_method' => ['required', 'string', Rule::in(PaymentMethod::values())],
+            'payment_account_id' => ['nullable', 'integer', 'exists:accounts,id'],
             'payment_date' => ['required', 'date'],
             'status' => ['required', 'string', Rule::in(PaymentStatus::values())],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
+
+        if (! empty($validated['payment_account_id'])) {
+            $paymentAccount = Account::findOrFail((int) $validated['payment_account_id']);
+            if ($paymentAccount->type !== AccountType::Asset) {
+                return back()->withErrors(['payment_account_id' => 'Choose a cash, bank, or mobile money asset account.'])->withInput();
+            }
+        }
 
         $student = Student::findOrFail((int) $validated['student_id']);
         $payment = $manageStudentPayment->record($student, $validated);
@@ -353,13 +368,15 @@ class FinanceController extends Controller
     /**
      * Create a new student invoice.
      */
-    public function storeInvoice(Request $request): RedirectResponse
+    public function storeInvoice(Request $request, CreateStudentInvoice $createStudentInvoice): RedirectResponse
     {
         $validated = $request->validate([
             'student_id' => ['required', 'exists:students,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'type' => ['required', 'string', 'max:100'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'semester' => ['nullable', 'integer', 'min:1', 'max:'.config('academic.total_semesters')],
             'amount' => ['required', 'numeric', 'min:1'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
@@ -372,48 +389,22 @@ class FinanceController extends Controller
             'items.*.amount' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $invoiceNo = $this->nextInvoiceNo();
+        $items = array_map(fn (array $item) => [
+            'description' => $item['description'],
+            'quantity' => $item['quantity'],
+            'unit_price' => $item['unit_price'],
+            'amount' => $item['amount'],
+        ], $validated['items'] ?? []);
+        $student = Student::findOrFail((int) $validated['student_id']);
+        $result = $createStudentInvoice->handle($student, [...$validated, 'items' => $items]);
 
-        $invoice = StudentInvoice::create([
-            'student_id' => $validated['student_id'],
-            'invoice_no' => $invoiceNo,
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'type' => $validated['type'],
-            'amount' => $validated['amount'],
-            'tax_amount' => $validated['tax_amount'] ?? 0.00,
-            'discount_amount' => $validated['discount_amount'] ?? 0.00,
-            'paid_amount' => 0.00,
-            'due_date' => $validated['due_date'] ?? null,
-            'issue_date' => $validated['issue_date'] ?? now()->toDateString(),
-            'status' => 'unpaid',
-        ]);
-
-        // Create line items if provided
-        if (! empty($validated['items'])) {
-            $items = [];
-
-            foreach ($validated['items'] as $item) {
-                if (! is_array($item)) {
-                    continue;
-                }
-
-                $items[] = [
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'amount' => $item['amount'],
-                ];
-            }
-
-            $invoice->items()->createMany($items);
+        if (! $result['created']) {
+            return back()->withErrors(['type' => 'This fee type has already been charged to the student for this academic year and semester.'])->withInput();
         }
 
-        // Update student fee status to unpaid or partial
-        $student = Student::find((int) $validated['student_id']);
-        if ($student && $student->fee_status === FeeStatus::Paid) {
-            $student->update(['fee_status' => FeeStatus::Partial]);
-        }
+        $invoice = $result['invoice'];
+        $invoiceNo = $invoice->invoice_no;
+        $student->recalculateFinancials();
 
         return back()->with('success', "Invoice {$invoiceNo} for \${$invoice->amount} issued successfully.");
     }

@@ -116,6 +116,18 @@ test('student photo upload rejects unsupported files and files over two megabyte
     ])->assertSessionHasErrors('photo');
 });
 
+test('stored student photos are served from the public storage route', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('student-photos/student.jpg', 'student-photo');
+
+    $this->get('/storage/student-photos/student.jpg')
+        ->assertOk()
+        ->assertStreamedContent('student-photo');
+
+    $this->get('/storage/student-photos/missing.jpg')->assertNotFound();
+    $this->get('/storage/../private/student.jpg')->assertNotFound();
+});
+
 test('finance statement includes the student photo and a running transaction balance', function () {
     Storage::fake('public');
 

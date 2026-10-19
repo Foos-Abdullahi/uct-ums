@@ -173,6 +173,12 @@ jobs:
 
           function rrmdir(string $dir): void
           {
+              if (is_link($dir)) {
+                  @unlink($dir);
+
+                  return;
+              }
+
               if (!is_dir($dir)) {
                   return;
               }
@@ -190,6 +196,18 @@ jobs:
               }
 
               @rmdir($dir);
+          }
+
+          $preservedPublicStorage = $home.'/.ums_public_storage';
+          $currentPublicStorage = $target.'/storage/app/public';
+
+          if (is_dir($currentPublicStorage)) {
+              rrmdir($preservedPublicStorage);
+
+              if (! @rename($currentPublicStorage, $preservedPublicStorage)) {
+                  http_response_code(500);
+                  exit('ERR unable to preserve public storage');
+              }
           }
 
           rrmdir($target);
@@ -216,6 +234,23 @@ jobs:
           if (!is_dir($target) || !is_file($target.'/artisan')) {
               http_response_code(500);
               exit('ERR extraction incomplete');
+          }
+
+          $deployedPublicStorage = $target.'/storage/app/public';
+
+          if (! is_dir(dirname($deployedPublicStorage))) {
+              mkdir(dirname($deployedPublicStorage), 0777, true);
+          }
+
+          if (is_dir($preservedPublicStorage)) {
+              rrmdir($deployedPublicStorage);
+
+              if (! @rename($preservedPublicStorage, $deployedPublicStorage)) {
+                  http_response_code(500);
+                  exit('ERR unable to restore public storage');
+              }
+          } elseif (! is_dir($deployedPublicStorage)) {
+              mkdir($deployedPublicStorage, 0777, true);
           }
 
           echo 'OK extracted';

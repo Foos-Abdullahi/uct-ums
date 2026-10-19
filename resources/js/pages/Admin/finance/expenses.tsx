@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
+import type { BreadcrumbItem } from '@/types';
 
 export interface ExpenseItem {
     id: number;
@@ -86,6 +87,9 @@ export interface ExpenseItem {
 
 export interface ExpenseStats {
     total_spent: number;
+    total_recorded: number;
+    paid_expenses: number;
+    draft_expenses: number;
     pending_approval: number;
     total_expenses: number;
     month_expenses: number;
@@ -114,6 +118,7 @@ interface AdminFinanceExpensesProps {
     stats?: ExpenseStats;
     expenses?: PaginatedData<ExpenseItem>;
     expense_accounts: ExpenseAccountOption[];
+    payment_accounts: Array<{ id: number; code: number; name: string }>;
     filters: {
         search: string;
         status: string;
@@ -126,6 +131,7 @@ export default function AdminFinanceExpenses({
     stats,
     expenses,
     expense_accounts = [],
+    payment_accounts = [],
     filters,
 }: AdminFinanceExpensesProps) {
     const { t } = useTranslation();
@@ -138,6 +144,19 @@ export default function AdminFinanceExpenses({
     const [rejectComment, setRejectComment] = useState('');
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectProcessing, setRejectProcessing] = useState(false);
+    const [markPaidTarget, setMarkPaidTarget] = useState<ExpenseItem | null>(null);
+    const markPaidForm = useForm({
+        payment_method: 'cash',
+        payment_account_id: '',
+        reference_no: '',
+        paid_at: new Date().toISOString().split('T')[0],
+    });
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: t('dashboard_breadcrumb'), href: '/admin/dashboard' },
+        { title: t('finance_breadcrumb'), href: '/admin/finance' },
+        { title: t('breadcrumb_expenses'), href: '/admin/expenses' },
+    ];
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -150,7 +169,11 @@ export default function AdminFinanceExpenses({
         expense_date: new Date().toISOString().split('T')[0],
         vendor: '',
         budget_line: '',
-        status: 'pending_approval',
+        status: 'paid',
+        payment_method: 'cash',
+        payment_account_id: '',
+        reference_no: '',
+        paid_at: new Date().toISOString().split('T')[0],
         notes: '',
     });
 
@@ -193,9 +216,7 @@ export default function AdminFinanceExpenses({
         router.delete(`/admin/expenses/${selectedForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    t('expense_deleted', {
-                        expense_no: selectedForDelete.expense_no,
-                    }),
+                    t('expense_deleted', { expense_no: selectedForDelete.expense_no }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
@@ -214,11 +235,7 @@ export default function AdminFinanceExpenses({
             {},
             {
                 onSuccess: () =>
-                    toast.success(
-                        t('expense_approved', {
-                            expense_no: expense.expense_no,
-                        }),
-                    ),
+                    toast.success(t('expense_approved', { expense_no: expense.expense_no })),
                 onError: (errs) => {
                     const msg = Object.values(errs)[0] ?? t('approval_failed');
                     toast.error(String(msg));
@@ -228,19 +245,21 @@ export default function AdminFinanceExpenses({
     };
 
     const handleMarkPaid = (expense: ExpenseItem) => {
-        router.post(
-            `/admin/expenses/${expense.id}/mark-paid`,
-            {},
-            {
-                onSuccess: () =>
-                    toast.success(
-                        t('expense_marked_paid', {
-                            expense_no: expense.expense_no,
-                        }),
-                    ),
-                onError: () => toast.error(t('failed_mark_paid')),
+        markPaidForm.reset();
+        markPaidForm.setData('payment_account_id', '');
+        setMarkPaidTarget(expense);
+    };
+
+    const confirmMarkPaid = (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!markPaidTarget) return;
+        markPaidForm.post(`/admin/expenses/${markPaidTarget.id}/mark-paid`, {
+            onSuccess: () => {
+                toast.success(t('expense_marked_paid', { expense_no: markPaidTarget.expense_no }));
+                setMarkPaidTarget(null);
             },
-        );
+            onError: () => toast.error(t('failed_mark_paid')),
+        });
     };
 
     const confirmReject = () => {
@@ -256,9 +275,7 @@ export default function AdminFinanceExpenses({
             {
                 onSuccess: () => {
                     toast.success(
-                        t('expense_rejected', {
-                            expense_no: rejectTarget.expense_no,
-                        }),
+                        t('expense_rejected', { expense_no: rejectTarget.expense_no }),
                     );
                     setRejectModalOpen(false);
                     setRejectTarget(null);
@@ -390,9 +407,7 @@ export default function AdminFinanceExpenses({
         },
         {
             id: 'actions',
-            header: () => (
-                <span className="sr-only">{t('actions_column')}</span>
-            ),
+            header: () => <span className="sr-only">{t('actions_column')}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     {row.original.status === 'approved' && (
@@ -480,10 +495,7 @@ export default function AdminFinanceExpenses({
             options: [
                 { label: t('all_statuses_filter'), value: 'all' },
                 { label: t('draft_status'), value: 'draft' },
-                {
-                    label: t('pending_approval_status'),
-                    value: 'pending_approval',
-                },
+                { label: t('pending_approval_status'), value: 'pending_approval' },
                 { label: t('approved_status'), value: 'approved' },
                 { label: t('paid_status'), value: 'paid' },
                 { label: t('rejected_status'), value: 'rejected' },
@@ -526,9 +538,7 @@ export default function AdminFinanceExpenses({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance">
-                                {t('finance_overview')}
-                            </Link>
+                            <Link href="/admin/finance">{t('finance_overview')}</Link>
                         </Button>
                         <Button
                             size="sm"
@@ -543,11 +553,16 @@ export default function AdminFinanceExpenses({
                 {/* Metric Cards */}
                 <Deferred data="stats" fallback={<MetricCardsSkeleton />}>
                     {stats && (
-                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-5">
+                        <div className="grid animate-in grid-cols-1 gap-2 duration-1000 ease-in-out fade-in slide-in-from-top-6 sm:grid-cols-2 md:gap-4 lg:grid-cols-7">
                             <MetricCard
-                                title={t('total_expense')}
-                                value={formatCurrency(stats.total_spent)}
-                                description="Includes pending, approved, and paid expenses"
+                                title="Total recorded"
+                                value={formatCurrency(stats.total_recorded)}
+                                icon={HandCoins}
+                                color="accent"
+                            />
+                            <MetricCard
+                                title="Paid expenses"
+                                value={formatCurrency(stats.paid_expenses)}
                                 icon={DollarSign}
                                 color="destructive"
                             />
@@ -568,6 +583,12 @@ export default function AdminFinanceExpenses({
                                 value={`${stats.total_expenses} items`}
                                 icon={Receipt}
                                 color="accent"
+                            />
+                            <MetricCard
+                                title="Draft expenses"
+                                value={formatCurrency(stats.draft_expenses)}
+                                icon={Save}
+                                color="primary"
                             />
                             <MetricCard
                                 title={t('rejected_expenses')}
@@ -695,11 +716,7 @@ export default function AdminFinanceExpenses({
                                             id="account_id"
                                             className="h-9 text-xs"
                                         >
-                                            <SelectValue
-                                                placeholder={t(
-                                                    'select_account',
-                                                )}
-                                            />
+                                            <SelectValue placeholder={t('select_account')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {Array.from(
@@ -821,9 +838,7 @@ export default function AdminFinanceExpenses({
                                     </Label>
                                     <Input
                                         id="budget_line"
-                                        placeholder={t(
-                                            'budget_line_placeholder',
-                                        )}
+                                        placeholder={t('budget_line_placeholder')}
                                         value={data.budget_line}
                                         onChange={(e) =>
                                             setData(
@@ -855,10 +870,10 @@ export default function AdminFinanceExpenses({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem
-                                                value="pending_approval"
+                                                value="paid"
                                                 className="text-xs"
                                             >
-                                                {t('submit_for_approval')}
+                                                {t('paid_status')}
                                             </SelectItem>
                                             <SelectItem
                                                 value="draft"
@@ -868,8 +883,57 @@ export default function AdminFinanceExpenses({
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    {errors.status && (
+                                        <p className="text-[11px] text-destructive">{errors.status}</p>
+                                    )}
                                 </div>
                             </div>
+
+                            {data.status === 'paid' && (
+                                <div className="space-y-3 rounded-md border border-border/60 p-3">
+                                    <p className="text-xs font-semibold">Payment details</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="expense_payment_method" className="text-xs">Payment method *</Label>
+                                            <Select value={data.payment_method} onValueChange={(value) => setData('payment_method', value)}>
+                                                <SelectTrigger id="expense_payment_method" className="h-9 text-xs"><SelectValue placeholder="Select method" /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="cash">Cash</SelectItem>
+                                                    <SelectItem value="bank_transfer">Bank transfer</SelectItem>
+                                                    <SelectItem value="mobile_money">Mobile money</SelectItem>
+                                                    <SelectItem value="card">Card</SelectItem>
+                                                    <SelectItem value="cheque">Cheque</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.payment_method && <p className="text-[11px] text-destructive">{errors.payment_method}</p>}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="expense_payment_account" className="text-xs">Paid from account *</Label>
+                                            <Select value={data.payment_account_id} onValueChange={(value) => setData('payment_account_id', value)}>
+                                                <SelectTrigger id="expense_payment_account" className="h-9 text-xs"><SelectValue placeholder="Select cash/bank account" /></SelectTrigger>
+                                                <SelectContent>
+                                                    {payment_accounts.map((account) => (
+                                                        <SelectItem key={account.id} value={String(account.id)}>{account.code} · {account.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.payment_account_id && <p className="text-[11px] text-destructive">{errors.payment_account_id}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="expense_paid_at" className="text-xs">Paid date *</Label>
+                                            <Input id="expense_paid_at" type="date" value={data.paid_at} onChange={(event) => setData('paid_at', event.target.value)} required />
+                                            {errors.paid_at && <p className="text-[11px] text-destructive">{errors.paid_at}</p>}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="expense_reference" className="text-xs">Reference number</Label>
+                                            <Input id="expense_reference" value={data.reference_no} onChange={(event) => setData('reference_no', event.target.value)} />
+                                            {errors.reference_no && <p className="text-[11px] text-destructive">{errors.reference_no}</p>}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="space-y-1.5">
                                 <Label
@@ -924,9 +988,7 @@ export default function AdminFinanceExpenses({
                                 {t('reject_expense_title')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('reject_expense_description', {
-                                    expense_no: rejectTarget?.expense_no,
-                                })}
+                                {t('reject_expense_description', { expense_no: rejectTarget?.expense_no })}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -942,9 +1004,7 @@ export default function AdminFinanceExpenses({
                                 <Textarea
                                     id="reject_comment"
                                     className="min-h-[90px] text-xs"
-                                    placeholder={t(
-                                        'rejection_reason_placeholder',
-                                    )}
+                                    placeholder={t('rejection_reason_placeholder')}
                                     value={rejectComment}
                                     onChange={(e) =>
                                         setRejectComment(e.target.value)
@@ -982,6 +1042,46 @@ export default function AdminFinanceExpenses({
                 </Dialog>
 
                 {/* Delete Confirmation Modal */}
+                <Dialog open={Boolean(markPaidTarget)} onOpenChange={(open) => !open && setMarkPaidTarget(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Record expense payment</DialogTitle>
+                            <DialogDescription>{markPaidTarget?.expense_no} · {markPaidTarget?.title}</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={confirmMarkPaid} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="paid_method">Payment method</Label>
+                                <Select value={markPaidForm.data.payment_method} onValueChange={(value) => markPaidForm.setData('payment_method', value)}>
+                                    <SelectTrigger id="paid_method"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cash">Cash</SelectItem>
+                                        <SelectItem value="bank_transfer">Bank transfer</SelectItem>
+                                        <SelectItem value="mobile_money">Mobile money</SelectItem>
+                                        <SelectItem value="card">Card</SelectItem>
+                                        <SelectItem value="cheque">Cheque</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="paid_account">Payment account</Label>
+                                <Select value={markPaidForm.data.payment_account_id} onValueChange={(value) => markPaidForm.setData('payment_account_id', value)}>
+                                    <SelectTrigger id="paid_account"><SelectValue placeholder="Select account" /></SelectTrigger>
+                                    <SelectContent>{payment_accounts.map((account) => <SelectItem key={account.id} value={String(account.id)}>{account.code} · {account.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                                {markPaidForm.errors.payment_account_id && <p className="text-xs text-destructive">{markPaidForm.errors.payment_account_id}</p>}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5"><Label htmlFor="paid_date">Paid date</Label><Input id="paid_date" type="date" value={markPaidForm.data.paid_at} onChange={(event) => markPaidForm.setData('paid_at', event.target.value)} /></div>
+                                <div className="space-y-1.5"><Label htmlFor="paid_reference">Reference number</Label><Input id="paid_reference" value={markPaidForm.data.reference_no} onChange={(event) => markPaidForm.setData('reference_no', event.target.value)} /></div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setMarkPaidTarget(null)}>Cancel</Button>
+                                <Button type="submit" disabled={markPaidForm.processing || !markPaidForm.data.payment_account_id}>Confirm paid</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
                 <ConfirmDeleteDialog
                     open={deleteModalOpen}
                     onOpenChange={setDeleteModalOpen}
@@ -1000,10 +1100,4 @@ export default function AdminFinanceExpenses({
     );
 }
 
-AdminFinanceExpenses.layout = {
-    breadcrumbs: [
-        { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Finance', href: '/admin/finance' },
-        { title: 'Expenses', href: '/admin/expenses' },
-    ],
-};
+AdminFinanceExpenses.layout = { breadcrumbs: [{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Finance', href: '/admin/finance' }, { title: 'Expenses', href: '/admin/expenses' }] };

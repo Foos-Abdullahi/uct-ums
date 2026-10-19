@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     DollarSign,
     Wallet,
@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -32,6 +33,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
@@ -51,6 +53,11 @@ interface ExpenseDetail {
     created_by: number;
     approved_by: number | null;
     approved_at: string | null;
+    payment_method: string | null;
+    payment_account_id: number | null;
+    reference_no: string | null;
+    paid_at: string | null;
+    paymentAccount?: { id: number; code: number; name: string } | null;
     created_at: string;
     notes: string | null;
     account?: {
@@ -83,8 +90,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function AdminExpenseDetails({
     expense,
+    payment_accounts = [],
 }: {
     expense: ExpenseDetail;
+    payment_accounts?: Array<{ id: number; code: number; name: string }>;
 }) {
     const [rejectComment, setRejectComment] = useState('');
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -92,7 +101,13 @@ export default function AdminExpenseDetails({
     const [approveComment, setApproveComment] = useState('');
     const [approveModalOpen, setApproveModalOpen] = useState(false);
     const [approveProcessing, setApproveProcessing] = useState(false);
-    const [markPaidProcessing, setMarkPaidProcessing] = useState(false);
+    const [markPaidModalOpen, setMarkPaidModalOpen] = useState(false);
+    const markPaidForm = useForm({
+        payment_method: 'cash',
+        payment_account_id: '',
+        reference_no: '',
+        paid_at: new Date().toISOString().split('T')[0],
+    });
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -155,21 +170,20 @@ export default function AdminExpenseDetails({
     };
 
     const handleMarkPaid = () => {
-        setMarkPaidProcessing(true);
-        router.post(
-            `/admin/expenses/${expense.id}/mark-paid`,
-            {},
-            {
-                onSuccess: () => {
-                    toast.success('Expense marked as paid.');
-                    setMarkPaidProcessing(false);
-                },
-                onError: () => {
-                    toast.error('Failed to mark as paid.');
-                    setMarkPaidProcessing(false);
-                },
+        markPaidForm.reset();
+        markPaidForm.setData('payment_account_id', '');
+        setMarkPaidModalOpen(true);
+    };
+
+    const confirmMarkPaid = (event: React.FormEvent) => {
+        event.preventDefault();
+        markPaidForm.post(`/admin/expenses/${expense.id}/mark-paid`, {
+            onSuccess: () => {
+                toast.success('Expense marked as paid.');
+                setMarkPaidModalOpen(false);
             },
-        );
+            onError: () => toast.error('Failed to mark as paid.'),
+        });
     };
 
     const statusBadge = () => {
@@ -277,11 +291,11 @@ export default function AdminExpenseDetails({
                             {expense.status === 'approved' && (
                                 <Button
                                     size="sm"
-                                    disabled={markPaidProcessing}
+                                    disabled={markPaidForm.processing}
                                     onClick={handleMarkPaid}
                                 >
                                     <HandCoins className="mr-1.5 h-3.5 w-3.5" />
-                                    {markPaidProcessing
+                                    {markPaidForm.processing
                                         ? 'Processing...'
                                         : 'Mark as Paid'}
                                 </Button>
@@ -349,6 +363,16 @@ export default function AdminExpenseDetails({
                         color="success"
                     />
                 </div>
+
+                {expense.status === 'paid' && <Card>
+                    <CardHeader><CardTitle className="text-base">Payment details</CardTitle></CardHeader>
+                    <CardContent className="grid gap-3 text-sm sm:grid-cols-4">
+                        <div><p className="text-muted-foreground">Method</p><p className="font-medium">{expense.payment_method || '—'}</p></div>
+                        <div><p className="text-muted-foreground">Payment account</p><p className="font-medium">{expense.paymentAccount?.name || 'Unassigned'}</p></div>
+                        <div><p className="text-muted-foreground">Paid date</p><p className="font-medium">{expense.paid_at ? formatDate(expense.paid_at) : '—'}</p></div>
+                        <div><p className="text-muted-foreground">Reference</p><p className="font-medium">{expense.reference_no || '—'}</p></div>
+                    </CardContent>
+                </Card>}
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Left: Description & Actions */}
@@ -662,6 +686,46 @@ export default function AdminExpenseDetails({
                                 </Button>
                             </DialogFooter>
                         </div>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={markPaidModalOpen} onOpenChange={setMarkPaidModalOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Record expense payment</DialogTitle>
+                            <DialogDescription>{expense.expense_no} · {expense.title}</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={confirmMarkPaid} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="payment_method">Payment method</Label>
+                                <Select value={markPaidForm.data.payment_method} onValueChange={(value) => markPaidForm.setData('payment_method', value)}>
+                                    <SelectTrigger id="payment_method"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cash">Cash</SelectItem>
+                                        <SelectItem value="bank_transfer">Bank transfer</SelectItem>
+                                        <SelectItem value="mobile_money">Mobile money</SelectItem>
+                                        <SelectItem value="card">Card</SelectItem>
+                                        <SelectItem value="cheque">Cheque</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="payment_account_id">Payment account</Label>
+                                <Select value={markPaidForm.data.payment_account_id} onValueChange={(value) => markPaidForm.setData('payment_account_id', value)}>
+                                    <SelectTrigger id="payment_account_id"><SelectValue placeholder="Select account" /></SelectTrigger>
+                                    <SelectContent>{payment_accounts.map((account) => <SelectItem key={account.id} value={String(account.id)}>{account.code} · {account.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                                {markPaidForm.errors.payment_account_id && <p className="text-xs text-destructive">{markPaidForm.errors.payment_account_id}</p>}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5"><Label htmlFor="paid_at">Paid date</Label><Input id="paid_at" type="date" value={markPaidForm.data.paid_at} onChange={(event) => markPaidForm.setData('paid_at', event.target.value)} /></div>
+                                <div className="space-y-1.5"><Label htmlFor="reference_no">Reference number</Label><Input id="reference_no" value={markPaidForm.data.reference_no} onChange={(event) => markPaidForm.setData('reference_no', event.target.value)} /></div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setMarkPaidModalOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={markPaidForm.processing || !markPaidForm.data.payment_account_id}>Confirm paid</Button>
+                            </DialogFooter>
+                        </form>
                     </DialogContent>
                 </Dialog>
             </div>

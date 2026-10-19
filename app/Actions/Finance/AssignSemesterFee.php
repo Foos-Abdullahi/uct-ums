@@ -30,6 +30,19 @@ class AssignSemesterFee
         DB::transaction(function () use ($eligibleStudents, $data, &$created): void {
             $eligibleStudents->chunkById(200, function ($students) use ($data, &$created): void {
                 foreach ($students as $student) {
+                    $legacyOrCurrentInvoice = StudentInvoice::query()
+                        ->where('student_id', $student->id)
+                        ->where('semester', $data['semester'])
+                        ->where('type', $data['type'])
+                        ->where(fn ($query) => $query
+                            ->where('academic_year', $data['academic_year'])
+                            ->orWhereNull('academic_year'))
+                        ->exists();
+
+                    if ($legacyOrCurrentInvoice) {
+                        continue;
+                    }
+
                     $invoice = StudentInvoice::firstOrCreate(
                         [
                             'student_id' => $student->id,
