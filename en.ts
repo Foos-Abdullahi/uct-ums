@@ -1166,6 +1166,7 @@ const en = {
   nav_expenses: 'Expenses',
   nav_chart_of_accounts: 'Chart of Accounts',
   nav_reports: 'Reports',
+  reports_nav_dashboard: 'Reports Dashboard',
   reports_nav_all: 'All Reports',
   reports_nav_overview: 'Overview',
   reports_nav_students: 'Students',

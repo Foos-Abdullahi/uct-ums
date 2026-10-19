@@ -140,6 +140,7 @@ export const adminNav: NavItem[] = [
         icon: BarChart3,
         permission: 'reports.view',
         items: [
+            { title: 'reports_nav_dashboard', href: '/admin/reports', icon: LayoutGrid },
             { title: 'reports_nav_fees', href: '/admin/reports/fees-collections', icon: Receipt },
             { title: 'reports_nav_revenue', href: '/admin/reports/income-revenue', icon: CreditCard },
             { title: 'reports_nav_expenses', href: '/admin/reports/expenses', icon: FileText },

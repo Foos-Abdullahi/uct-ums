@@ -1168,6 +1168,7 @@ const ar = {
   nav_expenses: 'المصروفات',
   nav_chart_of_accounts: 'دليل الحسابات',
   nav_reports: 'التقارير',
+  reports_nav_dashboard: 'لوحة التقارير',
   reports_nav_all: 'جميع التقارير',
   reports_nav_overview: 'نظرة عامة',
   reports_nav_students: 'تقارير الطلاب',
