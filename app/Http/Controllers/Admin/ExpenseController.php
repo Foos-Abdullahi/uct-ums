@@ -11,6 +11,7 @@ use App\Models\ExpenseApproval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,13 +47,13 @@ class ExpenseController extends Controller
 
         return Inertia::render('Admin/finance/expenses', [
             'stats' => Inertia::defer(fn () => [
-                'total_spent' => (float) Expense::where('status', 'paid')->sum('amount'),
+                'total_spent' => (float) Expense::includedInTotals()->sum('amount'),
                 'total_recorded' => (float) Expense::whereIn('status', ['pending_approval', 'approved', 'paid'])->sum('amount'),
                 'paid_expenses' => (float) Expense::where('status', 'paid')->sum('amount'),
                 'draft_expenses' => (float) Expense::where('status', 'draft')->sum('amount'),
                 'pending_approval' => (int) Expense::where('status', 'pending_approval')->count(),
                 'total_expenses' => (int) Expense::count(),
-                'month_expenses' => (float) Expense::where('status', 'paid')
+                'month_expenses' => (float) Expense::includedInTotals()
                     ->where('expense_date', '>=', now()->startOfMonth())
                     ->sum('amount'),
                 'rejected_count' => (int) Expense::where('status', 'rejected')->count(),
@@ -316,7 +317,7 @@ class ExpenseController extends Controller
     public function updateStatus(Request $request, Expense $expense): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:draft,pending_approval'],
+            'status' => ['required', 'string', Rule::in(ExpenseStatus::values())],
         ]);
 
         $expense->update(['status' => $validated['status']]);
