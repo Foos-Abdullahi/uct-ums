@@ -87,7 +87,7 @@ class ExpenseController extends Controller
             'expense_date' => ['required', 'date'],
             'vendor' => ['nullable', 'string', 'max:255'],
             'budget_line' => ['nullable', 'string', 'max:255'],
-            'status' => ['required', 'string', 'in:draft,paid'],
+            'status' => ['required', 'string', 'in:draft,pending_approval,paid'],
             'payment_method' => ['required_if:status,paid', 'nullable', 'string', 'in:cash,bank_transfer,mobile_money,card,cheque'],
             'payment_account_id' => ['required_if:status,paid', 'nullable', 'integer', 'exists:accounts,id'],
             'reference_no' => ['nullable', 'string', 'max:255'],
@@ -124,9 +124,15 @@ class ExpenseController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        $message = $status === ExpenseStatus::Draft->value
-            ? "Expense {$expenseNo} saved as a draft."
-            : "Expense {$expenseNo} of \${$expense->amount} recorded as paid.";
+        if ($status === ExpenseStatus::PendingApproval->value) {
+            $expense->buildApprovalChain();
+        }
+
+        $message = match ($status) {
+            ExpenseStatus::Draft->value => "Expense {$expenseNo} saved as a draft.",
+            ExpenseStatus::PendingApproval->value => "Expense {$expenseNo} submitted for approval.",
+            default => "Expense {$expenseNo} of \${$expense->amount} recorded as paid.",
+        };
 
         return back()->with('success', $message);
     }
