@@ -126,6 +126,30 @@ test('admission application is created with auto-generated application number', 
         ->and($admission->application_no)->toStartWith('ADM-');
 });
 
+test('admission application number accounts for deleted applications', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create();
+    $year = now()->year;
+
+    Admission::factory()->create([
+        'application_no' => "ADM-{$year}-00001",
+        'program_id' => $program->id,
+    ])->delete();
+
+    $this->post(route('admin.admissions.store'), [
+        'first_name' => 'Sahra',
+        'last_name' => 'Ali',
+        'email' => 'sahra.ali@example.com',
+        'program_id' => $program->id,
+    ])->assertRedirect();
+
+    $this->assertDatabaseHas('admissions', [
+        'application_no' => "ADM-{$year}-00002",
+        'email' => 'sahra.ali@example.com',
+    ]);
+});
+
 // ─── Update Status ────────────────────────────────────────────────────────────
 
 test('admin can approve an admission application', function () {

@@ -660,51 +660,15 @@ export default function AdminFinanceInvoices({
                                             *
                                         </span>
                                     </Label>
-                                    <Select
+                                    <Input
+                                        id="type"
+                                        placeholder="e.g. Registration Fee"
                                         value={data.type}
-                                        onValueChange={(value) =>
-                                            setData('type', value)
+                                        onChange={(event) =>
+                                            setData('type', event.target.value)
                                         }
-                                    >
-                                        <SelectTrigger id="type" size="sm">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="tuition">
-                                                Tuition
-                                            </SelectItem>
-                                            <SelectItem value="registration">
-                                                Registration
-                                            </SelectItem>
-                                            <SelectItem value="admission">
-                                                Admission
-                                            </SelectItem>
-                                            <SelectItem value="exam">
-                                                Exam
-                                            </SelectItem>
-                                            <SelectItem value="examination">
-                                                Examination
-                                            </SelectItem>
-                                            <SelectItem value="lab">
-                                                Lab
-                                            </SelectItem>
-                                            <SelectItem value="laboratory">
-                                                Laboratory
-                                            </SelectItem>
-                                            <SelectItem value="library">
-                                                Library
-                                            </SelectItem>
-                                            <SelectItem value="graduation">
-                                                Graduation
-                                            </SelectItem>
-                                            <SelectItem value="hostel">
-                                                Hostel
-                                            </SelectItem>
-                                            <SelectItem value="other">
-                                                Other
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        required
+                                    />
                                 </div>
 
                                 <div className="space-y-1.5">

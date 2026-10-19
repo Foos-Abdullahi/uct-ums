@@ -170,20 +170,6 @@ export default function AdminFinanceFees({
         other: 'Other charge',
     };
 
-    const handleFeeTypeChange = (type: string) => {
-        setData((currentData) => ({
-            ...currentData,
-            type,
-            title:
-                currentData.title === '' ||
-                Object.values(feeTypeLabels).some(
-                    (label) => currentData.title === `${label} Fee`,
-                )
-                    ? `${feeTypeLabels[type]} Fee`
-                    : currentData.title,
-        }));
-    };
-
     const handleRecordFee = (event: React.FormEvent) => {
         event.preventDefault();
 
@@ -661,29 +647,15 @@ export default function AdminFinanceFees({
                                             *
                                         </span>
                                     </Label>
-                                    <Select
+                                    <Input
+                                        id="record-fee-type"
+                                        placeholder="e.g. Registration Fee"
                                         value={data.type}
-                                        onValueChange={handleFeeTypeChange}
-                                    >
-                                        <SelectTrigger
-                                            id="record-fee-type"
-                                            size="sm"
-                                        >
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {Object.entries(feeTypeLabels).map(
-                                                ([value, label]) => (
-                                                    <SelectItem
-                                                        key={value}
-                                                        value={value}
-                                                    >
-                                                        {label}
-                                                    </SelectItem>
-                                                ),
-                                            )}
-                                        </SelectContent>
-                                    </Select>
+                                        onChange={(event) =>
+                                            setData('type', event.target.value)
+                                        }
+                                        required
+                                    />
                                     {errors.type && (
                                         <p className="text-[11px] text-destructive">
                                             {errors.type}
