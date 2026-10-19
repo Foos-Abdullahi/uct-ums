@@ -133,9 +133,14 @@ export const adminNav: NavItem[] = [
                 icon: BookOpen,
                 permission: 'finance.accounts.view',
             },
+            {
+                title: 'nav_reports',
+                href: '/admin/reports',
+                icon: BarChart3,
+                permission: 'reports.view',
+            },
         ],
     },
-    { title: 'nav_reports', href: '/admin/reports', icon: BarChart3, permission: 'reports.view' },
     {
         title: 'nav_settings',
         icon: Settings,
