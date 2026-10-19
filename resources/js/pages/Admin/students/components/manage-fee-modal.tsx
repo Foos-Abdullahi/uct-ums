@@ -25,16 +25,23 @@ interface ManageFeeModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     studentId: number;
+    academicYear: string | null;
+    semester: number;
 }
 
 export function ManageFeeModal({
     open,
     onOpenChange,
     studentId,
+    academicYear,
+    semester,
 }: ManageFeeModalProps) {
+    const currentYear = new Date().getFullYear();
     const { data, setData, post, processing, errors, reset } = useForm({
         title: '',
         type: 'tuition',
+        academic_year: academicYear ?? `${currentYear}/${currentYear + 1}`,
+        semester: String(semester),
         amount: '',
         due_date: '',
     });
@@ -156,6 +163,19 @@ export function ManageFeeModal({
                                         {errors.amount}
                                     </p>
                                 )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="grid gap-2">
+                                <Label htmlFor="academic_year">Academic year</Label>
+                                <Input id="academic_year" value={data.academic_year} onChange={(e) => setData('academic_year', e.target.value)} required />
+                                {errors.academic_year && <p className="text-xs text-destructive">{errors.academic_year}</p>}
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="semester">Semester</Label>
+                                <Input id="semester" type="number" min="1" max="8" value={data.semester} onChange={(e) => setData('semester', e.target.value)} required />
+                                {errors.semester && <p className="text-xs text-destructive">{errors.semester}</p>}
                             </div>
                         </div>
 

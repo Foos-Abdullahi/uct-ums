@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Finance\GenerateStudentFinanceStatement;
 use App\Actions\Finance\ManageStudentPayment;
+use App\Actions\Finance\CreateStudentInvoice;
 use App\Enums\FeeStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -463,29 +464,24 @@ class StudentController extends Controller
     /**
      * Create a fee invoice for the student.
      */
-    public function storeInvoice(Request $request, int $id): RedirectResponse
+    public function storeInvoice(Request $request, int $id, CreateStudentInvoice $createStudentInvoice): RedirectResponse
     {
         $student = Student::findOrFail($id);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:tuition,registration,exam,lab,library,other'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'semester' => ['nullable', 'integer', 'min:1', 'max:'.config('academic.total_semesters')],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'due_date' => ['nullable', 'date'],
         ]);
 
-        $invoiceNo = 'INV-'.date('Y').'-'.strtoupper(Str::random(6));
+        $result = $createStudentInvoice->handle($student, $validated);
 
-        StudentInvoice::create([
-            'student_id' => $student->id,
-            'invoice_no' => $invoiceNo,
-            'title' => $validated['title'],
-            'type' => $validated['type'],
-            'amount' => $validated['amount'],
-            'paid_amount' => 0.00,
-            'due_date' => $validated['due_date'] ?? null,
-            'status' => 'unpaid',
-        ]);
+        if (! $result['created']) {
+            return back()->withErrors(['type' => 'This fee type has already been charged to the student for this academic year and semester.']);
+        }
 
         $student->recalculateFinancials();
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AccountType;
 use App\Enums\ExpenseStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
@@ -45,16 +46,20 @@ class ExpenseController extends Controller
 
         return Inertia::render('Admin/finance/expenses', [
             'stats' => Inertia::defer(fn () => [
-                'total_spent' => (float) Expense::includedInTotals()->sum('amount'),
+                'total_spent' => (float) Expense::where('status', 'paid')->sum('amount'),
+                'total_recorded' => (float) Expense::whereIn('status', ['pending_approval', 'approved', 'paid'])->sum('amount'),
+                'paid_expenses' => (float) Expense::where('status', 'paid')->sum('amount'),
+                'draft_expenses' => (float) Expense::where('status', 'draft')->sum('amount'),
                 'pending_approval' => (int) Expense::where('status', 'pending_approval')->count(),
                 'total_expenses' => (int) Expense::count(),
-                'month_expenses' => (float) Expense::includedInTotals()
+                'month_expenses' => (float) Expense::where('status', 'paid')
                     ->where('expense_date', '>=', now()->startOfMonth())
                     ->sum('amount'),
                 'rejected_count' => (int) Expense::where('status', 'rejected')->count(),
             ]),
             'expenses' => Inertia::defer(fn () => $query->paginate($perPage)->withQueryString()),
             'expense_accounts' => $this->expenseAccounts(),
+            'payment_accounts' => $this->paymentAccounts(),
             'expense_statuses' => ExpenseStatus::values(),
             'level_roles' => Expense::APPROVAL_LEVELS,
             'filters' => [
@@ -71,6 +76,9 @@ class ExpenseController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // New expenses are treated as paid unless the user explicitly saves a draft.
+        $request->merge(['status' => $request->input('status') ?: ExpenseStatus::Paid->value]);
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
@@ -79,7 +87,11 @@ class ExpenseController extends Controller
             'expense_date' => ['required', 'date'],
             'vendor' => ['nullable', 'string', 'max:255'],
             'budget_line' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'in:'.implode(',', ExpenseStatus::values())],
+            'status' => ['required', 'string', 'in:draft,paid'],
+            'payment_method' => ['required_if:status,paid', 'nullable', 'string', 'in:cash,bank_transfer,mobile_money,card,cheque'],
+            'payment_account_id' => ['required_if:status,paid', 'nullable', 'integer', 'exists:accounts,id'],
+            'reference_no' => ['nullable', 'string', 'max:255'],
+            'paid_at' => ['required_if:status,paid', 'nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
@@ -91,22 +103,32 @@ class ExpenseController extends Controller
 
         $expenseNo = $this->nextExpenseNo();
 
-        $status = $validated['status'] ?? ExpenseStatus::PendingApproval->value;
+        $status = $validated['status'];
+
+        if ($status === ExpenseStatus::Paid->value && ! empty($validated['payment_account_id'])) {
+            $paymentAccount = Account::findOrFail((int) $validated['payment_account_id']);
+            if ($paymentAccount->type !== AccountType::Asset) {
+                return back()->withErrors(['payment_account_id' => 'Choose a cash, bank, or mobile money asset account.'])->withInput();
+            }
+        }
 
         $expense = Expense::create([
             ...$validated,
             'expense_type' => $account->legacyExpenseType()->value,
             'expense_no' => $expenseNo,
             'status' => $status,
+            'payment_method' => $status === ExpenseStatus::Paid->value ? $validated['payment_method'] : null,
+            'payment_account_id' => $status === ExpenseStatus::Paid->value ? $validated['payment_account_id'] : null,
+            'reference_no' => $status === ExpenseStatus::Paid->value ? ($validated['reference_no'] ?? null) : null,
+            'paid_at' => $status === ExpenseStatus::Paid->value ? $validated['paid_at'] : null,
             'created_by' => $request->user()->id,
         ]);
 
-        // If submitted for approval, create the first approval level
-        if ($status === ExpenseStatus::PendingApproval->value) {
-            $expense->buildApprovalChain();
-        }
+        $message = $status === ExpenseStatus::Draft->value
+            ? "Expense {$expenseNo} saved as a draft."
+            : "Expense {$expenseNo} of \${$expense->amount} recorded as paid.";
 
-        return back()->with('success', "Expense {$expenseNo} of \${$expense->amount} recorded.");
+        return back()->with('success', $message);
     }
 
     /**
@@ -114,7 +136,7 @@ class ExpenseController extends Controller
      */
     public function show(Expense $expense): Response
     {
-        $expense->load(['creator', 'approver', 'approvals.approver', 'account.category']);
+        $expense->load(['creator', 'approver', 'approvals.approver', 'account.category', 'paymentAccount']);
 
         return Inertia::render('Admin/finance/expense-details', [
             'expense' => [
@@ -122,6 +144,7 @@ class ExpenseController extends Controller
                 'level_roles' => Expense::APPROVAL_LEVELS,
                 'canApprove' => $expense->needsApproval(),
             ],
+            'payment_accounts' => $this->paymentAccounts(),
         ]);
     }
 
@@ -176,14 +199,30 @@ class ExpenseController extends Controller
     /**
      * Mark an expense as paid after it has been approved.
      */
-    public function markPaid(Expense $expense): RedirectResponse
+    public function markPaid(Request $request, Expense $expense): RedirectResponse
     {
+        $validated = $request->validate([
+            'payment_method' => ['required', 'string', 'in:cash,bank_transfer,mobile_money,card,cheque'],
+            'payment_account_id' => ['required', 'integer', 'exists:accounts,id'],
+            'reference_no' => ['nullable', 'string', 'max:255'],
+            'paid_at' => ['required', 'date'],
+        ]);
+
         if ($expense->status !== ExpenseStatus::Approved->value) {
             return back()->with('error', 'Only approved expenses can be marked as paid.');
         }
 
+        $paymentAccount = Account::findOrFail((int) $validated['payment_account_id']);
+        if ($paymentAccount->type !== AccountType::Asset) {
+            return back()->withErrors(['payment_account_id' => 'Choose a cash, bank, or mobile money asset account.']);
+        }
+
         $expense->update([
             'status' => ExpenseStatus::Paid->value,
+            'payment_method' => $validated['payment_method'],
+            'payment_account_id' => $paymentAccount->id,
+            'reference_no' => $validated['reference_no'] ?? null,
+            'paid_at' => $validated['paid_at'],
         ]);
 
         return back()->with('success', "Expense {$expense->expense_no} marked as paid.");
@@ -271,7 +310,7 @@ class ExpenseController extends Controller
     public function updateStatus(Request $request, Expense $expense): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:'.implode(',', ExpenseStatus::values())],
+            'status' => ['required', 'string', 'in:draft,pending_approval'],
         ]);
 
         $expense->update(['status' => $validated['status']]);
@@ -310,6 +349,17 @@ class ExpenseController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    /** @return array<int, array{id: int, code: int, name: string}> */
+    private function paymentAccounts(): array
+    {
+        return Account::query()
+            ->where('status', 'active')
+            ->where('type', AccountType::Asset->value)
+            ->orderBy('code')
+            ->get(['id', 'code', 'name'])
+            ->toArray();
     }
 
     /**

@@ -251,6 +251,13 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
             Route::get('/academic', [ReportController::class, 'academic'])->name('academic');
             Route::get('/attendance', [ReportController::class, 'attendance'])->name('attendance');
             Route::get('/finance', [ReportController::class, 'finance'])->name('finance');
+            Route::get('/fees-collections', [ReportController::class, 'feeCollections'])->name('fees-collections');
+            Route::get('/income-revenue', [ReportController::class, 'incomeRevenue'])->name('income-revenue');
+            Route::get('/expenses', [ReportController::class, 'expensesReport'])->name('expenses');
+            Route::get('/cash-flow', [ReportController::class, 'cashFlow'])->name('cash-flow');
+            Route::get('/budget-vs-actual', [ReportController::class, 'budgetVsActual'])->name('budget-vs-actual');
+            Route::get('/income-statement', [ReportController::class, 'incomeStatement'])->name('income-statement');
+            Route::post('/budgets', [ReportController::class, 'storeBudget'])->name('budgets.store');
             Route::get('/graduation', [ReportController::class, 'graduation'])->name('graduation');
         });
 

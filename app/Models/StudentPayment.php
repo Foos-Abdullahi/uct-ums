@@ -21,6 +21,7 @@ class StudentPayment extends Model
         'transaction_no',
         'amount',
         'payment_method',
+        'payment_account_id',
         'payment_date',
         'receipt_path',
         'status',
@@ -52,5 +53,11 @@ class StudentPayment extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(StudentInvoice::class, 'invoice_id');
+    }
+
+    /** @return BelongsTo<Account, $this> */
+    public function paymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'payment_account_id');
     }
 }

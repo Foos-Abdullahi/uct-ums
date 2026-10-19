@@ -199,6 +199,8 @@ class AdmissionController extends Controller
                 'invoice_no' => 'INV-'.date('Y').'-'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT),
                 'title' => 'Semester 1 Registration & Tuition Fee',
                 'type' => 'tuition',
+                'academic_year' => $student->academic_year,
+                'semester' => $student->current_semester,
                 'amount' => $feeAmount,
                 'paid_amount' => 0.00,
                 'due_date' => now()->addMonth()->toDateString(),

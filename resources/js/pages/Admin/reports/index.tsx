@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Deferred } from '@inertiajs/react';
 import {
     Users,
@@ -327,6 +327,21 @@ export default function ReportsIndex({
                         2026/2027 Academic Session
                     </Badge>
                 </div>
+
+                <nav className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {[
+                        ['Student Fees & Collections', 'fees-collections'],
+                        ['Income & Revenue', 'income-revenue'],
+                        ['Expenses', 'expenses'],
+                        ['Cash Flow', 'cash-flow'],
+                        ['Budget vs Actual', 'budget-vs-actual'],
+                        ['Income Statement', 'income-statement'],
+                    ].map(([label, path]) => (
+                        <Link key={path} href={`/admin/reports/${path}`} className="rounded-lg border bg-card p-3 text-sm font-medium hover:bg-accent">
+                            {label} →
+                        </Link>
+                    ))}
+                </nav>
 
                 {/* ── Section 1: Core KPI Ribbon ───────────────────────────── */}
                 <Deferred

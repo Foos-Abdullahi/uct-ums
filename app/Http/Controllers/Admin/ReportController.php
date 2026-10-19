@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AccountType;
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\Admission;
 use App\Models\Course;
 use App\Models\CourseAssignment;
+use App\Models\Expense;
+use App\Models\FinancialBudget;
 use App\Models\Lecturer;
 use App\Models\Program;
 use App\Models\Student;
@@ -13,6 +17,8 @@ use App\Models\StudentCertificate;
 use App\Models\StudentGrade;
 use App\Models\StudentInvoice;
 use App\Models\StudentPayment;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,11 +52,11 @@ class ReportController extends Controller
                 'approved_admissions' => Admission::where('status', 'approved')->count(),
                 'rejected_admissions' => Admission::where('status', 'rejected')->count(),
                 'total_invoiced' => (float) StudentInvoice::sum('amount'),
-                'total_collected' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
+                'total_collected' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
                 'total_outstanding' => $this->getOutstandingBalance(),
                 'collection_rate' => (function () {
                     $invoiced = (float) StudentInvoice::sum('amount');
-                    $collected = (float) StudentPayment::where('status', 'paid')->sum('amount');
+                    $collected = (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount');
 
                     return $invoiced > 0 ? round(($collected / $invoiced) * 100, 1) : 0;
                 })(),
@@ -88,7 +94,7 @@ class ReportController extends Controller
             ),
 
             // ── Payments Breakdown by Method ────────────────────────────────
-            'payments_by_method' => Inertia::defer(fn () => StudentPayment::where('status', 'paid')
+            'payments_by_method' => Inertia::defer(fn () => StudentPayment::whereIn('status', ['paid', 'approved'])
                 ->selectRaw('payment_method, count(*) as transactions, sum(amount) as total')
                 ->groupBy('payment_method')
                 ->get()
@@ -189,7 +195,7 @@ class ReportController extends Controller
                 'graduated_students' => Student::where('enrollment_status', 'graduated')->count(),
                 'suspended_students' => Student::where('enrollment_status', 'suspended')->count(),
                 'pending_students' => Student::where('enrollment_status', 'pending')->count(),
-                'total_revenue' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
+                'total_revenue' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
                 'outstanding_balance' => $this->getOutstandingBalance(),
             ]),
         ]);
@@ -207,7 +213,7 @@ class ReportController extends Controller
                 'graduated_students' => Student::where('enrollment_status', 'graduated')->count(),
                 'suspended_students' => Student::where('enrollment_status', 'suspended')->count(),
                 'pending_students' => Student::where('enrollment_status', 'pending')->count(),
-                'total_revenue' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
+                'total_revenue' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
                 'outstanding_balance' => 0,
             ]),
         ]);
@@ -225,7 +231,7 @@ class ReportController extends Controller
                 'graduated_students' => Student::where('enrollment_status', 'graduated')->count(),
                 'suspended_students' => Student::where('enrollment_status', 'suspended')->count(),
                 'pending_students' => Student::where('enrollment_status', 'pending')->count(),
-                'total_revenue' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
+                'total_revenue' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
                 'outstanding_balance' => 0,
             ]),
         ]);
@@ -238,14 +244,276 @@ class ReportController extends Controller
     {
         return Inertia::render('Admin/reports/components/finance', [
             'stats' => Inertia::defer(fn () => [
-                'total_students' => Student::count(),
-                'active_students' => Student::where('enrollment_status', 'enrolled')->count(),
-                'graduated_students' => Student::where('enrollment_status', 'graduated')->count(),
-                'suspended_students' => Student::where('enrollment_status', 'suspended')->count(),
-                'pending_students' => Student::where('enrollment_status', 'pending')->count(),
-                'total_revenue' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
-                'outstanding_balance' => $this->getOutstandingBalance(),
+                'total_revenue' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
+                'paid' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
+                'outstanding' => $this->getOutstandingBalance(),
+                'overdue' => (float) StudentInvoice::where('status', '!=', 'paid')->whereDate('due_date', '<', today())->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as balance')->value('balance'),
             ]),
+            'transactions' => Inertia::defer(function () {
+                $transactions = StudentInvoice::with('student.user')->latest('issue_date')->paginate(10);
+
+                return [
+                    'data' => $transactions->getCollection()->map(fn (StudentInvoice $invoice) => [
+                        'invoice_no' => $invoice->invoice_no,
+                        'student_name' => $invoice->student?->user?->name ?? 'Unknown',
+                        'amount' => (float) $invoice->amount,
+                        'paid' => (float) $invoice->paid_amount,
+                        'balance' => $invoice->balance(),
+                        'status' => $invoice->status,
+                    ])->all(),
+                    'pagination' => [
+                        'current_page' => $transactions->currentPage(),
+                        'last_page' => $transactions->lastPage(),
+                        'per_page' => $transactions->perPage(),
+                        'total' => $transactions->total(),
+                    ],
+                ];
+            }),
+        ]);
+    }
+
+    public function feeCollections(Request $request): Response
+    {
+        $invoiceQuery = StudentInvoice::with(['student.user', 'student.program'])
+            ->when($request->query('academic_year'), fn ($query, $year) => $query->where('academic_year', $year))
+            ->when($request->query('semester'), fn ($query, $semester) => $query->where('semester', $semester))
+            ->when($request->query('program_id'), fn ($query, $programId) => $query->whereHas('student', fn ($student) => $student->where('program_id', $programId)))
+            ->when($request->query('from'), fn ($query, $from) => $query->whereDate('issue_date', '>=', $from))
+            ->when($request->query('to'), fn ($query, $to) => $query->whereDate('issue_date', '<=', $to));
+        $invoices = (clone $invoiceQuery)->latest('issue_date')->get();
+        $paymentsQuery = StudentPayment::whereIn('status', ['paid', 'approved'])
+            ->whereHas('invoice', fn ($invoice) => $invoice
+                ->when($request->query('academic_year'), fn ($query, $year) => $query->where('academic_year', $year))
+                ->when($request->query('semester'), fn ($query, $semester) => $query->where('semester', $semester))
+                ->when($request->query('program_id'), fn ($query, $programId) => $query->whereHas('student', fn ($student) => $student->where('program_id', $programId)))
+                ->when($request->query('from'), fn ($query, $from) => $query->whereDate('issue_date', '>=', $from))
+                ->when($request->query('to'), fn ($query, $to) => $query->whereDate('issue_date', '<=', $to)))
+            ->when($request->query('from'), fn ($query, $from) => $query->whereDate('payment_date', '>=', $from))
+            ->when($request->query('to'), fn ($query, $to) => $query->whereDate('payment_date', '<=', $to));
+        $payments = (float) $paymentsQuery->sum('amount');
+
+        return $this->renderFinancialReport('Student Fees & Collections', [
+            'charges' => (float) $invoices->sum('amount'),
+            'collections' => (float) $payments,
+            'outstanding' => (float) $invoices->sum(fn (StudentInvoice $invoice) => $invoice->balance()),
+            'overdue' => (float) $invoices->filter(fn (StudentInvoice $invoice) => $invoice->due_date?->isPast() && $invoice->status !== 'paid')->sum(fn (StudentInvoice $invoice) => $invoice->balance()),
+        ], $invoices->map(fn (StudentInvoice $invoice) => [
+            'student' => $invoice->student?->user?->name ?? 'Unknown',
+            'matric_no' => $invoice->student?->matric_no ?? '',
+            'program' => $invoice->student?->program?->name ?? '',
+            'academic_year' => $invoice->academic_year ?? '',
+            'semester' => $invoice->semester ?? '',
+            'invoice' => $invoice->invoice_no,
+            'charged' => (float) $invoice->amount,
+            'collected' => (float) $invoice->paid_amount,
+            'balance' => $invoice->balance(),
+            'status' => $invoice->status,
+        ])->values()->all(), [
+            'filters' => $request->only(['from', 'to', 'academic_year', 'semester', 'program_id']),
+            'options' => [
+                'academic_years' => Student::whereNotNull('academic_year')->distinct()->orderByDesc('academic_year')->pluck('academic_year'),
+                'semesters' => range(1, (int) config('academic.total_semesters')),
+                'programs' => Program::orderBy('name')->get(['id', 'name']),
+            ],
+        ]);
+    }
+
+    public function incomeRevenue(Request $request): Response
+    {
+        $payments = StudentPayment::whereIn('status', ['paid', 'approved'])
+            ->when($request->query('from'), fn ($query, $from) => $query->whereDate('payment_date', '>=', $from))
+            ->when($request->query('to'), fn ($query, $to) => $query->whereDate('payment_date', '<=', $to))
+            ->with('invoice')->get();
+        $rows = $payments->groupBy(fn (StudentPayment $payment) => $payment->invoice?->type ?? 'other')
+            ->map(fn ($group, $type) => [
+                'fee_type' => ucfirst(str_replace('_', ' ', $type)),
+                'revenue_account' => match ($type) {
+                    'tuition' => '4000 · Tuition Revenue',
+                    'registration' => '4100 · Admission & Registration Fees',
+                    'exam' => '4110 · Examination Fees',
+                    default => '4900 · Other Income',
+                },
+                'transactions' => $group->count(),
+                'revenue' => (float) $group->sum('amount'),
+            ])->values()->all();
+
+        return $this->renderFinancialReport('Income & Revenue', [
+            'total_revenue' => (float) $payments->sum('amount'),
+            'transactions' => $payments->count(),
+        ], $rows, ['filters' => $request->only(['from', 'to'])]);
+    }
+
+    public function expensesReport(Request $request): Response
+    {
+        $expenses = Expense::with('account')
+            ->when($request->query('from'), fn ($query, $from) => $query->whereDate('expense_date', '>=', $from))
+            ->when($request->query('to'), fn ($query, $to) => $query->whereDate('expense_date', '<=', $to))
+            ->when($request->query('status'), fn ($query, $status) => $query->where('status', $status))
+            ->when($request->query('vendor'), fn ($query, $vendor) => $query->where('vendor', 'like', "%{$vendor}%"))
+            ->get();
+        $rows = $expenses->map(fn (Expense $expense) => [
+            'expense_no' => $expense->expense_no,
+            'account' => $expense->account?->name ?? 'Unassigned',
+            'vendor' => $expense->vendor ?? '',
+            'date' => $expense->expense_date?->toDateString() ?? '',
+            'status' => $expense->status,
+            'recorded' => in_array($expense->status, ['draft', 'rejected', 'cancelled'], true) ? 0 : (float) $expense->amount,
+            'paid' => $expense->status === 'paid' ? (float) $expense->amount : 0,
+        ])->values()->all();
+
+        return $this->renderFinancialReport('Expenses', [
+            'total_recorded' => (float) $expenses->whereIn('status', ['pending_approval', 'approved', 'paid'])->sum('amount'),
+            'paid' => (float) $expenses->where('status', 'paid')->sum('amount'),
+            'drafts' => (float) $expenses->where('status', 'draft')->sum('amount'),
+        ], $rows, ['filters' => $request->only(['from', 'to', 'status', 'vendor'])]);
+    }
+
+    public function cashFlow(Request $request): Response
+    {
+        $period = $request->query('group_by', 'daily');
+        $dateBucket = fn ($date) => $date?->format($period === 'monthly' ? 'Y-m' : 'Y-m-d') ?? 'Undated';
+        $inflows = StudentPayment::with('paymentAccount')->whereIn('status', ['paid', 'approved'])
+            ->when($request->query('from'), fn ($query, $from) => $query->whereDate('payment_date', '>=', $from))
+            ->when($request->query('to'), fn ($query, $to) => $query->whereDate('payment_date', '<=', $to))
+            ->get()->groupBy(fn (StudentPayment $payment) => $dateBucket($payment->payment_date).'|'.($payment->paymentAccount?->name ?? 'Unassigned'));
+        $outflows = Expense::with('paymentAccount')->where('status', 'paid')
+            ->where(function ($query) use ($request) {
+                $query->where(function ($paid) use ($request) {
+                    $paid->whereNotNull('paid_at')
+                        ->when($request->query('from'), fn ($dateQuery, $from) => $dateQuery->whereDate('paid_at', '>=', $from))
+                        ->when($request->query('to'), fn ($dateQuery, $to) => $dateQuery->whereDate('paid_at', '<=', $to));
+                })->orWhere(function ($legacy) use ($request) {
+                    $legacy->whereNull('paid_at')
+                        ->when($request->query('from'), fn ($dateQuery, $from) => $dateQuery->whereDate('expense_date', '>=', $from))
+                        ->when($request->query('to'), fn ($dateQuery, $to) => $dateQuery->whereDate('expense_date', '<=', $to));
+                });
+            })
+            ->get()->groupBy(fn (Expense $expense) => $dateBucket($expense->paid_at ?? $expense->expense_date).'|'.($expense->paymentAccount?->name ?? 'Unassigned'));
+        $dates = $inflows->keys()->merge($outflows->keys())->unique()->sort()->values();
+        $rows = $dates->map(function (string $dateAndAccount) use ($inflows, $outflows): array {
+            [$date, $account] = array_pad(explode('|', $dateAndAccount, 2), 2, 'Unassigned');
+            $income = (float) ($inflows->get($dateAndAccount)?->sum('amount') ?? 0);
+            $expenses = (float) ($outflows->get($dateAndAccount)?->sum('amount') ?? 0);
+
+            return ['date' => $date, 'account' => $account, 'inflow' => $income, 'outflow' => $expenses, 'net_cash' => $income - $expenses];
+        })->all();
+        $totalInflows = (float) collect($rows)->sum('inflow');
+        $totalOutflows = (float) collect($rows)->sum('outflow');
+
+        return $this->renderFinancialReport('Cash Flow', [
+            'inflows' => $totalInflows,
+            'outflows' => $totalOutflows,
+            'net_cash' => $totalInflows - $totalOutflows,
+        ], $rows, ['filters' => $request->only(['from', 'to', 'group_by'])]);
+    }
+
+    public function budgetVsActual(Request $request): Response
+    {
+        $period = $request->query('period', now()->format('Y'));
+        $budgets = FinancialBudget::with('account')->where('financial_period', $period)->get()->keyBy('account_id');
+        [$year, $month] = array_pad(explode('-', $period, 2), 2, null);
+        $expenses = Expense::with('account')
+            ->where('status', 'paid')
+            ->where(function ($query) use ($year, $month) {
+                $query->where(function ($paidAt) use ($year, $month) {
+                    $paidAt->whereYear('paid_at', $year);
+                    if ($month) {
+                        $paidAt->whereMonth('paid_at', (int) $month);
+                    }
+                })->orWhere(function ($legacyDate) use ($year, $month) {
+                    $legacyDate->whereNull('paid_at')->whereYear('expense_date', $year);
+                    if ($month) {
+                        $legacyDate->whereMonth('expense_date', (int) $month);
+                    }
+                });
+            })
+            ->get()
+            ->groupBy('account_id');
+        $accountIds = $budgets->keys()->merge($expenses->keys())->unique();
+        $rows = $accountIds->map(function ($accountId) use ($budgets, $expenses): array {
+            $budget = $budgets->get($accountId);
+            $actual = (float) ($expenses->get($accountId)?->sum('amount') ?? 0);
+            $planned = (float) ($budget?->amount ?? 0);
+
+            return [
+                'account' => $budget?->account?->name ?? $expenses->get($accountId)?->first()?->account?->name ?? 'Unknown',
+                'budget' => $planned,
+                'actual' => $actual,
+                'variance' => $planned - $actual,
+                'utilization_percent' => $planned > 0 ? round($actual / $planned * 100, 1) : null,
+            ];
+        })->values()->all();
+
+        return Inertia::render('Admin/reports/financial-detail', [
+            'title' => 'Budget vs Actual',
+            'stats' => ['budget' => (float) $budgets->sum('amount'), 'actual' => (float) collect($rows)->sum('actual')],
+            'rows' => $rows,
+            'accounts' => Account::where('type', AccountType::Expense->value)->orderBy('code')->get(['id', 'code', 'name']),
+            'period' => $period,
+            'showBudgetForm' => true,
+        ]);
+    }
+
+    public function incomeStatement(Request $request): Response
+    {
+        $income = StudentPayment::whereIn('status', ['paid', 'approved'])
+            ->when($request->query('from'), fn ($query, $from) => $query->whereDate('payment_date', '>=', $from))
+            ->when($request->query('to'), fn ($query, $to) => $query->whereDate('payment_date', '<=', $to))
+            ->with('invoice')->get()
+            ->groupBy(fn (StudentPayment $payment) => $payment->invoice?->type ?? 'other')
+            ->map(fn ($group, $type) => ['section' => 'Revenue', 'account' => ucfirst($type), 'amount' => (float) $group->sum('amount')]);
+        $expenses = Expense::with('account')->where('status', 'paid')
+            ->where(function ($query) use ($request) {
+                $query->where(function ($paid) use ($request) {
+                    $paid->whereNotNull('paid_at')
+                        ->when($request->query('from'), fn ($dateQuery, $from) => $dateQuery->whereDate('paid_at', '>=', $from))
+                        ->when($request->query('to'), fn ($dateQuery, $to) => $dateQuery->whereDate('paid_at', '<=', $to));
+                })->orWhere(function ($legacy) use ($request) {
+                    $legacy->whereNull('paid_at')
+                        ->when($request->query('from'), fn ($dateQuery, $from) => $dateQuery->whereDate('expense_date', '>=', $from))
+                        ->when($request->query('to'), fn ($dateQuery, $to) => $dateQuery->whereDate('expense_date', '<=', $to));
+                });
+            })
+            ->get()
+            ->groupBy(fn (Expense $expense) => $expense->account?->name ?? 'Unassigned')
+            ->map(fn ($group, $account) => ['section' => 'Expenses', 'account' => $account, 'amount' => (float) $group->sum('amount')]);
+        $rows = $income->concat($expenses)->values();
+        $revenue = (float) $income->sum('amount');
+        $expenseTotal = (float) $expenses->sum('amount');
+
+        return $this->renderFinancialReport('Income Statement', [
+            'revenue' => $revenue,
+            'expenses' => $expenseTotal,
+            'surplus_deficit' => $revenue - $expenseTotal,
+        ], $rows->all(), ['filters' => $request->only(['from', 'to'])]);
+    }
+
+    public function storeBudget(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'account_id' => ['required', 'exists:accounts,id'],
+            'financial_period' => ['required', 'regex:/^\d{4}(?:-\d{2})?$/'],
+            'amount' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        FinancialBudget::updateOrCreate(
+            ['account_id' => $validated['account_id'], 'financial_period' => $validated['financial_period']],
+            ['amount' => $validated['amount']],
+        );
+
+        return back()->with('success', 'Budget saved.');
+    }
+
+    /** @param array<string, int|float> $stats
+     * @param  array<int, array<string, string|int|float|null>>  $rows
+     */
+    private function renderFinancialReport(string $title, array $stats, array $rows, array $extra = []): Response
+    {
+        return Inertia::render('Admin/reports/financial-detail', [
+            'title' => $title,
+            'stats' => $stats,
+            'rows' => $rows,
+            ...$extra,
         ]);
     }
 
@@ -261,7 +529,7 @@ class ReportController extends Controller
                 'graduated_students' => Student::where('enrollment_status', 'graduated')->count(),
                 'suspended_students' => Student::where('enrollment_status', 'suspended')->count(),
                 'pending_students' => Student::where('enrollment_status', 'pending')->count(),
-                'total_revenue' => (float) StudentPayment::where('status', 'paid')->sum('amount'),
+                'total_revenue' => (float) StudentPayment::whereIn('status', ['paid', 'approved'])->sum('amount'),
                 'outstanding_balance' => 0,
             ]),
         ]);

@@ -45,6 +45,10 @@ class Expense extends Model
         'budget_line',
         'receipt_path',
         'status',
+        'payment_method',
+        'payment_account_id',
+        'reference_no',
+        'paid_at',
         'created_by',
         'approved_by',
         'approved_at',
@@ -60,6 +64,7 @@ class Expense extends Model
             'amount' => 'decimal:2',
             'expense_date' => 'date:Y-m-d',
             'approved_at' => 'datetime',
+            'paid_at' => 'date:Y-m-d',
         ];
     }
 
@@ -69,6 +74,12 @@ class Expense extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /** @return BelongsTo<Account, $this> */
+    public function paymentAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'payment_account_id');
     }
 
     /**

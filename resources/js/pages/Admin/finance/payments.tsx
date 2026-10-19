@@ -94,6 +94,7 @@ interface AdminFinancePaymentsProps {
             balance: number;
         }>;
     }>;
+    payment_accounts: Array<{ id: number; code: string; name: string }>;
     filters: {
         search: string;
         status: string;
@@ -106,6 +107,7 @@ export default function AdminFinancePayments({
     stats,
     payments,
     students = [],
+    payment_accounts = [],
     filters,
 }: AdminFinancePaymentsProps) {
     const { t } = useTranslation();
@@ -119,6 +121,7 @@ export default function AdminFinancePayments({
         invoice_id: '',
         amount: '',
         payment_method: 'bank_transfer',
+        payment_account_id: '',
         payment_date: new Date().toISOString().split('T')[0],
         status: 'paid',
         notes: '',
@@ -699,6 +702,41 @@ export default function AdminFinancePayments({
 
                             <div className="space-y-1.5">
                                 <Label
+                                    htmlFor="payment_account_id"
+                                    className="text-xs font-semibold"
+                                >
+                                    Deposit account{' '}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <Select
+                                    value={data.payment_account_id}
+                                    onValueChange={(value) =>
+                                        setData('payment_account_id', value)
+                                    }
+                                >
+                                    <SelectTrigger id="payment_account_id" size="sm">
+                                        <SelectValue placeholder="Select cash or bank account" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {payment_accounts.map((account) => (
+                                            <SelectItem
+                                                key={account.id}
+                                                value={String(account.id)}
+                                            >
+                                                {account.code} · {account.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.payment_account_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.payment_account_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
                                     htmlFor="notes"
                                     className="text-xs font-semibold"
                                 >
@@ -727,7 +765,7 @@ export default function AdminFinancePayments({
                                 <Button
                                     type="submit"
                                     size="sm"
-                                    disabled={processing || !data.invoice_id}
+                                    disabled={processing || !data.invoice_id || (data.status === 'paid' && !data.payment_account_id)}
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing

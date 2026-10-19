@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 class ManageStudentPayment
 {
     /**
-     * @param  array{invoice_id: int, amount: numeric-string|float|int, payment_method: string, payment_date: string, status: string, notes?: string|null, receipt_path?: string|null}  $data
+     * @param  array{invoice_id: int, amount: numeric-string|float|int, payment_method: string, payment_date: string, status: string, payment_account_id?: int|null, notes?: string|null, receipt_path?: string|null}  $data
      */
     public function record(Student $student, array $data): StudentPayment
     {
@@ -40,6 +40,7 @@ class ManageStudentPayment
                 'transaction_no' => $this->transactionNumber(),
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
+                'payment_account_id' => $data['payment_account_id'] ?? null,
                 'payment_date' => $data['payment_date'],
                 'receipt_path' => $data['receipt_path'] ?? null,
                 'status' => $status->value,

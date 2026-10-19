@@ -1698,6 +1698,8 @@ export default function AdminStudentsShow({
                     open={feeModalOpen}
                     onOpenChange={setFeeModalOpen}
                     studentId={student.id}
+                    academicYear={student.academic_year}
+                    semester={student.current_semester ?? 1}
                 />
 
                 <RecordPaymentModal
