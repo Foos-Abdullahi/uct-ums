@@ -202,7 +202,7 @@ export default function AdminFinanceFees({
                 student.program_id === Number(semesterFeeForm.data.program_id)),
     );
     const alreadyChargedStudents = matchingSemesterStudents.filter((student) =>
-        student.invoices.some(
+        (student.invoices ?? []).some(
             (invoice) =>
                 (invoice.academic_year === semesterFeeForm.data.academic_year ||
                     invoice.academic_year === null) &&
@@ -214,7 +214,7 @@ export default function AdminFinanceFees({
     const selectedRecordStudent = recordingStudents.find(
         (student) => student.id === Number(data.student_id),
     );
-    const recordFeeDuplicate = selectedRecordStudent?.invoices.some(
+    const recordFeeDuplicate = selectedRecordStudent?.invoices?.some(
         (invoice) =>
             invoice.type === data.type &&
             invoice.semester === Number(data.semester) &&

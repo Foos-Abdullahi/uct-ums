@@ -124,7 +124,7 @@ class FinanceController extends Controller
 
         $programs = Program::query()->orderBy('name')->get(['id', 'name', 'code', 'degree_level']);
         $recordingStudents = Student::query()
-            ->with('user')
+            ->with(['user', 'invoices'])
             ->orderBy('matric_no')
             ->get()
             ->map(fn (Student $student) => [
@@ -132,8 +132,14 @@ class FinanceController extends Controller
                 'matric_no' => $student->matric_no,
                 'name' => $student->user?->name ?? 'Unknown',
                 'program_id' => $student->program_id,
+                'academic_year' => $student->academic_year,
                 'current_semester' => $student->current_semester,
                 'enrollment_status' => $student->enrollment_status,
+                'invoices' => $student->invoices->map(fn (StudentInvoice $invoice) => [
+                    'academic_year' => $invoice->academic_year,
+                    'semester' => $invoice->semester,
+                    'type' => $invoice->type,
+                ])->values(),
             ]);
 
         return Inertia::render('Admin/finance/fees', [
