@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Academics\EnsureTimetableHasNoConflicts;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseAssignment;
 use App\Models\Lecturer;
+use App\Models\Program;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,6 +31,8 @@ class AssignmentController extends Controller
         $role = $request->input('role');
         $status = $request->input('status');
         $department = $request->input('department');
+        $programId = $request->input('program_id');
+        $section = $request->input('section');
 
         $query = CourseAssignment::query()
             ->with(['lecturer.user', 'course.program'])
@@ -38,6 +42,8 @@ class AssignmentController extends Controller
             ->filterRole($role)
             ->filterStatus($status)
             ->filterDepartment($department)
+            ->filterProgram($programId)
+            ->filterSection($section)
             ->latest('id');
 
         $courses = Course::query()
@@ -69,6 +75,8 @@ class AssignmentController extends Controller
                 'role' => $role ?? 'all',
                 'status' => $status ?? 'all',
                 'department' => $department ?? 'all',
+                'program_id' => $programId ?? 'all',
+                'section' => $section ?? 'all',
                 'per_page' => $perPage,
             ],
         ]);
@@ -108,20 +116,7 @@ class AssignmentController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'lecturer_id' => ['required', 'exists:lecturers,id'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'academic_year' => ['required', 'string', 'max:20'],
-            'semester' => ['required', 'string', 'max:50'],
-            'section' => ['required', 'string', 'max:50'],
-            'role' => ['required', 'string', 'in:lead_lecturer,co_lecturer,assistant,lab_instructor'],
-            'status' => ['nullable', 'string', 'in:assigned,active,completed,cancelled'],
-            'workload_hours' => ['required', 'integer', 'min:1', 'max:30'],
-            'room' => ['nullable', 'string', 'max:100'],
-            'schedule_day' => ['nullable', 'string', 'max:50'],
-            'schedule_time' => ['nullable', 'string', 'max:50'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $this->validateAssignment($request);
 
         $assignment = CourseAssignment::create([
             ...$validated,
@@ -130,6 +125,52 @@ class AssignmentController extends Controller
 
         return redirect()->route('admin.assignments.show', $assignment)
             ->with('success', 'Teaching course assignment created successfully.');
+    }
+
+    /**
+     * Display the filtered weekly timetable.
+     */
+    public function timetable(Request $request): Response
+    {
+        $academicYear = $request->string('academic_year')->toString();
+        $semester = $request->string('semester')->toString();
+        $programId = $request->input('program_id');
+        $section = $request->string('section')->toString();
+
+        $assignments = CourseAssignment::query()
+            ->with(['course.program', 'lecturer.user'])
+            ->whereIn('status', ['assigned', 'active'])
+            ->whereNotNull('weekday')
+            ->whereNotNull('start_time')
+            ->whereNotNull('end_time')
+            ->filterAcademicYear($academicYear ?: null)
+            ->filterSemester($semester ?: null)
+            ->filterProgram($programId)
+            ->filterSection($section ?: null)
+            ->get()
+            ->sortBy(fn (CourseAssignment $assignment) => $assignment->weekday.'-'.$assignment->start_time)
+            ->values();
+
+        return Inertia::render('Admin/assignments/timetable', [
+            'assignments' => $assignments,
+            'programs' => Program::query()->select('id', 'name')->orderBy('name')->get(),
+            'academicYears' => CourseAssignment::query()
+                ->whereNotNull('academic_year')
+                ->distinct()
+                ->orderByDesc('academic_year')
+                ->pluck('academic_year'),
+            'sections' => CourseAssignment::query()
+                ->whereNotNull('section')
+                ->distinct()
+                ->orderBy('section')
+                ->pluck('section'),
+            'filters' => [
+                'academic_year' => $academicYear ?: 'all',
+                'semester' => $semester ?: 'all',
+                'program_id' => $programId ?: 'all',
+                'section' => $section ?: 'all',
+            ],
+        ]);
     }
 
     /**
@@ -180,20 +221,7 @@ class AssignmentController extends Controller
      */
     public function update(Request $request, CourseAssignment $assignment): RedirectResponse
     {
-        $validated = $request->validate([
-            'lecturer_id' => ['required', 'exists:lecturers,id'],
-            'course_id' => ['required', 'exists:courses,id'],
-            'academic_year' => ['required', 'string', 'max:20'],
-            'semester' => ['required', 'string', 'max:50'],
-            'section' => ['required', 'string', 'max:50'],
-            'role' => ['required', 'string', 'in:lead_lecturer,co_lecturer,assistant,lab_instructor'],
-            'status' => ['required', 'string', 'in:assigned,active,completed,cancelled'],
-            'workload_hours' => ['required', 'integer', 'min:1', 'max:30'],
-            'room' => ['nullable', 'string', 'max:100'],
-            'schedule_day' => ['nullable', 'string', 'max:50'],
-            'schedule_time' => ['nullable', 'string', 'max:50'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $this->validateAssignment($request, $assignment);
 
         $assignment->update($validated);
 
@@ -224,5 +252,41 @@ class AssignmentController extends Controller
         $assignment->update($validated);
 
         return back()->with('success', "Assignment status updated to {$validated['status']}.");
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validateAssignment(Request $request, ?CourseAssignment $currentAssignment = null): array
+    {
+        $validated = $request->validate([
+            'lecturer_id' => ['required', 'exists:lecturers,id'],
+            'course_id' => ['required', 'exists:courses,id'],
+            'academic_year' => ['required', 'string', 'max:20'],
+            'semester' => ['required', 'string', 'max:50'],
+            'section' => ['required', 'string', 'max:50'],
+            'role' => ['required', 'string', 'in:lead_lecturer,co_lecturer,assistant,lab_instructor'],
+            'status' => ['nullable', 'string', 'in:assigned,active,completed,cancelled'],
+            'workload_hours' => ['required', 'integer', 'min:1', 'max:30'],
+            'room' => ['required', 'string', 'max:100'],
+            'weekday' => ['required', 'string', 'in:Saturday,Sunday,Monday,Tuesday,Wednesday,Thursday,Friday'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $validated['status'] ??= 'active';
+        $validated['room'] = trim($validated['room']);
+        $validated['section'] = trim($validated['section']);
+        $validated['schedule_day'] = $validated['weekday'];
+        $validated['schedule_time'] = $validated['start_time'].' - '.$validated['end_time'];
+
+        if (! in_array($validated['status'], ['assigned', 'active'], true)) {
+            return $validated;
+        }
+
+        (new EnsureTimetableHasNoConflicts)->handle($validated, $currentAssignment);
+
+        return $validated;
     }
 }

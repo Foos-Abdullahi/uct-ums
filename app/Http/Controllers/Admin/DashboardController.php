@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Models\Course;
@@ -38,7 +39,7 @@ class DashboardController extends Controller
                 $activeCourses = Course::where('status', 'active')->count();
                 $totalPrograms = Program::count();
 
-                $totalRevenue = (float) (StudentPayment::where('status', 'approved')->sum('amount') ?: 0);
+                $totalRevenue = (float) (StudentPayment::where('status', PaymentStatus::Paid->value)->sum('amount') ?: 0);
                 $totalInvoiced = (float) (StudentInvoice::sum('amount') ?: 0);
                 $totalPaidInvoices = (float) (StudentInvoice::sum('paid_amount') ?: 0);
                 $outstandingBalance = max(0, $totalInvoiced - $totalPaidInvoices);

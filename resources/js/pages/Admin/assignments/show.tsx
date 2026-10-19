@@ -343,8 +343,7 @@ export default function AdminAssignmentsShow({
                                         Schedule Day
                                     </p>
                                     <p className="font-medium">
-                                        {assignment.schedule_day ||
-                                            'Not specified'}
+                                        {assignment.weekday || 'Not specified'}
                                     </p>
                                 </div>
                                 <div className="space-y-2">
@@ -352,8 +351,10 @@ export default function AdminAssignmentsShow({
                                         Schedule Time
                                     </p>
                                     <p className="font-medium">
-                                        {assignment.schedule_time ||
-                                            'Not specified'}
+                                        {assignment.start_time &&
+                                        assignment.end_time
+                                            ? `${assignment.start_time.slice(0, 5)} - ${assignment.end_time.slice(0, 5)}`
+                                            : 'Not specified'}
                                     </p>
                                 </div>
                             </div>

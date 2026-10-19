@@ -26,9 +26,10 @@ import {
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import StudentStatementSheet from '@/components/finance/student-statement-sheet';
 import { DataTable } from '@/components/tools/table/main-table';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -42,6 +43,7 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type {
+    FinanceStatementData,
     Student,
     StudentGrade,
     StudentInvoice,
@@ -85,6 +87,7 @@ interface AdminStudentsShowProps {
     financialSummary: FinancialSummary;
     academicSummary: AcademicSummary;
     attendanceSummary: AttendanceSummary;
+    financeStatement?: FinanceStatementData;
 }
 
 export default function AdminStudentsShow({
@@ -92,6 +95,7 @@ export default function AdminStudentsShow({
     financialSummary,
     academicSummary,
     attendanceSummary,
+    financeStatement,
 }: AdminStudentsShowProps) {
     const [passwordModalOpen, setPasswordModalOpen] = useState(false);
     const [feeModalOpen, setFeeModalOpen] = useState(false);
@@ -166,7 +170,7 @@ export default function AdminStudentsShow({
 
     const handlePaymentStatusChange = (
         paymentId: number,
-        status: 'approved' | 'rejected',
+        status: 'paid' | 'rejected',
     ) => {
         if (paymentBusy !== null) {
             return;
@@ -181,7 +185,7 @@ export default function AdminStudentsShow({
                 onSuccess: () => {
                     setPaymentBusy(null);
                     toast.success(
-                        `Payment ${status === 'approved' ? 'approved' : 'rejected'}.`,
+                        `Payment ${status === 'paid' ? 'paid' : 'rejected'}.`,
                     );
                 },
                 onError: () => {
@@ -368,14 +372,14 @@ export default function AdminStudentsShow({
     ];
 
     const renderPaymentStatusBadge = (status: string) => {
-        if (status === 'approved') {
+        if (status === 'paid') {
             return (
                 <Badge
                     variant="outline"
                     className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 >
                     <Check className="mr-1 h-3 w-3" />
-                    Approved
+                    Paid
                 </Badge>
             );
         }
@@ -473,7 +477,7 @@ export default function AdminStudentsShow({
                                         e.stopPropagation();
                                         handlePaymentStatusChange(
                                             row.original.id,
-                                            'approved',
+                                            'paid',
                                         );
                                     }}
                                 >
@@ -482,7 +486,7 @@ export default function AdminStudentsShow({
                                     ) : (
                                         <Check className="mr-1 h-3 w-3" />
                                     )}
-                                    Approve
+                                    Mark Paid
                                 </Button>
                                 <Button
                                     size="sm"
@@ -524,6 +528,10 @@ export default function AdminStudentsShow({
                     title={
                         <div className="flex flex-col items-start gap-3.5 sm:flex-row sm:items-center">
                             <Avatar className="h-14 w-14 shrink-0 border-2 border-primary/20">
+                                <AvatarImage
+                                    src={student.photo_url ?? undefined}
+                                    alt={name}
+                                />
                                 <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
                                     {initials}
                                 </AvatarFallback>
@@ -977,6 +985,16 @@ export default function AdminStudentsShow({
 
                     {/* Tab 3: Finance */}
                     <TabsContent value="finance" className="space-y-6">
+                        <div className="flex justify-end">
+                            <Button variant="outline" size="sm" asChild>
+                                <Link
+                                    href={`/admin/students/${student.id}/finance-statement`}
+                                >
+                                    <Printer className="mr-1.5 h-3.5 w-3.5" />
+                                    Print Finance Statement
+                                </Link>
+                            </Button>
+                        </div>
                         {/* Financial metric overview */}
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             <Card className="rounded-sm border-border/40 bg-card p-4 shadow-xs">
@@ -1018,6 +1036,28 @@ export default function AdminStudentsShow({
                                 </div>
                             </Card>
                         </div>
+
+                        {/* Chronological Finance Statement */}
+                        {financeStatement && (
+                            <div className="space-y-3">
+                                <div>
+                                    <h4 className="text-sm font-semibold text-foreground">
+                                        Finance Statement
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground">
+                                        Official chronological ledger showing
+                                        charges, payments, and running balance.
+                                    </p>
+                                </div>
+                                <StudentStatementSheet
+                                    student={student}
+                                    statement={financeStatement.statement}
+                                    totals={financeStatement.totals}
+                                    generatedAt={financeStatement.generatedAt}
+                                    printUrl={`/admin/students/${student.id}/finance-statement`}
+                                />
+                            </div>
+                        )}
 
                         {/* Invoices Section */}
                         <div className="space-y-3">

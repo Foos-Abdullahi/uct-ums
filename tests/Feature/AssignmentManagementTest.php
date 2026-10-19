@@ -100,8 +100,9 @@ test('admin can create a new teaching course assignment', function () {
         'status' => 'active',
         'workload_hours' => 3,
         'room' => 'Hall 2, Room 105',
-        'schedule_day' => 'Sunday',
-        'schedule_time' => '08:00 - 10:00',
+        'weekday' => 'Sunday',
+        'start_time' => '08:00',
+        'end_time' => '10:00',
         'notes' => 'Primary lecture sessions',
     ]);
 
@@ -123,7 +124,19 @@ test('assignment creation validates required fields', function () {
 
     $response = $this->post(route('admin.assignments.store'), []);
 
-    $response->assertSessionHasErrors(['lecturer_id', 'course_id', 'academic_year', 'semester', 'section', 'role', 'workload_hours']);
+    $response->assertSessionHasErrors([
+        'lecturer_id',
+        'course_id',
+        'academic_year',
+        'semester',
+        'section',
+        'role',
+        'workload_hours',
+        'room',
+        'weekday',
+        'start_time',
+        'end_time',
+    ]);
 });
 
 // ─── Show & Edit & Update ────────────────────────────────────────────────────
@@ -173,8 +186,9 @@ test('admin can update a course assignment', function () {
         'status' => 'active',
         'workload_hours' => 4,
         'room' => 'Lab 502',
-        'schedule_day' => 'Tuesday',
-        'schedule_time' => '13:00 - 15:00',
+        'weekday' => 'Tuesday',
+        'start_time' => '13:00',
+        'end_time' => '15:00',
     ]);
 
     $response->assertRedirect(route('admin.assignments.show', $assignment));
@@ -184,6 +198,94 @@ test('admin can update a course assignment', function () {
         ->and($assignment->section)->toBe('Section C')
         ->and($assignment->role)->toBe('co_lecturer')
         ->and($assignment->workload_hours)->toBe(4);
+});
+
+test('assignment creation rejects lecturer room and program section timetable conflicts', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $lecturer = Lecturer::factory()->create();
+    $otherLecturer = Lecturer::factory()->create();
+    $course = Course::factory()->create();
+    $otherProgramCourse = Course::factory()->create();
+    $sameProgramCourse = Course::factory()->create(['program_id' => $course->program_id]);
+
+    CourseAssignment::factory()->create([
+        'lecturer_id' => $lecturer->id,
+        'course_id' => $course->id,
+        'academic_year' => '2026/2027',
+        'semester' => 'Semester 1',
+        'section' => 'Section A',
+        'room' => 'Room 101',
+        'weekday' => 'Monday',
+        'start_time' => '09:00',
+        'end_time' => '11:00',
+    ]);
+
+    $base = [
+        'academic_year' => '2026/2027',
+        'semester' => 'Semester 1',
+        'role' => 'lead_lecturer',
+        'status' => 'active',
+        'workload_hours' => 3,
+        'weekday' => 'Monday',
+        'start_time' => '10:00',
+        'end_time' => '12:00',
+    ];
+
+    $this->post(route('admin.assignments.store'), [
+        ...$base,
+        'lecturer_id' => $lecturer->id,
+        'course_id' => $otherProgramCourse->id,
+        'section' => 'Section B',
+        'room' => 'Room 202',
+    ])->assertSessionHasErrors('lecturer_id');
+
+    $this->post(route('admin.assignments.store'), [
+        ...$base,
+        'lecturer_id' => $otherLecturer->id,
+        'course_id' => $otherProgramCourse->id,
+        'section' => 'Section B',
+        'room' => 'Room 101',
+    ])->assertSessionHasErrors('room');
+
+    $this->post(route('admin.assignments.store'), [
+        ...$base,
+        'lecturer_id' => $otherLecturer->id,
+        'course_id' => $sameProgramCourse->id,
+        'section' => 'Section A',
+        'room' => 'Room 303',
+    ])->assertSessionHasErrors('section');
+});
+
+test('admin timetable filters sessions by year semester program and section', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $course = Course::factory()->create();
+    $matching = CourseAssignment::factory()->create([
+        'course_id' => $course->id,
+        'academic_year' => '2026/2027',
+        'semester' => 'Semester 2',
+        'section' => 'Section B',
+    ]);
+    CourseAssignment::factory()->create([
+        'academic_year' => '2025/2026',
+        'semester' => 'Semester 1',
+        'section' => 'Section A',
+    ]);
+
+    $this->get(route('admin.assignments.timetable', [
+        'academic_year' => '2026/2027',
+        'semester' => 'Semester 2',
+        'program_id' => $course->program_id,
+        'section' => 'Section B',
+    ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Admin/assignments/timetable')
+            ->has('assignments', 1)
+            ->where('assignments.0.id', $matching->id));
 });
 
 // ─── Status Update & Destroy ─────────────────────────────────────────────────

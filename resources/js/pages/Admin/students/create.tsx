@@ -22,6 +22,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { Program } from '@/types/student';
+import { StudentPhotoField } from './components/student-photo-field';
 
 interface AdminStudentsCreateProps {
     programs: Program[];
@@ -42,7 +43,9 @@ export default function AdminStudentsCreate({
         password: '',
         matric_no: '',
         program_id: programs[0]?.id ? String(programs[0].id) : '',
+        academic_year: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
         current_semester: 1,
+        section: 'Section A',
         phone: '',
         gender: 'Male',
         date_of_birth: '',
@@ -51,11 +54,13 @@ export default function AdminStudentsCreate({
         enrollment_status: 'enrolled',
         enrollment_date: new Date().toISOString().split('T')[0],
         initial_fee_amount: '1200',
+        photo: null as File | null,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/admin/students', {
+            forceFormData: true,
             onError: () => {
                 toast.error('Please review the form for validation errors.');
             },
@@ -90,6 +95,12 @@ export default function AdminStudentsCreate({
                         icon={User}
                         type="default"
                     >
+                        <div className="mb-6">
+                            <StudentPhotoField
+                                error={errors.photo}
+                                onChange={(photo) => setData('photo', photo)}
+                            />
+                        </div>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div className="grid gap-2">
                                 <Label htmlFor="name">
@@ -316,6 +327,42 @@ export default function AdminStudentsCreate({
                                 {errors.current_semester && (
                                     <p className="text-xs text-destructive">
                                         {errors.current_semester}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="academic_year">
+                                    Academic Year
+                                </Label>
+                                <Input
+                                    id="academic_year"
+                                    value={data.academic_year}
+                                    onChange={(e) =>
+                                        setData('academic_year', e.target.value)
+                                    }
+                                    placeholder="2026/2027"
+                                />
+                                {errors.academic_year && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.academic_year}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="section">Student Section</Label>
+                                <Input
+                                    id="section"
+                                    value={data.section}
+                                    onChange={(e) =>
+                                        setData('section', e.target.value)
+                                    }
+                                    placeholder="Section A"
+                                />
+                                {errors.section && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.section}
                                     </p>
                                 )}
                             </div>

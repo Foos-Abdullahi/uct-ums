@@ -145,6 +145,18 @@ test('import reports failed rows with their errors', function () {
     $this->assertDatabaseMissing('users', ['email' => 'missing-name@example.com']);
 });
 
+test('student import rejects semester numbers above eight', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $program = Program::factory()->create();
+
+    $rows = [['Future Student', 'future.student@example.com', '', '', $program->name, '9', '', '', '', '', '', '', '', '', '']];
+
+    $this->post(route('admin.students.import'), ['file' => makeStudentImportFile($rows)])
+        ->assertOk()
+        ->assertJson(['imported' => 0, 'failed' => 1]);
+});
+
 test('import requires an xlsx file', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
@@ -420,7 +432,7 @@ test('admin can view a student profile page', function () {
     $this->actingAs($admin);
     $student = Student::factory()->create();
     $invoice = StudentInvoice::factory()->create(['student_id' => $student->id]);
-    StudentPayment::factory()->approved()->create([
+    StudentPayment::factory()->paid()->create([
         'student_id' => $student->id,
         'invoice_id' => $invoice->id,
     ]);
@@ -588,7 +600,7 @@ test('admin can record a student payment', function () {
         ->and($invoice->status)->toBe('partial');
 });
 
-test('a pending payment is not applied to the invoice until approved', function () {
+test('a pending payment is not applied to the invoice until paid', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
     $student = Student::factory()->create();
@@ -616,7 +628,7 @@ test('a pending payment is not applied to the invoice until approved', function 
         ->and($invoice->status)->toBe('unpaid');
 });
 
-test('admin can approve a pending payment', function () {
+test('admin can mark a pending payment as paid', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($admin);
     $student = Student::factory()->create();
@@ -630,14 +642,17 @@ test('admin can approve a pending payment', function () {
     $response = $this->patch(route('admin.students.payments.status', [
         'student' => $student->id,
         'payment' => $payment->id,
-    ]), ['status' => 'approved']);
+    ]), ['status' => 'paid']);
 
     $response->assertRedirect();
 
     $this->assertDatabaseHas('student_payments', [
         'id' => $payment->id,
-        'status' => 'approved',
+        'status' => 'paid',
     ]);
+
+    expect($invoice->fresh()->paid_amount)->toBe('1000.00')
+        ->and($invoice->fresh()->status)->toBe('paid');
 });
 
 // ─── Grades ───────────────────────────────────────────────────────────────────
@@ -664,6 +679,20 @@ test('admin can add a grade record for a student', function () {
         'course_code' => 'CS101',
         'grade' => 'A',
     ]);
+});
+
+test('admin cannot add a grade outside the eight semester structure', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+    $student = Student::factory()->create();
+
+    $this->post(route('admin.students.grades.store', $student), [
+        'course_name' => 'Future Course',
+        'course_code' => 'FUT901',
+        'semester' => 9,
+        'credits' => 3,
+        'status' => 'in_progress',
+    ])->assertSessionHasErrors('semester');
 });
 
 test('admin can delete a grade record', function () {

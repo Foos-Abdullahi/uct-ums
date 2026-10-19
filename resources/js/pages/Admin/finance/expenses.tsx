@@ -48,7 +48,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
 
 export interface ExpenseItem {
     id: number;
@@ -140,12 +139,6 @@ export default function AdminFinanceExpenses({
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectProcessing, setRejectProcessing] = useState(false);
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('dashboard_breadcrumb'), href: '/admin/dashboard' },
-        { title: t('finance_breadcrumb'), href: '/admin/finance' },
-        { title: t('breadcrumb_expenses'), href: '/admin/expenses' },
-    ];
-
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -200,7 +193,9 @@ export default function AdminFinanceExpenses({
         router.delete(`/admin/expenses/${selectedForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    t('expense_deleted', { expense_no: selectedForDelete.expense_no }),
+                    t('expense_deleted', {
+                        expense_no: selectedForDelete.expense_no,
+                    }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
@@ -219,7 +214,11 @@ export default function AdminFinanceExpenses({
             {},
             {
                 onSuccess: () =>
-                    toast.success(t('expense_approved', { expense_no: expense.expense_no })),
+                    toast.success(
+                        t('expense_approved', {
+                            expense_no: expense.expense_no,
+                        }),
+                    ),
                 onError: (errs) => {
                     const msg = Object.values(errs)[0] ?? t('approval_failed');
                     toast.error(String(msg));
@@ -235,7 +234,9 @@ export default function AdminFinanceExpenses({
             {
                 onSuccess: () =>
                     toast.success(
-                        t('expense_marked_paid', { expense_no: expense.expense_no }),
+                        t('expense_marked_paid', {
+                            expense_no: expense.expense_no,
+                        }),
                     ),
                 onError: () => toast.error(t('failed_mark_paid')),
             },
@@ -255,7 +256,9 @@ export default function AdminFinanceExpenses({
             {
                 onSuccess: () => {
                     toast.success(
-                        t('expense_rejected', { expense_no: rejectTarget.expense_no }),
+                        t('expense_rejected', {
+                            expense_no: rejectTarget.expense_no,
+                        }),
                     );
                     setRejectModalOpen(false);
                     setRejectTarget(null);
@@ -387,7 +390,9 @@ export default function AdminFinanceExpenses({
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">{t('actions_column')}</span>,
+            header: () => (
+                <span className="sr-only">{t('actions_column')}</span>
+            ),
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     {row.original.status === 'approved' && (
@@ -475,7 +480,10 @@ export default function AdminFinanceExpenses({
             options: [
                 { label: t('all_statuses_filter'), value: 'all' },
                 { label: t('draft_status'), value: 'draft' },
-                { label: t('pending_approval_status'), value: 'pending_approval' },
+                {
+                    label: t('pending_approval_status'),
+                    value: 'pending_approval',
+                },
                 { label: t('approved_status'), value: 'approved' },
                 { label: t('paid_status'), value: 'paid' },
                 { label: t('rejected_status'), value: 'rejected' },
@@ -518,7 +526,9 @@ export default function AdminFinanceExpenses({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance">{t('finance_overview')}</Link>
+                            <Link href="/admin/finance">
+                                {t('finance_overview')}
+                            </Link>
                         </Button>
                         <Button
                             size="sm"
@@ -537,6 +547,7 @@ export default function AdminFinanceExpenses({
                             <MetricCard
                                 title={t('total_expense')}
                                 value={formatCurrency(stats.total_spent)}
+                                description="Includes pending, approved, and paid expenses"
                                 icon={DollarSign}
                                 color="destructive"
                             />
@@ -684,7 +695,11 @@ export default function AdminFinanceExpenses({
                                             id="account_id"
                                             className="h-9 text-xs"
                                         >
-                                            <SelectValue placeholder={t('select_account')} />
+                                            <SelectValue
+                                                placeholder={t(
+                                                    'select_account',
+                                                )}
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {Array.from(
@@ -806,7 +821,9 @@ export default function AdminFinanceExpenses({
                                     </Label>
                                     <Input
                                         id="budget_line"
-                                        placeholder={t('budget_line_placeholder')}
+                                        placeholder={t(
+                                            'budget_line_placeholder',
+                                        )}
                                         value={data.budget_line}
                                         onChange={(e) =>
                                             setData(
@@ -907,7 +924,9 @@ export default function AdminFinanceExpenses({
                                 {t('reject_expense_title')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('reject_expense_description', { expense_no: rejectTarget?.expense_no })}
+                                {t('reject_expense_description', {
+                                    expense_no: rejectTarget?.expense_no,
+                                })}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -923,7 +942,9 @@ export default function AdminFinanceExpenses({
                                 <Textarea
                                     id="reject_comment"
                                     className="min-h-[90px] text-xs"
-                                    placeholder={t('rejection_reason_placeholder')}
+                                    placeholder={t(
+                                        'rejection_reason_placeholder',
+                                    )}
                                     value={rejectComment}
                                     onChange={(e) =>
                                         setRejectComment(e.target.value)
@@ -979,4 +1000,10 @@ export default function AdminFinanceExpenses({
     );
 }
 
-AdminFinanceExpenses.layout = { breadcrumbs: [{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Finance', href: '/admin/finance' }, { title: 'Expenses', href: '/admin/expenses' }] };
+AdminFinanceExpenses.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Finance', href: '/admin/finance' },
+        { title: 'Expenses', href: '/admin/expenses' },
+    ],
+};

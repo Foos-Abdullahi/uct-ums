@@ -298,7 +298,7 @@ test('admin can create an invoice with line items, tax, and discount', function 
         ->and($invoice->subtotal())->toBeGreaterThan(0);
 });
 
-test('admin can record a custom fee type from the fees page', function () {
+test('admin can record a registration fee from the fees page', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $student = Student::factory()->create();
     $this->actingAs($admin);
@@ -313,11 +313,31 @@ test('admin can record a custom fee type from the fees page', function () {
 
     $this->post(route('admin.finance.invoices.store'), [
         'student_id' => $student->id,
-        'title' => 'Sports Club Fee - 2026/27',
-        'type' => 'sports club fee',
+        'title' => 'Registration Fee - 2026/27',
+        'type' => 'registration',
         'amount' => 50.00,
         'due_date' => '2026-10-15',
     ])->assertRedirect();
+
+    expect(StudentInvoice::where('student_id', $student->id)
+        ->where('type', 'registration')
+        ->where('title', 'Registration Fee - 2026/27')
+        ->exists())->toBeTrue();
+});
+
+test('admin can record a custom fee type from the fees page', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $student = Student::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('admin.finance.invoices.store'), [
+            'student_id' => $student->id,
+            'title' => 'Sports Club Fee - 2026/27',
+            'type' => 'sports club fee',
+            'amount' => 50.00,
+            'due_date' => '2026-10-15',
+        ])
+        ->assertRedirect();
 
     expect(StudentInvoice::where('student_id', $student->id)
         ->where('type', 'sports club fee')
@@ -377,14 +397,13 @@ test('admin can update an invoice with no payments collected', function () {
 
 // ─── Finance Portal ───────────────────────────────────────────────────────────
 
-test('finance user can view the finance dashboard', function () {
+test('finance user is routed to the shared admin finance dashboard', function () {
     $finance = User::factory()->role(UserRole::Finance)->create();
     $this->actingAs($finance);
 
     $response = $this->get(route('finance.dashboard'));
 
-    $response->assertOk()
-        ->assertInertia(fn ($page) => $page->component('finance/dashboard'));
+    $response->assertRedirect(route('admin.finance.overview'));
 });
 
 test('finance user can view the expense roster', function () {

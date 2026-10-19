@@ -62,6 +62,9 @@ export interface CourseAssignment {
     status: 'assigned' | 'active' | 'completed' | 'cancelled';
     workload_hours: number;
     room: string | null;
+    weekday: string | null;
+    start_time: string | null;
+    end_time: string | null;
     schedule_day: string | null;
     schedule_time: string | null;
     notes: string | null;
@@ -84,7 +87,13 @@ export interface CourseMaterial {
     lecturer_id: number | null;
     title: string;
     description: string | null;
-    category: 'syllabus' | 'lecture_notes' | 'assignment' | 'lab_manual' | 'reading' | 'other';
+    category:
+        | 'syllabus'
+        | 'lecture_notes'
+        | 'assignment'
+        | 'lab_manual'
+        | 'reading'
+        | 'other';
     file_path: string;
     file_name: string | null;
     file_size: number | null;
@@ -125,4 +134,3 @@ export interface GradebookStudentItem {
     status: 'passed' | 'failed' | 'in_progress';
     grade_id?: number | null;
 }
-

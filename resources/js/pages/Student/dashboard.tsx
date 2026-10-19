@@ -3,7 +3,6 @@ import {
     ArrowRight,
     Award,
     BookOpen,
-    Calendar,
     CheckCircle2,
     CreditCard,
     GraduationCap,
@@ -11,6 +10,9 @@ import {
     TrendingUp,
     Wallet,
 } from 'lucide-react';
+import { WeeklyTimetable } from '@/components/timetable/weekly-timetable';
+import type { TimetableEntry } from '@/components/timetable/weekly-timetable';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,10 +29,6 @@ interface Course {
     code: string;
     name: string;
     credit_hours: number;
-    lecturer_name: string | null;
-    schedule_day: string | null;
-    schedule_time: string | null;
-    room: string | null;
 }
 
 interface Invoice {
@@ -56,13 +54,20 @@ interface Props {
     student: Student;
     stats: Stats;
     courses: Course[];
+    timetable: TimetableEntry[];
     recent_grades: StudentGrade[];
     next_due_invoice: Invoice | null;
 }
 
 const feeStatusVariant = (status: string) => {
-    if (status === 'paid') return 'default';
-    if (status === 'partial') return 'secondary';
+    if (status === 'paid') {
+        return 'default';
+    }
+
+    if (status === 'partial') {
+        return 'secondary';
+    }
+
     return 'destructive';
 };
 
@@ -70,9 +75,18 @@ export default function StudentDashboard({
     student,
     stats,
     courses,
+    timetable,
     recent_grades,
     next_due_invoice,
 }: Props) {
+    const studentName = student.user?.name ?? 'Student';
+    const initials = studentName
+        .split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
     return (
         <>
             <Head title="Student Dashboard" />
@@ -82,22 +96,36 @@ export default function StudentDashboard({
                     <div className="absolute -top-24 -right-16 size-64 rounded-full bg-white/10" />
                     <div className="absolute right-32 -bottom-20 size-48 rounded-full border-[24px] border-cyan-300/15" />
                     <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                        <div className="max-w-2xl">
-                            <div className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-cyan-200 uppercase">
-                                <Sparkles className="size-4" />
-                                Your learning space
+                        <div className="flex max-w-2xl items-center gap-4">
+                            <Avatar className="size-20 border-4 border-white/20 shadow-lg">
+                                <AvatarImage
+                                    src={student.photo_url ?? undefined}
+                                    alt={studentName}
+                                />
+                                <AvatarFallback className="bg-white/15 text-xl font-bold text-white">
+                                    {initials || 'ST'}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <div className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-cyan-200 uppercase">
+                                    <Sparkles className="size-4" />
+                                    Your learning space
+                                </div>
+                                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                                    Good to see you, {studentName}.
+                                </h1>
+                                <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">
+                                    {student.program?.name ?? 'Your programme'}{' '}
+                                    <span className="mx-1.5 text-cyan-300">
+                                        •
+                                    </span>{' '}
+                                    Semester {student.current_semester}{' '}
+                                    <span className="mx-1.5 text-cyan-300">
+                                        •
+                                    </span>{' '}
+                                    {student.matric_no}
+                                </p>
                             </div>
-                            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                                Good to see you,{' '}
-                                {student.user?.name ?? 'Student'}.
-                            </h1>
-                            <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">
-                                {student.program?.name ?? 'Your programme'}{' '}
-                                <span className="mx-1.5 text-cyan-300">•</span>{' '}
-                                Semester {student.current_semester}{' '}
-                                <span className="mx-1.5 text-cyan-300">•</span>{' '}
-                                {student.matric_no}
-                            </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <Button
@@ -224,6 +252,22 @@ export default function StudentDashboard({
                     </Card>
                 </div>
 
+                <Card className="border-slate-200/80 shadow-sm dark:border-border">
+                    <CardHeader>
+                        <CardTitle className="text-lg">
+                            Weekly Timetable
+                        </CardTitle>
+                        <CardDescription>
+                            {student.academic_year} · Semester{' '}
+                            {student.current_semester} ·{' '}
+                            {student.section ?? 'Section A'}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <WeeklyTimetable entries={timetable} />
+                    </CardContent>
+                </Card>
+
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="space-y-4 lg:col-span-2">
                         <div className="flex items-center justify-between">
@@ -285,32 +329,6 @@ export default function StudentDashboard({
                                                 {course.name}
                                             </CardTitle>
                                         </CardHeader>
-                                        <CardContent className="space-y-1 pt-0 text-xs text-muted-foreground">
-                                            {course.lecturer_name && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                                                    <span>
-                                                        {course.lecturer_name}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {(course.schedule_day ||
-                                                course.schedule_time) && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <Calendar className="h-3.5 w-3.5 text-primary" />
-                                                    <span>
-                                                        {course.schedule_day ??
-                                                            'TBA'}{' '}
-                                                        &bull;{' '}
-                                                        {course.schedule_time ??
-                                                            'TBA'}
-                                                        {course.room
-                                                            ? ` · ${course.room}`
-                                                            : ''}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </CardContent>
                                     </Card>
                                 ))}
                             </div>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ExpenseStatus;
 use Database\Factories\ExpenseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,8 @@ class Expense extends Model
     public const TYPES = ['salary', 'utilities', 'equipment', 'maintenance', 'supplies', 'others'];
 
     public const STATUSES = ['draft', 'pending_approval', 'approved', 'paid', 'rejected', 'cancelled'];
+
+    public const TOTAL_STATUSES = ['pending_approval', 'approved', 'paid'];
 
     public const APPROVAL_LEVELS = [
         1 => 'Finance Officer',
@@ -120,6 +123,17 @@ class Expense extends Model
         return $this->status === ExpenseStatus::PendingApproval->value
             && $this->approvedApprovals()->count() < count(self::APPROVAL_LEVELS)
             && $this->pendingApprovals()->exists();
+    }
+
+    /**
+     * Include expenses that have been submitted and remain financially active.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeIncludedInTotals(Builder $query): Builder
+    {
+        return $query->whereIn('status', self::TOTAL_STATUSES);
     }
 
     /**

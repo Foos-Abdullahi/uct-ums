@@ -251,8 +251,9 @@ test('admin can assign a course directly to a lecturer', function () {
         'role' => 'lead_lecturer',
         'workload_hours' => 3,
         'room' => 'Hall 4, Room 201',
-        'schedule_day' => 'Monday',
-        'schedule_time' => '10:00 - 12:00',
+        'weekday' => 'Monday',
+        'start_time' => '10:00',
+        'end_time' => '12:00',
     ]);
 
     $response->assertRedirect();

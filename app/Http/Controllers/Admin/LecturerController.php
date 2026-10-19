@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Academics\EnsureTimetableHasNoConflicts;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
@@ -342,17 +343,23 @@ class LecturerController extends Controller
             'section' => ['required', 'string', 'max:50'],
             'role' => ['required', 'string', 'in:lead_lecturer,co_lecturer,assistant,lab_instructor'],
             'workload_hours' => ['required', 'integer', 'min:1', 'max:30'],
-            'room' => ['nullable', 'string', 'max:100'],
-            'schedule_day' => ['nullable', 'string', 'max:50'],
-            'schedule_time' => ['nullable', 'string', 'max:50'],
+            'room' => ['required', 'string', 'max:100'],
+            'weekday' => ['required', 'string', 'in:Saturday,Sunday,Monday,Tuesday,Wednesday,Thursday,Friday'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        CourseAssignment::create([
-            ...$validated,
-            'lecturer_id' => $lecturer->id,
-            'status' => 'active',
-        ]);
+        $validated['lecturer_id'] = $lecturer->id;
+        $validated['status'] = 'active';
+        $validated['room'] = trim($validated['room']);
+        $validated['section'] = trim($validated['section']);
+        $validated['schedule_day'] = $validated['weekday'];
+        $validated['schedule_time'] = $validated['start_time'].' - '.$validated['end_time'];
+
+        (new EnsureTimetableHasNoConflicts)->handle($validated);
+
+        CourseAssignment::create($validated);
 
         return back()->with('success', 'Course assigned to lecturer successfully.');
     }

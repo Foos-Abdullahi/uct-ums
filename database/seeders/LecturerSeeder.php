@@ -114,6 +114,9 @@ class LecturerSeeder extends Seeder
                     'status' => 'active',
                     'workload_hours' => $course->credit_hours,
                     'room' => 'Hall 3, Room 102',
+                    'weekday' => 'Monday',
+                    'start_time' => '08:00',
+                    'end_time' => '10:00',
                     'schedule_day' => 'Monday',
                     'schedule_time' => '08:00 - 10:00',
                 ]

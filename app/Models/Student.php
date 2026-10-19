@@ -26,16 +26,23 @@ class Student extends Model
         'program_id',
         'academic_year',
         'current_semester',
+        'section',
         'phone',
         'gender',
         'date_of_birth',
         'address',
+        'photo_path',
         'fee_status',
         'enrollment_status',
         'gpa',
         'enrollment_date',
         'graduation_date',
     ];
+
+    /**
+     * @var list<string>
+     */
+    protected $appends = ['photo_url'];
 
     /**
      * @return array<string, string>
@@ -66,6 +73,13 @@ class Student extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path
+            ? '/storage/'.ltrim($this->photo_path, '/')
+            : null;
     }
 
     /**
@@ -215,12 +229,12 @@ class Student extends Model
     }
 
     /**
-     * Calculate and sync fee status according to invoices and approved payments.
+     * Calculate and sync fee status from reconciled invoice balances.
      */
     public function recalculateFinancials(): void
     {
         $totalInvoiced = (float) $this->invoices()->sum('amount');
-        $totalPaid = (float) $this->payments()->where('status', 'approved')->sum('amount');
+        $totalPaid = (float) $this->invoices()->sum('paid_amount');
 
         if ($totalInvoiced <= 0) {
             $this->update(['fee_status' => FeeStatus::Paid]);

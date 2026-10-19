@@ -42,6 +42,8 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
                 ->middleware('permission:students.create')->name('store');
             Route::post('/import', [StudentController::class, 'import'])
                 ->middleware('permission:students.create')->name('import');
+            Route::get('/{student}/finance-statement', [StudentController::class, 'financeStatement'])
+                ->middleware('permission:finance.view')->name('finance-statement');
             Route::get('/{student}', [StudentController::class, 'show'])
                 ->middleware('permission:students.view')->name('show');
             Route::get('/{student}/edit', [StudentController::class, 'edit'])
@@ -123,6 +125,7 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
             Route::get('/', [AssignmentController::class, 'index'])->name('index');
             Route::get('/create', [AssignmentController::class, 'create'])->name('create');
             Route::post('/', [AssignmentController::class, 'store'])->name('store');
+            Route::get('/timetable', [AssignmentController::class, 'timetable'])->name('timetable');
             Route::get('/{assignment}', [AssignmentController::class, 'show'])->name('show');
             Route::get('/{assignment}/edit', [AssignmentController::class, 'edit'])->name('edit');
             Route::put('/{assignment}', [AssignmentController::class, 'update'])->name('update');
@@ -183,6 +186,8 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
                 ->middleware('permission:finance.view')->name('payments');
             Route::post('/payments', [FinanceController::class, 'storePayment'])
                 ->middleware('permission:finance.payments.create')->name('payments.store');
+            Route::post('/fees/semester', [FinanceController::class, 'storeSemesterFee'])
+                ->middleware('permission:finance.invoices.create')->name('fees.semester.store');
             Route::patch('/payments/{payment}/status', [FinanceController::class, 'updatePaymentStatus'])
                 ->middleware('permission:finance.payments.verify')->name('payments.status');
 

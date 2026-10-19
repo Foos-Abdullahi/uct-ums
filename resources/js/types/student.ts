@@ -38,13 +38,43 @@ export interface StudentPayment {
     invoice_id?: number | null;
     transaction_no: string;
     amount: number | string;
-    payment_method: 'bank_transfer' | 'cash' | 'card' | 'online' | 'cheque';
+    payment_method:
+        | 'bank_transfer'
+        | 'cash'
+        | 'evc_plus'
+        | 'zaad'
+        | 'sahay'
+        | 'credit_card'
+        | 'cheque'
+        | 'online';
     payment_date: string;
     receipt_path?: string | null;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'paid' | 'rejected';
     notes?: string | null;
     created_at: string;
     invoice?: StudentInvoice;
+}
+
+export interface StatementEntry {
+    reference: string;
+    date: string;
+    paid: number;
+    charged: number;
+    reason: string;
+    balance: number;
+    sort_order?: number;
+}
+
+export interface StatementTotals {
+    charged: number;
+    paid: number;
+    balance: number;
+}
+
+export interface FinanceStatementData {
+    statement: StatementEntry[];
+    totals: StatementTotals;
+    generatedAt: string;
 }
 
 export interface StudentInvoice {
@@ -103,10 +133,13 @@ export interface Student {
     program_id?: number | null;
     academic_year?: string | null;
     current_semester: number;
+    section?: string | null;
     phone?: string | null;
     gender?: string | null;
     date_of_birth?: string | null;
     address?: string | null;
+    photo_path?: string | null;
+    photo_url?: string | null;
     fee_status: StudentFeeStatus;
     enrollment_status: EnrollmentStatus;
     gpa?: number | string | null;

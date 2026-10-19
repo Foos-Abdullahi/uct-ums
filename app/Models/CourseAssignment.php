@@ -27,6 +27,9 @@ class CourseAssignment extends Model
         'status',
         'workload_hours',
         'room',
+        'weekday',
+        'start_time',
+        'end_time',
         'schedule_day',
         'schedule_time',
         'notes',
@@ -147,6 +150,26 @@ class CourseAssignment extends Model
             $query->whereHas('lecturer', function (Builder $q) use ($department) {
                 $q->where('department', $department);
             });
+        }
+    }
+
+    /**
+     * @param  Builder<CourseAssignment>  $query
+     */
+    public function scopeFilterProgram(Builder $query, int|string|null $programId): void
+    {
+        if ($programId && $programId !== 'all') {
+            $query->whereHas('course', fn (Builder $courseQuery) => $courseQuery->where('program_id', $programId));
+        }
+    }
+
+    /**
+     * @param  Builder<CourseAssignment>  $query
+     */
+    public function scopeFilterSection(Builder $query, ?string $section): void
+    {
+        if ($section && $section !== 'all') {
+            $query->where('section', $section);
         }
     }
 }

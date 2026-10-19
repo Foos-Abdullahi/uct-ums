@@ -10,6 +10,7 @@ import {
     X,
     Eye,
     Save,
+    CalendarRange,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +32,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { BreadcrumbItem } from '@/types';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface PaymentItem {
     id: number;
@@ -76,7 +83,17 @@ export interface PaginatedData<T> {
 interface AdminFinancePaymentsProps {
     stats?: PaymentStats;
     payments?: PaginatedData<PaymentItem>;
-    students: Array<{ id: number; matric_no: string; name: string }>;
+    students: Array<{
+        id: number;
+        matric_no: string;
+        name: string;
+        invoices: Array<{
+            id: number;
+            invoice_no: string;
+            title: string;
+            balance: number;
+        }>;
+    }>;
     filters: {
         search: string;
         status: string;
@@ -94,23 +111,24 @@ export default function AdminFinancePayments({
     const { t } = useTranslation();
     const [createModalOpen, setCreateModalOpen] = useState(false);
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_finance'), href: '/admin/finance' },
-        { title: t('breadcrumb_payments'), href: '/admin/finance/payments' },
-    ];
-
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const { data, setData, post, processing, reset, errors } = useForm({
         student_id: '',
+        invoice_id: '',
         amount: '',
         payment_method: 'bank_transfer',
         payment_date: new Date().toISOString().split('T')[0],
         status: 'paid',
         notes: '',
     });
+    const selectedStudent = students.find(
+        (student) => student.id === Number(data.student_id),
+    );
+    const selectedInvoice = selectedStudent?.invoices.find(
+        (invoice) => invoice.id === Number(data.invoice_id),
+    );
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
         const query = {
@@ -232,7 +250,9 @@ export default function AdminFinancePayments({
                     );
                 }
 
-                return <Badge variant="destructive">{t('failed_payment')}</Badge>;
+                return (
+                    <Badge variant="destructive">{t('failed_payment')}</Badge>
+                );
             },
         },
         {
@@ -311,6 +331,8 @@ export default function AdminFinancePayments({
                 { label: 'Zaad', value: 'zaad' },
                 { label: 'Sahay', value: 'sahay' },
                 { label: 'Credit Card', value: 'credit_card' },
+                { label: 'Cheque', value: 'cheque' },
+                { label: 'Online', value: 'online' },
             ],
             value: filters.payment_method || undefined,
         },
@@ -334,7 +356,15 @@ export default function AdminFinancePayments({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance/invoices">{t('invoices_list_page')}</Link>
+                            <Link href="/admin/finance/fees">
+                                <CalendarRange className="mr-1.5 h-4 w-4" />
+                                Assign semester fees
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/admin/finance/invoices">
+                                {t('invoices_list_page')}
+                            </Link>
                         </Button>
                         <Button
                             size="sm"
@@ -439,7 +469,9 @@ export default function AdminFinancePayments({
                                 {t('record_payment')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('enter_payment_details')}
+                                Record money received from one student. To
+                                charge a whole semester, use Assign semester
+                                fees.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -455,25 +487,99 @@ export default function AdminFinancePayments({
                                     {t('student')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="student_id"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
-                                    value={data.student_id}
-                                    onChange={(e) =>
-                                        setData('student_id', e.target.value)
-                                    }
-                                    required
+                                <Select
+                                    value={data.student_id || undefined}
+                                    onValueChange={(value) => {
+                                        setData((currentData) => ({
+                                            ...currentData,
+                                            student_id: value,
+                                            invoice_id: '',
+                                            amount: '',
+                                        }));
+                                    }}
                                 >
-                                    <option value="">{t('select_student')}</option>
-                                    {students.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name} ({s.matric_no})
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger id="student_id" size="sm">
+                                        <SelectValue
+                                            placeholder={t('select_student')}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {students.map((student) => (
+                                            <SelectItem
+                                                key={student.id}
+                                                value={String(student.id)}
+                                            >
+                                                {student.name} (
+                                                {student.matric_no})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.student_id && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.student_id}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label
+                                    htmlFor="invoice_id"
+                                    className="text-xs font-semibold"
+                                >
+                                    Apply to invoice
+                                </Label>
+                                <Select
+                                    value={data.invoice_id}
+                                    disabled={!selectedStudent}
+                                    onValueChange={(value) => {
+                                        const invoiceId = value;
+                                        const invoice =
+                                            selectedStudent?.invoices.find(
+                                                (item) =>
+                                                    item.id ===
+                                                    Number(invoiceId),
+                                            );
+                                        setData((currentData) => ({
+                                            ...currentData,
+                                            invoice_id: invoiceId,
+                                            amount: invoice
+                                                ? String(invoice.balance)
+                                                : currentData.amount,
+                                        }));
+                                    }}
+                                >
+                                    <SelectTrigger id="invoice_id" size="sm">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {selectedStudent?.invoices.map(
+                                            (invoice) => (
+                                                <SelectItem
+                                                    key={invoice.id}
+                                                    value={String(invoice.id)}
+                                                >
+                                                    {invoice.invoice_no} —{' '}
+                                                    {invoice.title} (
+                                                    {formatCurrency(
+                                                        invoice.balance,
+                                                    )}{' '}
+                                                    due)
+                                                </SelectItem>
+                                            ),
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                {selectedStudent &&
+                                    selectedStudent.invoices.length === 0 && (
+                                        <p className="text-[11px] text-muted-foreground">
+                                            This student has no outstanding
+                                            invoices.
+                                        </p>
+                                    )}
+                                {errors.invoice_id && (
+                                    <p className="text-[11px] text-destructive">
+                                        {errors.invoice_id}
                                     </p>
                                 )}
                             </div>
@@ -498,6 +604,14 @@ export default function AdminFinancePayments({
                                     className="text-xs"
                                     required
                                 />
+                                {selectedInvoice && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Remaining invoice balance:{' '}
+                                        {formatCurrency(
+                                            selectedInvoice.balance,
+                                        )}
+                                    </p>
+                                )}
                                 {errors.amount && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.amount}
@@ -516,33 +630,45 @@ export default function AdminFinancePayments({
                                             *
                                         </span>
                                     </Label>
-                                    <select
-                                        id="payment_method"
-                                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
+                                    <Select
                                         value={data.payment_method}
-                                        onChange={(e) =>
-                                            setData(
-                                                'payment_method',
-                                                e.target.value,
-                                            )
+                                        onValueChange={(value) =>
+                                            setData('payment_method', value)
                                         }
-                                        required
                                     >
-                                        <option value="bank_transfer">
-                                            Bank Transfer
-                                        </option>
-                                        <option value="cash">Cash</option>
-                                        <option value="evc_plus">
-                                            EVC Plus
-                                        </option>
-                                        <option value="zaad">
-                                            Zaad Service
-                                        </option>
-                                        <option value="sahay">Sahay</option>
-                                        <option value="credit_card">
-                                            Credit / Debit Card
-                                        </option>
-                                    </select>
+                                        <SelectTrigger
+                                            id="payment_method"
+                                            size="sm"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="bank_transfer">
+                                                Bank Transfer
+                                            </SelectItem>
+                                            <SelectItem value="cash">
+                                                Cash
+                                            </SelectItem>
+                                            <SelectItem value="evc_plus">
+                                                EVC Plus
+                                            </SelectItem>
+                                            <SelectItem value="zaad">
+                                                Zaad Service
+                                            </SelectItem>
+                                            <SelectItem value="sahay">
+                                                Sahay
+                                            </SelectItem>
+                                            <SelectItem value="credit_card">
+                                                Credit / Debit Card
+                                            </SelectItem>
+                                            <SelectItem value="cheque">
+                                                Cheque
+                                            </SelectItem>
+                                            <SelectItem value="online">
+                                                Online
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -601,7 +727,7 @@ export default function AdminFinancePayments({
                                 <Button
                                     type="submit"
                                     size="sm"
-                                    disabled={processing}
+                                    disabled={processing || !data.invoice_id}
                                 >
                                     <Save className="mr-1.5 h-4 w-4" />
                                     {processing
@@ -617,4 +743,10 @@ export default function AdminFinancePayments({
     );
 }
 
-AdminFinancePayments.layout = { breadcrumbs: [{ title: 'breadcrumb_dashboard', href: '/admin/dashboard' }, { title: 'breadcrumb_finance', href: '/admin/finance' }, { title: 'breadcrumb_payments', href: '/admin/finance/payments' }] };
+AdminFinancePayments.layout = {
+    breadcrumbs: [
+        { title: 'breadcrumb_dashboard', href: '/admin/dashboard' },
+        { title: 'breadcrumb_finance', href: '/admin/finance' },
+        { title: 'breadcrumb_payments', href: '/admin/finance/payments' },
+    ],
+};

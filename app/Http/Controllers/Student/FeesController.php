@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Student;
 
+use App\Actions\Finance\GenerateStudentFinanceStatement;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -11,9 +12,14 @@ class FeesController extends StudentBaseController
     /**
      * Display the student's fees, invoices, and payment history.
      */
-    public function index(Request $request): Response
-    {
+    public function index(
+        Request $request,
+        GenerateStudentFinanceStatement $generateStatement,
+    ): Response {
         $student = $this->getStudent($request);
+        $student->load(['user', 'program', 'invoices', 'payments.invoice']);
+
+        $statementData = $generateStatement->execute($student);
 
         $invoices = $student->invoices()
             ->with('payments')
@@ -49,19 +55,39 @@ class FeesController extends StudentBaseController
             ->get();
 
         $totalInvoiced = (float) $student->invoices()->sum('amount');
-        $totalPaid = (float) $student->payments()->where('status', 'approved')->sum('amount');
+        $totalPaid = (float) $student->invoices()->sum('paid_amount');
         $outstandingBalance = max(0, $totalInvoiced - $totalPaid);
 
         return Inertia::render('Student/fees/index', [
             'student' => $student,
             'invoices' => $invoices,
             'payments' => $payments,
+            'financeStatement' => $statementData,
             'summary' => [
                 'total_invoiced' => $totalInvoiced,
                 'total_paid' => $totalPaid,
                 'outstanding_balance' => $outstandingBalance,
                 'fee_status' => $student->fee_status->value,
             ],
+        ]);
+    }
+
+    /**
+     * Display printable student finance statement.
+     */
+    public function statement(
+        Request $request,
+        GenerateStudentFinanceStatement $generateStatement,
+    ): Response {
+        $student = $this->getStudent($request);
+        $student->load(['user', 'program', 'invoices', 'payments.invoice']);
+        $statementData = $generateStatement->execute($student);
+
+        return Inertia::render('Student/fees/statement', [
+            'student' => $student,
+            'statement' => $statementData['statement'],
+            'totals' => $statementData['totals'],
+            'generatedAt' => $statementData['generatedAt'],
         ]);
     }
 }

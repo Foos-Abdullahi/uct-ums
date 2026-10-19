@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified', 'role:'.UserRole::Student->value])
             Route::get('grades', [GradesController::class, 'index'])->name('grades.index');
             Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
             Route::get('fees', [FeesController::class, 'index'])->name('fees.index');
+            Route::get('fees/statement', [FeesController::class, 'statement'])->name('fees.statement');
             Route::get('documents', [DocumentsController::class, 'index'])->name('documents.index');
             Route::get('certificates', [CertificatesController::class, 'index'])->name('certificates.index');
         });

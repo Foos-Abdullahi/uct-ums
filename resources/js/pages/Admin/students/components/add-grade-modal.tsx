@@ -147,20 +147,29 @@ export function AddGradeModal({
                         <div className="grid grid-cols-2 gap-3">
                             <div className="grid gap-2">
                                 <Label htmlFor="semester">Semester</Label>
-                                <Input
-                                    id="semester"
-                                    type="number"
-                                    min="1"
-                                    max="12"
-                                    value={data.semester}
-                                    onChange={(e) =>
-                                        setData(
-                                            'semester',
-                                            parseInt(e.target.value) || 1,
-                                        )
+                                <Select
+                                    value={String(data.semester)}
+                                    onValueChange={(value) =>
+                                        setData('semester', Number(value))
                                     }
-                                    required
-                                />
+                                >
+                                    <SelectTrigger id="semester">
+                                        <SelectValue placeholder="Select semester" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Array.from(
+                                            { length: 8 },
+                                            (_, index) => index + 1,
+                                        ).map((semester) => (
+                                            <SelectItem
+                                                key={semester}
+                                                value={String(semester)}
+                                            >
+                                                Semester {semester}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.semester && (
                                     <p className="text-xs text-destructive">
                                         {errors.semester}

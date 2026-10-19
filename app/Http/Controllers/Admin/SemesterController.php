@@ -19,10 +19,13 @@ class SemesterController extends Controller
     {
         $programId = $request->query('program_id');
 
-        // Aggregate data for Semesters 1 through 8
-        $semesters = collect(range(1, 8))->map(function (int $semNumber) use ($programId) {
+        $totalSemesters = (int) config('academic.total_semesters');
+
+        $semesters = collect(range(1, $totalSemesters))->map(function (int $semNumber) use ($programId) {
             $coursesQuery = Course::query()->where('semester', $semNumber);
-            $studentsQuery = Student::query()->where('current_semester', $semNumber);
+            $studentsQuery = Student::query()
+                ->where('current_semester', $semNumber)
+                ->where('enrollment_status', 'enrolled');
 
             if ($programId && $programId !== 'all') {
                 $coursesQuery->where('program_id', $programId);
@@ -48,7 +51,7 @@ class SemesterController extends Controller
 
         return Inertia::render('Admin/semesters/index', [
             'stats' => Inertia::defer(fn () => [
-                'total_semesters' => 8,
+                'total_semesters' => $totalSemesters,
                 'active_cohorts' => Student::distinct('current_semester')->count('current_semester'),
                 'total_courses_offered' => Course::where('status', 'active')->count(),
                 'total_enrolled_students' => Student::where('enrollment_status', 'enrolled')->count(),

@@ -35,7 +35,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { BreadcrumbItem } from '@/types';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface InvoiceItem {
     id: number;
@@ -43,6 +49,8 @@ export interface InvoiceItem {
     invoice_no: string;
     title: string;
     type: string;
+    academic_year: string | null;
+    semester: number | null;
     amount: number;
     tax_amount: number;
     discount_amount: number;
@@ -102,12 +110,6 @@ export default function AdminFinanceInvoices({
         useState<InvoiceItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
-
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('breadcrumb_dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_finance'), href: '/admin/finance' },
-        { title: t('breadcrumb_invoices'), href: '/admin/finance/invoices' },
-    ];
 
     const formatCurrency = (val: number) =>
         `$${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -271,6 +273,9 @@ export default function AdminFinanceInvoices({
                         className="mt-0.5 text-[10px] capitalize"
                     >
                         {row.original.type}
+                        {row.original.semester && row.original.academic_year
+                            ? ` · Semester ${row.original.semester} · ${row.original.academic_year}`
+                            : ''}
                     </Badge>
                 </div>
             ),
@@ -512,6 +517,13 @@ export default function AdminFinanceInvoices({
                             <DataTable
                                 title={t('invoices_list_label')}
                                 searchTitle={t('search_invoices')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={invoices.data}
                                 pagination={{
@@ -582,24 +594,29 @@ export default function AdminFinanceInvoices({
                                     {t('student')}{' '}
                                     <span className="text-destructive">*</span>
                                 </Label>
-                                <select
-                                    id="student_id"
-                                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:ring-1 focus:ring-ring focus:outline-none"
-                                    value={data.student_id}
-                                    onChange={(e) =>
-                                        setData('student_id', e.target.value)
+                                <Select
+                                    value={data.student_id || undefined}
+                                    onValueChange={(value) =>
+                                        setData('student_id', value)
                                     }
-                                    required
                                 >
-                                    <option value="">
-                                        {t('select_student')}
-                                    </option>
-                                    {students.map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name} ({s.matric_no})
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger id="student_id" size="sm">
+                                        <SelectValue
+                                            placeholder={t('select_student')}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {students.map((student) => (
+                                            <SelectItem
+                                                key={student.id}
+                                                value={String(student.id)}
+                                            >
+                                                {student.name} (
+                                                {student.matric_no})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {errors.student_id && (
                                     <p className="text-[11px] text-destructive">
                                         {errors.student_id}
@@ -647,8 +664,8 @@ export default function AdminFinanceInvoices({
                                         id="type"
                                         placeholder="e.g. Registration Fee"
                                         value={data.type}
-                                        onChange={(e) =>
-                                            setData('type', e.target.value)
+                                        onChange={(event) =>
+                                            setData('type', event.target.value)
                                         }
                                         required
                                     />

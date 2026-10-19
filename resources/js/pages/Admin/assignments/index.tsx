@@ -5,11 +5,11 @@ import {
     Clock,
     XCircle,
     Plus,
+    CalendarDays,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import AppLayout from '@/layouts/app-layout';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
@@ -17,6 +17,7 @@ import { DataTable } from '@/components/tools/table/main-table';
 import type { DataTableServerFilter } from '@/components/tools/table/types';
 import { TableSkeleton } from '@/components/tools/table-skeleton';
 import { Button } from '@/components/ui/button';
+import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type {
     CourseAssignment,
@@ -50,10 +51,6 @@ export default function AdminAssignmentsIndex({
 }: AdminAssignmentsIndexProps) {
     const { t } = useTranslation();
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: t('dashboard'), href: '/admin/dashboard' },
-        { title: t('breadcrumb_assignments'), href: '/admin/assignments' },
-    ];
     const [selectedAssignment, setSelectedAssignment] =
         useState<CourseAssignment | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -192,12 +189,20 @@ export default function AdminAssignmentsIndex({
                     </div>
 
                     {/* Use Link for full-page creation */}
-                    <Button size="sm" asChild>
-                        <Link href="/admin/assignments/create">
-                            <Plus className="mr-1.5 h-4 w-4" />
-                            {t('create_assignment')}
-                        </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href="/admin/assignments/timetable">
+                                <CalendarDays className="mr-1.5 h-4 w-4" />
+                                Weekly Timetable
+                            </Link>
+                        </Button>
+                        <Button size="sm" asChild>
+                            <Link href="/admin/assignments/create">
+                                <Plus className="mr-1.5 h-4 w-4" />
+                                {t('create_assignment')}
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Summary Metric Cards */}

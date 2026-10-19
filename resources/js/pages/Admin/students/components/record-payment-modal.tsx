@@ -40,7 +40,7 @@ export function RecordPaymentModal({
         amount: '',
         payment_method: 'bank_transfer',
         payment_date: new Date().toISOString().split('T')[0],
-        status: 'approved',
+        status: 'paid',
         notes: '',
         receipt: null as File | null,
     });
@@ -83,18 +83,15 @@ export function RecordPaymentModal({
                     </DialogHeader>
 
                     <div className="grid gap-4 py-4">
-                        {invoices.length > 0 && (
+                        {invoices.length > 0 ? (
                             <div className="grid gap-2">
                                 <Label htmlFor="invoice_id">
-                                    Link to Invoice (Optional)
+                                    Apply to Invoice
                                 </Label>
                                 <Select
                                     value={data.invoice_id}
                                     onValueChange={(val) => {
-                                        setData(
-                                            'invoice_id',
-                                            val === 'none' ? '' : val,
-                                        );
+                                        setData('invoice_id', val);
                                         const selected = invoices.find(
                                             (inv) => String(inv.id) === val,
                                         );
@@ -122,10 +119,6 @@ export function RecordPaymentModal({
                                         <SelectValue placeholder="Select an outstanding invoice" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="none">
-                                            General Payment (No specific
-                                            invoice)
-                                        </SelectItem>
                                         {invoices.map((inv) => (
                                             <SelectItem
                                                 key={inv.id}
@@ -144,6 +137,11 @@ export function RecordPaymentModal({
                                     </p>
                                 )}
                             </div>
+                        ) : (
+                            <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700">
+                                This student has no outstanding invoice. Create
+                                an invoice before recording a payment.
+                            </p>
                         )}
 
                         <div className="grid grid-cols-2 gap-3">
@@ -188,14 +186,23 @@ export function RecordPaymentModal({
                                         <SelectItem value="cash">
                                             Cash Desk
                                         </SelectItem>
-                                        <SelectItem value="card">
+                                        <SelectItem value="credit_card">
                                             Credit/Debit Card
                                         </SelectItem>
-                                        <SelectItem value="online">
-                                            Online / Mobile Money
+                                        <SelectItem value="evc_plus">
+                                            EVC Plus
+                                        </SelectItem>
+                                        <SelectItem value="zaad">
+                                            Zaad
+                                        </SelectItem>
+                                        <SelectItem value="sahay">
+                                            Sahay
                                         </SelectItem>
                                         <SelectItem value="cheque">
                                             Cheque
+                                        </SelectItem>
+                                        <SelectItem value="online">
+                                            Online
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -239,8 +246,8 @@ export function RecordPaymentModal({
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="approved">
-                                            Approved - Apply to Balance
+                                        <SelectItem value="paid">
+                                            Paid - Apply to Balance
                                         </SelectItem>
                                         <SelectItem value="pending">
                                             Pending - Await Verification
@@ -308,7 +315,7 @@ export function RecordPaymentModal({
                         <Button
                             type="submit"
                             size="sm"
-                            disabled={processing}
+                            disabled={processing || invoices.length === 0}
                             className="bg-emerald-600 text-white hover:bg-emerald-700"
                         >
                             {processing && (

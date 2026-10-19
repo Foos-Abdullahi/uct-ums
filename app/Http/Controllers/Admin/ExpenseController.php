@@ -45,10 +45,10 @@ class ExpenseController extends Controller
 
         return Inertia::render('Admin/finance/expenses', [
             'stats' => Inertia::defer(fn () => [
-                'total_spent' => (float) Expense::whereIn('status', ['approved', 'paid'])->sum('amount'),
+                'total_spent' => (float) Expense::includedInTotals()->sum('amount'),
                 'pending_approval' => (int) Expense::where('status', 'pending_approval')->count(),
                 'total_expenses' => (int) Expense::count(),
-                'month_expenses' => (float) Expense::whereIn('status', ['approved', 'paid'])
+                'month_expenses' => (float) Expense::includedInTotals()
                     ->where('expense_date', '>=', now()->startOfMonth())
                     ->sum('amount'),
                 'rejected_count' => (int) Expense::where('status', 'rejected')->count(),
