@@ -26,6 +26,7 @@ import {
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import StudentStatementSheet from '@/components/finance/student-statement-sheet';
 import { DataTable } from '@/components/tools/table/main-table';
 import { UctPanelCard } from '@/components/tools/uct-panel-card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,7 +42,6 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import StudentStatementSheet from '@/components/finance/student-statement-sheet';
 import type {
     FinanceStatementData,
     Student,
@@ -1045,7 +1045,8 @@ export default function AdminStudentsShow({
                                         Finance Statement
                                     </h4>
                                     <p className="text-xs text-muted-foreground">
-                                        Official chronological ledger showing charges, payments, and running balance.
+                                        Official chronological ledger showing
+                                        charges, payments, and running balance.
                                     </p>
                                 </div>
                                 <StudentStatementSheet

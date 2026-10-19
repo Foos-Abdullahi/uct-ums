@@ -33,7 +33,7 @@ test('admin can create a student with a profile photo', function () {
     $student = Student::whereHas('user', fn ($query) => $query->where('email', 'asha@example.com'))->firstOrFail();
 
     expect($student->photo_path)->not->toBeNull()
-        ->and($student->photo_url)->toContain('/storage/student-photos/');
+        ->and($student->photo_url)->toBe('/storage/'.$student->photo_path);
     Storage::disk('public')->assertExists($student->photo_path);
 });
 
@@ -41,7 +41,7 @@ test('replacing a student photo removes the previous file', function () {
     Storage::fake('public');
 
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
-    $student = Student::factory()->create(['photo_path' => 'student-photos/old.jpg']);
+    $student = Student::factory()->paid()->create(['photo_path' => 'student-photos/old.jpg']);
     Storage::disk('public')->put($student->photo_path, 'old-photo');
 
     $this->actingAs($admin)
@@ -63,6 +63,30 @@ test('replacing a student photo removes the previous file', function () {
     expect($newPhotoPath)->not->toBe('student-photos/old.jpg');
     Storage::disk('public')->assertMissing('student-photos/old.jpg');
     Storage::disk('public')->assertExists($newPhotoPath);
+
+    $photoUrl = '/storage/'.$newPhotoPath;
+
+    $this->get(route('admin.students.show', $student))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.photo_url', $photoUrl));
+
+    $this->get(route('admin.students.edit', $student))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.photo_url', $photoUrl));
+
+    $this->get(route('admin.students.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->loadDeferredProps(fn (Assert $reload) => $reload
+                ->where('students.data.0.photo_url', $photoUrl)));
+
+    $this->actingAs($student->user)
+        ->get(route('student.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('student.photo_url', $photoUrl));
 });
 
 test('student photo upload rejects unsupported files and files over two megabytes', function () {

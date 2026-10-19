@@ -32,13 +32,7 @@ class GenerateStudentFinanceStatement
      */
     public function execute(Student $student): array
     {
-        if (! $student->relationLoaded('invoices')) {
-            $student->load('invoices');
-        }
-
-        if (! $student->relationLoaded('payments')) {
-            $student->load('payments.invoice');
-        }
+        $student->loadMissing(['invoices', 'payments.invoice']);
 
         $invoiceEntries = $student->invoices->map(function (StudentInvoice $invoice): array {
             $date = $invoice->issue_date?->format('Y-m-d') ?? $invoice->created_at->format('Y-m-d');

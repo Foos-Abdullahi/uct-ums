@@ -134,6 +134,7 @@ test('admin student profile includes the finance statement data', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Admin/students/show')
             ->has('financeStatement.statement', 2)
+            ->where('financeStatement.statement.1.reason', 'Registration Fee')
             ->where('financeStatement.totals.charged', 450)
             ->where('financeStatement.totals.paid', 450)
             ->where('financeStatement.totals.balance', 0)

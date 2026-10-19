@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
 class Student extends Model
 {
@@ -79,7 +78,7 @@ class Student extends Model
     public function getPhotoUrlAttribute(): ?string
     {
         return $this->photo_path
-            ? Storage::disk('public')->url($this->photo_path)
+            ? '/storage/'.ltrim($this->photo_path, '/')
             : null;
     }
 

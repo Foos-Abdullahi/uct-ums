@@ -52,7 +52,13 @@ export default function StudentStatementSheet({
     };
 
     return (
-        <div className={isPrintPage ? 'min-h-screen bg-slate-100 p-4 sm:p-8 print:bg-white print:p-0' : 'space-y-4'}>
+        <div
+            className={
+                isPrintPage
+                    ? 'min-h-screen bg-slate-100 p-4 sm:p-8 print:bg-white print:p-0'
+                    : 'space-y-4'
+            }
+        >
             {isPrintPage && (
                 <style>{`
                     @media print {
@@ -85,7 +91,11 @@ export default function StudentStatementSheet({
                             </Link>
                         </Button>
                     ) : (
-                        <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handlePrint}
+                        >
                             <Printer className="mr-2 size-4" />
                             Print Statement
                         </Button>
@@ -116,23 +126,33 @@ export default function StudentStatementSheet({
                                 {studentName}
                             </h1>
                             <p className="mt-0.5 text-sm text-slate-600">
-                                <span className="font-semibold text-slate-800">ID:</span> {student.matric_no}
+                                <span className="font-semibold text-slate-800">
+                                    ID:
+                                </span>{' '}
+                                {student.matric_no}
                                 {' · '}
-                                <span className="font-semibold text-slate-800">Program:</span> {student.program?.name ?? 'No program assigned'}
+                                <span className="font-semibold text-slate-800">
+                                    Program:
+                                </span>{' '}
+                                {student.program?.name ?? 'No program assigned'}
                             </p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-slate-600 sm:text-right">
                         <div>
-                            <span className="font-medium text-slate-500">Academic Year:</span>
+                            <span className="font-medium text-slate-500">
+                                Academic Year:
+                            </span>
                         </div>
                         <div className="font-semibold text-slate-900">
                             {student.academic_year || '—'}
                         </div>
 
                         <div>
-                            <span className="font-medium text-slate-500">Semester:</span>
+                            <span className="font-medium text-slate-500">
+                                Semester:
+                            </span>
                         </div>
                         <div className="font-semibold text-slate-900">
                             {student.current_semester}
@@ -140,11 +160,11 @@ export default function StudentStatementSheet({
                         </div>
 
                         <div>
-                            <span className="font-medium text-slate-500">Generated:</span>
+                            <span className="font-medium text-slate-500">
+                                Generated:
+                            </span>
                         </div>
-                        <div className="text-slate-800">
-                            {generatedAt}
-                        </div>
+                        <div className="text-slate-800">{generatedAt}</div>
                     </div>
                 </header>
 
@@ -153,12 +173,24 @@ export default function StudentStatementSheet({
                     <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr className="bg-sky-600 text-white">
-                                <th className="px-3 py-2 text-left font-semibold">Ref</th>
-                                <th className="px-3 py-2 text-left font-semibold">Date</th>
-                                <th className="px-3 py-2 text-right font-semibold">Paid</th>
-                                <th className="px-3 py-2 text-right font-semibold">Charged</th>
-                                <th className="px-3 py-2 text-left font-semibold">Reason</th>
-                                <th className="px-3 py-2 text-right font-semibold">Running balance</th>
+                                <th className="px-3 py-2 text-left font-semibold">
+                                    Ref
+                                </th>
+                                <th className="px-3 py-2 text-left font-semibold">
+                                    Date
+                                </th>
+                                <th className="px-3 py-2 text-right font-semibold">
+                                    Paid
+                                </th>
+                                <th className="px-3 py-2 text-right font-semibold">
+                                    Charged
+                                </th>
+                                <th className="px-3 py-2 text-left font-semibold">
+                                    Reason
+                                </th>
+                                <th className="px-3 py-2 text-right font-semibold">
+                                    Running balance
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -178,18 +210,28 @@ export default function StudentStatementSheet({
                                             <td className="px-3 py-2 whitespace-nowrap text-slate-700">
                                                 {entry.date}
                                             </td>
-                                            <td className="px-3 py-2 text-right tabular-nums font-medium text-emerald-700">
-                                                {entry.paid > 0 ? formatMoney(entry.paid) : '—'}
+                                            <td className="px-3 py-2 text-right font-medium text-emerald-700 tabular-nums">
+                                                {entry.paid > 0
+                                                    ? formatMoney(entry.paid)
+                                                    : '—'}
                                             </td>
-                                            <td className="px-3 py-2 text-right tabular-nums font-medium text-slate-900">
-                                                {entry.charged > 0 ? formatMoney(entry.charged) : '—'}
+                                            <td className="px-3 py-2 text-right font-medium text-slate-900 tabular-nums">
+                                                {entry.charged > 0
+                                                    ? formatMoney(entry.charged)
+                                                    : '—'}
                                             </td>
                                             <td className="px-3 py-2 text-slate-700">
                                                 {entry.reason}
                                             </td>
-                                            <td className={`px-3 py-2 text-right font-semibold tabular-nums ${
-                                                isNegative ? 'text-red-600' : isPositive ? 'text-emerald-600' : 'text-slate-700'
-                                            }`}>
+                                            <td
+                                                className={`px-3 py-2 text-right font-semibold tabular-nums ${
+                                                    isNegative
+                                                        ? 'text-red-600'
+                                                        : isPositive
+                                                          ? 'text-emerald-600'
+                                                          : 'text-slate-700'
+                                                }`}
+                                            >
                                                 {formatMoney(entry.balance)}
                                             </td>
                                         </tr>
@@ -227,11 +269,21 @@ export default function StudentStatementSheet({
 
                     <div className="mt-4 flex flex-wrap items-center justify-between text-xs text-slate-500">
                         <p>
-                            * Running balance = Paid − Charged. A negative balance indicates an outstanding amount owed; positive indicates credit.
+                            * Running balance = Paid − Charged. A negative
+                            balance indicates an outstanding amount owed;
+                            positive indicates credit.
                         </p>
                         <p className="font-medium text-slate-700">
                             Current Balance:{' '}
-                            <span className={totals.balance < 0 ? 'text-red-600 font-bold' : totals.balance > 0 ? 'text-emerald-600 font-bold' : 'text-slate-900 font-bold'}>
+                            <span
+                                className={
+                                    totals.balance < 0
+                                        ? 'font-bold text-red-600'
+                                        : totals.balance > 0
+                                          ? 'font-bold text-emerald-600'
+                                          : 'font-bold text-slate-900'
+                                }
+                            >
                                 {formatMoney(totals.balance)}
                             </span>
                         </p>
