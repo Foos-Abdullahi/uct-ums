@@ -384,6 +384,13 @@ export default function AdminProgramsIndex({
                             <DataTable
                                 title={t('programs_list')}
                                 searchTitle={t('search_programs')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={programs.data}
                                 pagination={{

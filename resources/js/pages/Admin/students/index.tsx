@@ -294,6 +294,13 @@ export default function AdminStudentsIndex({
                             <DataTable
                                 title={t('students_list')}
                                 searchTitle={t('search_students')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={students.data}
                                 pagination={{

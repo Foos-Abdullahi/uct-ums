@@ -418,6 +418,13 @@ export default function AdminFinancePayments({
                             <DataTable
                                 title={t('payments_list')}
                                 searchTitle={t('search_payments')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={payments.data}
                                 pagination={{

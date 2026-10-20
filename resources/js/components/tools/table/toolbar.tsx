@@ -8,7 +8,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,6 +125,12 @@ export function DataTableToolbar<TData>({
         );
     });
 
+    const tableGlobalFilter = (table.getState().globalFilter as string) ?? '';
+
+    useEffect(() => {
+        setSearchInput(tableGlobalFilter);
+    }, [tableGlobalFilter]);
+
     const selectedRows = table.getFilteredSelectedRowModel().rows;
     const hasSelectedRows = selectedRows.length > 0;
 
@@ -181,6 +187,8 @@ export function DataTableToolbar<TData>({
 
     const handleResetFilters = () => {
         table.resetColumnFilters();
+        table.setGlobalFilter('');
+        setSearchInput('');
 
         if (onDateRangeChange) {
             onDateRangeChange({});
@@ -303,6 +311,14 @@ export function DataTableToolbar<TData>({
                                     event: React.ChangeEvent<HTMLInputElement>,
                                 ) => {
                                     handleSearch(event.target.value);
+                                }}
+                                onKeyDown={(
+                                    event: React.KeyboardEvent<HTMLInputElement>,
+                                ) => {
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        handleSearch(searchInput);
+                                    }
                                 }}
                                 className="h-9 rounded-sm pr-8 pl-8 text-lg text-foreground placeholder:text-xs"
                             />

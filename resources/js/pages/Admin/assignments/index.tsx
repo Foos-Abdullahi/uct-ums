@@ -250,6 +250,13 @@ export default function AdminAssignmentsIndex({
                             <DataTable
                                 title={t('assignments_list')}
                                 searchTitle={t('search_assignments')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={assignments.data}
                                 pagination={{
@@ -322,6 +329,6 @@ function AdminAssignmentsLayout({ children }: { children: React.ReactNode }) {
     return <AppLayout breadcrumbs={breadcrumbs}>{children}</AppLayout>;
 }
 
-AdminAssignmentsIndex.layout = (page) => (
+AdminAssignmentsIndex.layout = (page: React.ReactNode) => (
     <AdminAssignmentsLayout>{page}</AdminAssignmentsLayout>
 );

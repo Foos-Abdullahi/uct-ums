@@ -391,6 +391,13 @@ export default function AdminEnrollmentsIndex({
                             <DataTable
                                 title={t('enrollments_list')}
                                 searchTitle={t('search_enrollments')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={enrollments.data}
                                 pagination={{

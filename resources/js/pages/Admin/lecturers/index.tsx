@@ -56,11 +56,23 @@ export default function AdminLecturersIndex({
         useState<Lecturer | null>(null);
 
     const handleFilterUpdate = (newFilters: Partial<typeof filters>) => {
-        router.get(
-            '/admin/lecturers',
-            { ...filters, ...newFilters },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+        const query = {
+            ...filters,
+            ...newFilters,
+        };
+
+        const cleanQuery: Record<string, any> = {};
+        Object.entries(query).forEach(([key, val]) => {
+            if (val !== undefined && val !== '' && val !== 'all') {
+                cleanQuery[key] = val;
+            }
+        });
+
+        router.get('/admin/lecturers', cleanQuery, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     const confirmDelete = () => {
@@ -227,6 +239,13 @@ export default function AdminLecturersIndex({
                             <DataTable
                                 title={t('lecturers_list')}
                                 searchTitle={t('search_lecturers')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={lecturers.data}
                                 pagination={{
@@ -311,6 +330,6 @@ function AdminLecturersLayout({ children }: { children: React.ReactNode }) {
     return <AppLayout breadcrumbs={breadcrumbs}>{children}</AppLayout>;
 }
 
-AdminLecturersIndex.layout = (page) => (
+AdminLecturersIndex.layout = (page: React.ReactNode) => (
     <AdminLecturersLayout>{page}</AdminLecturersLayout>
 );

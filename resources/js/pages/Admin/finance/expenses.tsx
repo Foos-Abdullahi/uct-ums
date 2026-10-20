@@ -621,6 +621,13 @@ export default function AdminFinanceExpenses({
                             <DataTable
                                 title={t('expense_vouchers')}
                                 searchTitle={t('search_expenses_description')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={expenses.data}
                                 pagination={{
