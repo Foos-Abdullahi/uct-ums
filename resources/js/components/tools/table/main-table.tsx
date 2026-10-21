@@ -104,22 +104,32 @@ export function DataTable<TData, TValue>({
         React.useState<VisibilityState>({});
     const [columnFilters, setColumnFilters] =
         React.useState<ColumnFiltersState>([]);
-    const [globalFilter, setGlobalFilter] = React.useState(searchValue);
+    const [globalFilter, setGlobalFilter] = React.useState(searchValue ?? '');
     const [sorting, setSorting] = React.useState<SortingState>([]);
 
     useEffect(() => {
-        setGlobalFilter(searchValue);
+        setGlobalFilter(searchValue ?? '');
     }, [searchValue]);
 
+    const onSearchChangeRef = React.useRef(onSearchChange);
     useEffect(() => {
-        if (!onSearchChange || globalFilter === searchValue) {
+        onSearchChangeRef.current = onSearchChange;
+    }, [onSearchChange]);
+
+    useEffect(() => {
+        const currentFilter = globalFilter ?? '';
+        const currentSearch = searchValue ?? '';
+
+        if (!onSearchChangeRef.current || currentFilter === currentSearch) {
             return;
         }
 
-        const timeout = setTimeout(() => onSearchChange(globalFilter), 300);
+        const timeout = setTimeout(() => {
+            onSearchChangeRef.current?.(currentFilter);
+        }, 300);
 
         return () => clearTimeout(timeout);
-    }, [globalFilter, searchValue, onSearchChange]);
+    }, [globalFilter, searchValue]);
 
     // Function to reset row selection
     const resetRowSelection = () => {

@@ -7,7 +7,6 @@ use App\Enums\ExpenseStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Expense;
-use App\Models\ExpenseApproval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -208,16 +207,18 @@ class ExpenseController extends Controller
      */
     public function markPaid(Request $request, Expense $expense): RedirectResponse
     {
+        if ($expense->status !== ExpenseStatus::Approved->value) {
+            return back()->withErrors([
+                'expense' => 'Only approved expenses can be marked as paid.',
+            ]);
+        }
+
         $validated = $request->validate([
             'payment_method' => ['required', 'string', 'in:cash,bank_transfer,mobile_money,card,cheque'],
             'payment_account_id' => ['required', 'integer', 'exists:accounts,id'],
             'reference_no' => ['nullable', 'string', 'max:255'],
             'paid_at' => ['required', 'date'],
         ]);
-
-        if ($expense->status !== ExpenseStatus::Approved->value) {
-            return back()->with('error', 'Only approved expenses can be marked as paid.');
-        }
 
         $paymentAccount = Account::findOrFail((int) $validated['payment_account_id']);
         if ($paymentAccount->type !== AccountType::Asset) {
@@ -245,38 +246,68 @@ class ExpenseController extends Controller
             'comment' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $approval = $this->currentApproval($expense);
+        $result = DB::transaction(function () use ($expense, $request, $validated): array {
+            $lockedExpense = Expense::query()
+                ->lockForUpdate()
+                ->findOrFail($expense->id);
 
-        if (! $approval) {
-            return back()->with('error', 'No pending approval to process for this expense.');
-        }
+            if ($lockedExpense->status !== ExpenseStatus::PendingApproval->value) {
+                return [
+                    'success' => false,
+                    'message' => 'This expense is no longer pending approval. Refresh the page to see its current status.',
+                ];
+            }
 
-        $approval->update([
-            'action' => 'approved',
-            'approver_id' => $request->user()->id,
-            'comment' => $validated['comment'] ?? null,
-            'acted_at' => now(),
-        ]);
+            if ($lockedExpense->approvals()->where('action', 'rejected')->exists()) {
+                return [
+                    'success' => false,
+                    'message' => 'This approval chain contains a rejection. Return the expense to draft, then submit it again.',
+                ];
+            }
 
-        $approvedCount = $expense->approvedApprovals()->count();
+            $approval = $lockedExpense->pendingApprovals()
+                ->orderBy('level')
+                ->lockForUpdate()
+                ->first();
 
-        if ($approvedCount >= count(Expense::APPROVAL_LEVELS)) {
-            $expense->update([
+            if (! $approval) {
+                return [
+                    'success' => false,
+                    'message' => 'No pending approval step is available. Return the expense to draft and submit it again.',
+                ];
+            }
+
+            $approval->update([
+                'action' => 'approved',
+                'approver_id' => $request->user()->id,
+                'comment' => $validated['comment'] ?? null,
+                'acted_at' => now(),
+            ]);
+
+            if ($lockedExpense->pendingApprovals()->exists()) {
+                return [
+                    'success' => true,
+                    'message' => "Approval level {$approval->level} completed. The next approval is now pending.",
+                ];
+            }
+
+            $lockedExpense->update([
                 'status' => ExpenseStatus::Approved->value,
                 'approved_by' => $request->user()->id,
                 'approved_at' => now(),
             ]);
 
-            return back()->with('success', "Expense {$expense->expense_no} fully approved at all levels.");
+            return [
+                'success' => true,
+                'message' => "Expense {$lockedExpense->expense_no} is fully approved and ready for payment.",
+            ];
+        }, 3);
+
+        if (! $result['success']) {
+            return back()->withErrors(['expense' => $result['message']]);
         }
 
-        $nextLevel = $approvedCount + 1;
-
-        if (! $expense->pendingApprovals()->where('level', $nextLevel)->exists()) {
-            $this->createLevelApproval($expense, $nextLevel);
-        }
-
-        return back()->with('success', "Approval level {$approval->level} approved. Next approval required.");
+        return back()->with('success', $result['message']);
     }
 
     /**
@@ -289,13 +320,37 @@ class ExpenseController extends Controller
             'comment' => ['required', 'string', 'max:1000'],
         ]);
 
-        $approval = $this->currentApproval($expense);
+        $result = DB::transaction(function () use ($expense, $validated, $request): array {
+            $lockedExpense = Expense::query()
+                ->lockForUpdate()
+                ->findOrFail($expense->id);
 
-        if (! $approval) {
-            return back()->with('error', 'No pending approval to process for this expense.');
-        }
+            if ($lockedExpense->status !== ExpenseStatus::PendingApproval->value) {
+                return [
+                    'success' => false,
+                    'message' => 'This expense is no longer pending approval. Refresh the page to see its current status.',
+                ];
+            }
 
-        DB::transaction(function () use ($approval, $expense, $validated, $request) {
+            if ($lockedExpense->approvals()->where('action', 'rejected')->exists()) {
+                return [
+                    'success' => false,
+                    'message' => 'This approval chain already contains a rejection. Return the expense to draft before starting again.',
+                ];
+            }
+
+            $approval = $lockedExpense->pendingApprovals()
+                ->orderBy('level')
+                ->lockForUpdate()
+                ->first();
+
+            if (! $approval) {
+                return [
+                    'success' => false,
+                    'message' => 'No pending approval step is available. Return the expense to draft and submit it again.',
+                ];
+            }
+
             $approval->update([
                 'action' => 'rejected',
                 'approver_id' => $request->user()->id,
@@ -303,12 +358,25 @@ class ExpenseController extends Controller
                 'acted_at' => now(),
             ]);
 
-            $expense->update([
-                'status' => ExpenseStatus::Rejected->value,
-            ]);
-        });
+            $lockedExpense->pendingApprovals()->delete();
 
-        return back()->with('success', "Expense {$expense->expense_no} rejected at approval level {$approval->level}.");
+            $lockedExpense->update([
+                'status' => ExpenseStatus::Rejected->value,
+                'approved_by' => null,
+                'approved_at' => null,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => "Expense {$lockedExpense->expense_no} was rejected at approval level {$approval->level}.",
+            ];
+        }, 3);
+
+        if (! $result['success']) {
+            return back()->withErrors(['expense' => $result['message']]);
+        }
+
+        return back()->with('success', $result['message']);
     }
 
     /**
@@ -320,18 +388,45 @@ class ExpenseController extends Controller
             'status' => ['required', 'string', Rule::in(ExpenseStatus::values())],
         ]);
 
-        $expense->update(['status' => $validated['status']]);
+        $nextStatus = ExpenseStatus::from($validated['status']);
+        $allowedTransitions = match ($expense->status) {
+            ExpenseStatus::Draft->value => [ExpenseStatus::PendingApproval, ExpenseStatus::Cancelled],
+            ExpenseStatus::PendingApproval->value => [ExpenseStatus::Draft, ExpenseStatus::Cancelled],
+            ExpenseStatus::Rejected->value, ExpenseStatus::Cancelled->value => [ExpenseStatus::Draft, ExpenseStatus::PendingApproval],
+            default => [],
+        };
 
-        // Reset approval chain when pushed back to draft or pending
-        if (in_array($validated['status'], ['draft', 'pending_approval'])) {
-            $expense->approvals()->delete();
-
-            if ($validated['status'] === 'pending_approval') {
-                $expense->buildApprovalChain();
-            }
+        if (! in_array($nextStatus, $allowedTransitions, true)) {
+            return back()->withErrors([
+                'status' => 'That status change is not allowed. Use Approve, Reject, or Record Payment for the next step.',
+            ]);
         }
 
-        return back()->with('success', "Expense {$expense->expense_no} status updated to {$validated['status']}.");
+        DB::transaction(function () use ($expense, $nextStatus): void {
+            $lockedExpense = Expense::query()
+                ->lockForUpdate()
+                ->findOrFail($expense->id);
+
+            $lockedExpense->approvals()->delete();
+            $lockedExpense->update([
+                'status' => $nextStatus->value,
+                'approved_by' => null,
+                'approved_at' => null,
+            ]);
+
+            if ($nextStatus === ExpenseStatus::PendingApproval) {
+                $lockedExpense->buildApprovalChain();
+            }
+        }, 3);
+
+        $message = match ($nextStatus) {
+            ExpenseStatus::PendingApproval => "Expense {$expense->expense_no} submitted for approval.",
+            ExpenseStatus::Draft => "Expense {$expense->expense_no} returned to draft.",
+            ExpenseStatus::Cancelled => "Expense {$expense->expense_no} cancelled.",
+            default => "Expense {$expense->expense_no} status updated.",
+        };
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -375,28 +470,5 @@ class ExpenseController extends Controller
     private function nextExpenseNo(): string
     {
         return 'EXP-'.date('Y').'-'.str_pad((string) (Expense::withTrashed()->count() + 1), 5, '0', STR_PAD_LEFT);
-    }
-
-    /**
-     * Get the current pending approval for an expense.
-     */
-    private function currentApproval(Expense $expense): ?ExpenseApproval
-    {
-        return $expense->pendingApprovals()
-            ->orderBy('level')
-            ->first();
-    }
-
-    /**
-     * Create an approval record for a given level on the expense.
-     */
-    private function createLevelApproval(Expense $expense, int $level): void
-    {
-        ExpenseApproval::create([
-            'expense_id' => $expense->id,
-            'approver_id' => $expense->created_by,
-            'level' => $level,
-            'action' => 'pending',
-        ]);
     }
 }

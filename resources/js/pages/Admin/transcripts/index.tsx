@@ -286,6 +286,13 @@ export default function AdminTranscriptsIndex({
                             <DataTable
                                 title={t('transcripts_list')}
                                 searchTitle={t('search_transcripts')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={transcripts.data}
                                 pagination={{

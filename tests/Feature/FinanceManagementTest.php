@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\Expense;
+use App\Models\ExpenseApproval;
 use App\Models\Student;
 use App\Models\StudentInvoice;
 use App\Models\User;
@@ -214,6 +215,82 @@ test('rejecting an expense at any level marks it rejected', function () {
 
     $expense->refresh();
     expect($expense->status)->toBe('rejected');
+});
+
+test('approval returns a validation error instead of inserting a duplicate approval level', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $expense = Expense::factory()->create(['status' => 'pending_approval']);
+
+    ExpenseApproval::factory()->create([
+        'expense_id' => $expense->id,
+        'approver_id' => $admin->id,
+        'level' => 1,
+        'action' => 'approved',
+    ]);
+    ExpenseApproval::factory()->create([
+        'expense_id' => $expense->id,
+        'approver_id' => $admin->id,
+        'level' => 2,
+        'action' => 'rejected',
+    ]);
+    ExpenseApproval::factory()->create([
+        'expense_id' => $expense->id,
+        'approver_id' => $admin->id,
+        'level' => 3,
+        'action' => 'pending',
+    ]);
+
+    $response = $this->post(route('admin.expenses.approve', $expense), [
+        'comment' => 'Retry approval',
+    ]);
+
+    $response->assertRedirect()->assertSessionHasErrors(['expense']);
+
+    expect($expense->refresh()->status)->toBe('pending_approval')
+        ->and($expense->approvals()->count())->toBe(3);
+});
+
+test('expense statuses only move through valid workflow actions', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $draft = Expense::factory()->create(['status' => 'draft']);
+
+    $this->patch(route('admin.expenses.status', $draft), [
+        'status' => 'approved',
+    ])->assertSessionHasErrors(['status']);
+
+    expect($draft->refresh()->status)->toBe('draft');
+
+    $this->patch(route('admin.expenses.status', $draft), [
+        'status' => 'pending_approval',
+    ])->assertSessionHasNoErrors();
+
+    expect($draft->refresh()->status)->toBe('pending_approval')
+        ->and($draft->approvals()->exists())->toBeTrue();
+});
+
+test('rejected expense can restart with a clean approval chain', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $expense = Expense::factory()->rejected()->create();
+    ExpenseApproval::factory()->create([
+        'expense_id' => $expense->id,
+        'approver_id' => $admin->id,
+        'level' => 1,
+        'action' => 'rejected',
+    ]);
+
+    $this->patch(route('admin.expenses.status', $expense), [
+        'status' => 'pending_approval',
+    ])->assertSessionHasNoErrors();
+
+    expect($expense->refresh()->status)->toBe('pending_approval')
+        ->and($expense->approvals()->where('action', 'rejected')->exists())->toBeFalse()
+        ->and($expense->approvals()->where('action', 'pending')->exists())->toBeTrue();
 });
 
 test('marked expense as paid only when approved', function () {

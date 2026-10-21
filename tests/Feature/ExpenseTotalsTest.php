@@ -62,30 +62,47 @@ test('expense totals include active records once and exclude non financial statu
         ->and((float) Expense::includedInTotals()->sum('amount'))->toBe(600.0);
 });
 
-test('status transitions count an expense once and remove it when rejected', function () {
+test('workflow transitions count active expenses once and remove rejected expenses', function () {
     $expense = Expense::factory()->create([
         'status' => ExpenseStatus::PendingApproval->value,
         'amount' => 750,
     ]);
+    $expense->buildApprovalChain();
 
     expect((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
 
-    $this->patch(route('admin.expenses.status', $expense), [
-        'status' => ExpenseStatus::Approved->value,
+    while ($expense->fresh()->status === ExpenseStatus::PendingApproval->value) {
+        $this->post(route('admin.expenses.approve', $expense), [
+            'comment' => 'Approved for totals test',
+        ])->assertSessionHas('success');
+    }
+
+    expect((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
+
+    $paymentAccount = Account::factory()
+        ->expenseAccount(AccountCategoryType::Assets, 1010)
+        ->create();
+
+    $this->post(route('admin.expenses.mark-paid', $expense), [
+        'payment_method' => 'cash',
+        'payment_account_id' => $paymentAccount->id,
+        'paid_at' => now()->toDateString(),
     ])->assertSessionHas('success');
 
     expect((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
 
-    $this->patch(route('admin.expenses.status', $expense), [
-        'status' => ExpenseStatus::Paid->value,
+    $rejectedExpense = Expense::factory()->create([
+        'status' => ExpenseStatus::PendingApproval->value,
+        'amount' => 250,
+    ]);
+    $rejectedExpense->buildApprovalChain();
+
+    expect((float) Expense::includedInTotals()->sum('amount'))->toBe(1000.0);
+
+    $this->post(route('admin.expenses.reject', $rejectedExpense), [
+        'comment' => 'Rejected for totals test',
     ])->assertSessionHas('success');
 
-    expect((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
-
-    $this->patch(route('admin.expenses.status', $expense), [
-        'status' => ExpenseStatus::Rejected->value,
-    ])->assertSessionHas('success');
-
-    expect($expense->fresh()->status)->toBe(ExpenseStatus::Rejected->value)
-        ->and((float) Expense::includedInTotals()->sum('amount'))->toBe(0.0);
+    expect($rejectedExpense->fresh()->status)->toBe(ExpenseStatus::Rejected->value)
+        ->and((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
 });

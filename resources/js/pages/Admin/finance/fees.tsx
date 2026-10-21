@@ -566,6 +566,13 @@ export default function AdminFinanceFees({
                             <DataTable
                                 title={t('fees_list_label')}
                                 searchTitle={t('search_fees')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={students.data}
                                 pagination={{

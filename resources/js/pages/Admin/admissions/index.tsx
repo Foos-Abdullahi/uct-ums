@@ -243,6 +243,13 @@ export default function AdminAdmissionsIndex({
                             <DataTable
                                 title={t('applications_list')}
                                 searchTitle={t('search_applications')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={admissions.data}
                                 pagination={{
@@ -329,6 +336,6 @@ function AdminAdmissionsLayout({ children }: { children: React.ReactNode }) {
     return <AppLayout breadcrumbs={breadcrumbs}>{children}</AppLayout>;
 }
 
-AdminAdmissionsIndex.layout = (page) => (
+AdminAdmissionsIndex.layout = (page: React.ReactNode) => (
     <AdminAdmissionsLayout>{page}</AdminAdmissionsLayout>
 );

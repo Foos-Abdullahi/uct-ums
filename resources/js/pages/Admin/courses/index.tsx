@@ -368,6 +368,13 @@ export default function AdminCoursesIndex({
                             <DataTable
                                 title={t('courses_list')}
                                 searchTitle={t('search_courses')}
+                                searchValue={filters.search}
+                                onSearchChange={(search) =>
+                                    handleFilterUpdate({
+                                        search,
+                                        page: 1,
+                                    } as any)
+                                }
                                 columns={columns}
                                 data={courses.data}
                                 pagination={{

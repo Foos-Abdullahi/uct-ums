@@ -1,5 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import React from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DataTable } from '@/components/tools/table/main-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +12,6 @@ type ReportRow = Record<string, string | number | null>;
 
 interface FinancialDetailProps {
     title: string;
-    stats: Record<string, number>;
     rows: ReportRow[];
     accounts?: Array<{ id: number; code: number; name: string }>;
     period?: string;
@@ -26,7 +27,7 @@ interface FinancialDetailProps {
 const labelFor = (key: string) => key.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 const money = (value: number) => `$${Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export default function FinancialDetail({ title, stats, rows, accounts = [], period = String(new Date().getFullYear()), showBudgetForm = false, filters = {}, options = {} }: FinancialDetailProps) {
+export default function FinancialDetail({ title, rows, accounts = [], period = String(new Date().getFullYear()), showBudgetForm = false, filters = {}, options = {} }: FinancialDetailProps) {
     const form = useForm({ account_id: '', financial_period: period, amount: '' });
     const filterForm = useForm({
         from: String(filters.from ?? ''),
@@ -39,7 +40,16 @@ export default function FinancialDetail({ title, stats, rows, accounts = [], per
         group_by: String(filters.group_by ?? 'daily'),
         period: String(filters.period ?? period),
     });
-    const columns = Object.keys(rows[0] ?? {});
+    const columns: ColumnDef<ReportRow>[] = Object.keys(rows[0] ?? {}).map((column) => ({
+        accessorKey: column,
+        header: labelFor(column),
+        cell: ({ row }) => {
+            const value = row.original[column];
+            const isAmount = /amount|balance|paid|charged|collected|revenue|budget|actual|variance|cash|inflow|outflow|surplus|deficit/i.test(column);
+
+            return value === null ? '—' : isAmount && typeof value === 'number' ? money(value) : value;
+        },
+    }));
 
     const saveBudget = (event: React.FormEvent) => {
         event.preventDefault();
@@ -55,26 +65,11 @@ export default function FinancialDetail({ title, stats, rows, accounts = [], per
     return (
         <>
             <Head title={title} />
-            <div className="space-y-6 p-6">
+            <div key={title} className="animate-in space-y-6 p-6 duration-700 ease-in-out fade-in slide-in-from-bottom-6">
                 <header>
                     <h1 className="text-xl font-semibold">{title}</h1>
                     <p className="text-sm text-muted-foreground">Cash basis: collections and paid expenses are included.</p>
                 </header>
-
-                <nav className="flex flex-wrap gap-2 text-sm">
-                    {[
-                        ['Fees & Collections', 'fees-collections'], ['Income & Revenue', 'income-revenue'],
-                        ['Expenses', 'expenses'], ['Cash Flow', 'cash-flow'],
-                        ['Budget vs Actual', 'budget-vs-actual'], ['Income Statement', 'income-statement'],
-                    ].map(([label, path]) => <Button key={path} variant={title.toLowerCase().includes(path.split('-')[0]) ? 'default' : 'outline'} size="sm" onClick={() => router.get(`/admin/reports/${path}`)}>{label}</Button>)}
-                </nav>
-
-                <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {Object.entries(stats).map(([key, value]) => <article key={key} className="rounded-lg border bg-card p-4">
-                        <p className="text-sm text-muted-foreground">{labelFor(key)}</p>
-                        <p className="mt-1 text-xl font-semibold">{money(value)}</p>
-                    </article>)}
-                </section>
 
                 <form onSubmit={applyFilters} className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
                     {title === 'Budget vs Actual' ? <div className="space-y-1"><Label>Period</Label><Input placeholder="YYYY or YYYY-MM" value={filterForm.data.period} onChange={(event) => filterForm.setData('period', event.target.value)} /></div> : <>
@@ -101,17 +96,12 @@ export default function FinancialDetail({ title, stats, rows, accounts = [], per
                     <Button type="submit" disabled={form.processing}>Save budget</Button>
                 </form>}
 
-                <div className="overflow-x-auto rounded-lg border bg-card">
-                    <table className="w-full text-sm">
-                        <thead><tr className="border-b text-left">{columns.map((column) => <th key={column} className="px-4 py-3 font-medium">{labelFor(column)}</th>)}</tr></thead>
-                        <tbody>{rows.map((row, index) => <tr key={index} className="border-b last:border-0">{columns.map((column) => {
-                            const value = row[column];
-                            const isAmount = /amount|balance|paid|charged|collected|revenue|budget|actual|variance|cash|inflow|outflow|surplus|deficit/i.test(column);
-                            return <td key={column} className="px-4 py-3">{value === null ? '—' : isAmount && typeof value === 'number' ? money(value) : value}</td>;
-                        })}</tr>)}
-                        {rows.length === 0 && <tr><td className="px-4 py-8 text-center text-muted-foreground" colSpan={Math.max(columns.length, 1)}>No records for this report yet.</td></tr>}</tbody>
-                    </table>
-                </div>
+                <DataTable
+                    title={title}
+                    searchTitle={`Search ${title.toLowerCase()}...`}
+                    columns={columns}
+                    data={rows}
+                />
             </div>
         </>
     );
