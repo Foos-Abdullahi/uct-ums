@@ -14,11 +14,14 @@ import {
     Check,
     X,
     HandCoins,
+    RotateCcw,
+    Send,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
+import { ExpenseStatusGuide } from '@/components/finance/expense-status-guide';
 import { MetricCardsSkeleton } from '@/components/tools/metric-cards-skeleton';
 import { MetricCard } from '@/components/tools/MetricCard';
 import { DataTable } from '@/components/tools/table/main-table';
@@ -139,14 +142,21 @@ export default function AdminFinanceExpenses({
         useState<ExpenseItem | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteProcessing, setDeleteProcessing] = useState(false);
-    const [approveTarget, setApproveTarget] = useState<ExpenseItem | null>(null);
+    const [approveTarget, setApproveTarget] = useState<ExpenseItem | null>(
+        null,
+    );
     const [approveComment, setApproveComment] = useState('');
     const [approveProcessing, setApproveProcessing] = useState(false);
     const [rejectTarget, setRejectTarget] = useState<ExpenseItem | null>(null);
     const [rejectComment, setRejectComment] = useState('');
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [rejectProcessing, setRejectProcessing] = useState(false);
-    const [markPaidTarget, setMarkPaidTarget] = useState<ExpenseItem | null>(null);
+    const [markPaidTarget, setMarkPaidTarget] = useState<ExpenseItem | null>(
+        null,
+    );
+    const [statusProcessingId, setStatusProcessingId] = useState<number | null>(
+        null,
+    );
     const markPaidForm = useForm({
         payment_method: 'cash',
         payment_account_id: '',
@@ -212,7 +222,9 @@ export default function AdminFinanceExpenses({
         router.delete(`/admin/expenses/${selectedForDelete.id}`, {
             onSuccess: () => {
                 toast.success(
-                    t('expense_deleted', { expense_no: selectedForDelete.expense_no }),
+                    t('expense_deleted', {
+                        expense_no: selectedForDelete.expense_no,
+                    }),
                 );
                 setDeleteModalOpen(false);
                 setSelectedForDelete(null);
@@ -241,7 +253,11 @@ export default function AdminFinanceExpenses({
             { comment: approveComment.trim() || null },
             {
                 onSuccess: () => {
-                    toast.success(t('expense_approved', { expense_no: approveTarget.expense_no }));
+                    toast.success(
+                        t('expense_approved', {
+                            expense_no: approveTarget.expense_no,
+                        }),
+                    );
                     setApproveTarget(null);
                     setApproveComment('');
                 },
@@ -269,10 +285,18 @@ export default function AdminFinanceExpenses({
 
         markPaidForm.post(`/admin/expenses/${markPaidTarget.id}/mark-paid`, {
             onSuccess: () => {
-                toast.success(t('expense_marked_paid', { expense_no: markPaidTarget.expense_no }));
+                toast.success(
+                    t('expense_marked_paid', {
+                        expense_no: markPaidTarget.expense_no,
+                    }),
+                );
                 setMarkPaidTarget(null);
             },
-            onError: () => toast.error(t('failed_mark_paid')),
+            onError: (errors) => {
+                const message =
+                    Object.values(errors)[0] ?? t('failed_mark_paid');
+                toast.error(String(message));
+            },
         });
     };
 
@@ -289,7 +313,9 @@ export default function AdminFinanceExpenses({
             {
                 onSuccess: () => {
                     toast.success(
-                        t('expense_rejected', { expense_no: rejectTarget.expense_no }),
+                        t('expense_rejected', {
+                            expense_no: rejectTarget.expense_no,
+                        }),
                     );
                     setRejectModalOpen(false);
                     setRejectTarget(null);
@@ -300,6 +326,39 @@ export default function AdminFinanceExpenses({
                     toast.error(t('failed_reject_expense'));
                     setRejectProcessing(false);
                 },
+            },
+        );
+    };
+
+    const handleStatusTransition = (
+        expense: ExpenseItem,
+        status: 'draft' | 'pending_approval',
+    ) => {
+        setStatusProcessingId(expense.id);
+
+        router.patch(
+            `/admin/expenses/${expense.id}/status`,
+            { status },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success(
+                        t('expense_status_updated', {
+                            expense_no: expense.expense_no,
+                            status:
+                                status === 'draft'
+                                    ? t('draft_status')
+                                    : t('pending_approval_status'),
+                        }),
+                    );
+                },
+                onError: (errors) => {
+                    const message =
+                        Object.values(errors)[0] ??
+                        t('failed_update_expense_status');
+                    toast.error(String(message));
+                },
+                onFinish: () => setStatusProcessingId(null),
             },
         );
     };
@@ -421,9 +480,33 @@ export default function AdminFinanceExpenses({
         },
         {
             id: 'actions',
-            header: () => <span className="sr-only">{t('actions_column')}</span>,
+            header: () => (
+                <span className="sr-only">{t('actions_column')}</span>
+            ),
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
+                    {['draft', 'rejected', 'cancelled'].includes(
+                        row.original.status,
+                    ) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary hover:text-primary"
+                            disabled={statusProcessingId === row.original.id}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusTransition(
+                                    row.original,
+                                    'pending_approval',
+                                );
+                            }}
+                        >
+                            <Send className="mr-1 h-3.5 w-3.5" />
+                            {row.original.status === 'draft'
+                                ? t('submit_expense')
+                                : t('resubmit_expense')}
+                        </Button>
+                    )}
                     {row.original.status === 'approved' && (
                         <Button
                             variant="ghost"
@@ -443,6 +526,7 @@ export default function AdminFinanceExpenses({
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-xs text-blue-600 hover:text-blue-600"
+                            disabled={statusProcessingId === row.original.id}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handleApprove(row.original);
@@ -456,7 +540,23 @@ export default function AdminFinanceExpenses({
                         <Button
                             variant="ghost"
                             size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            disabled={statusProcessingId === row.original.id}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusTransition(row.original, 'draft');
+                            }}
+                        >
+                            <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                            {t('return_to_draft')}
+                        </Button>
+                    )}
+                    {row.original.status === 'pending_approval' && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                            disabled={statusProcessingId === row.original.id}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setRejectTarget(row.original);
@@ -478,12 +578,9 @@ export default function AdminFinanceExpenses({
                             {t('view_expense')}
                         </Link>
                     </Button>
-                    {[
-                        'draft',
-                        'rejected',
-                        'cancelled',
-                        'pending_approval',
-                    ].includes(row.original.status) && (
+                    {['draft', 'rejected', 'cancelled'].includes(
+                        row.original.status,
+                    ) && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -509,7 +606,10 @@ export default function AdminFinanceExpenses({
             options: [
                 { label: t('all_statuses_filter'), value: 'all' },
                 { label: t('draft_status'), value: 'draft' },
-                { label: t('pending_approval_status'), value: 'pending_approval' },
+                {
+                    label: t('pending_approval_status'),
+                    value: 'pending_approval',
+                },
                 { label: t('approved_status'), value: 'approved' },
                 { label: t('paid_status'), value: 'paid' },
                 { label: t('rejected_status'), value: 'rejected' },
@@ -552,7 +652,9 @@ export default function AdminFinanceExpenses({
 
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <Link href="/admin/finance">{t('finance_overview')}</Link>
+                            <Link href="/admin/finance">
+                                {t('finance_overview')}
+                            </Link>
                         </Button>
                         <Button
                             size="sm"
@@ -613,6 +715,8 @@ export default function AdminFinanceExpenses({
                         </div>
                     )}
                 </Deferred>
+
+                <ExpenseStatusGuide />
 
                 {/* Expenses Data Table */}
                 <Deferred data="expenses" fallback={<TableSkeleton />}>
@@ -737,7 +841,11 @@ export default function AdminFinanceExpenses({
                                             id="account_id"
                                             className="h-9 text-xs"
                                         >
-                                            <SelectValue placeholder={t('select_account')} />
+                                            <SelectValue
+                                                placeholder={t(
+                                                    'select_account',
+                                                )}
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {Array.from(
@@ -859,7 +967,9 @@ export default function AdminFinanceExpenses({
                                     </Label>
                                     <Input
                                         id="budget_line"
-                                        placeholder={t('budget_line_placeholder')}
+                                        placeholder={t(
+                                            'budget_line_placeholder',
+                                        )}
                                         value={data.budget_line}
                                         onChange={(e) =>
                                             setData(
@@ -911,52 +1021,158 @@ export default function AdminFinanceExpenses({
                                         </SelectContent>
                                     </Select>
                                     {errors.status && (
-                                        <p className="text-[11px] text-destructive">{errors.status}</p>
+                                        <p className="text-[11px] text-destructive">
+                                            {errors.status}
+                                        </p>
                                     )}
                                 </div>
                             </div>
 
                             {data.status === 'paid' && (
                                 <div className="space-y-3 rounded-md border border-border/60 p-3">
-                                    <p className="text-xs font-semibold">Payment details</p>
+                                    <p className="text-xs font-semibold">
+                                        Payment details
+                                    </p>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="expense_payment_method" className="text-xs">Payment method *</Label>
-                                            <Select value={data.payment_method} onValueChange={(value) => setData('payment_method', value)}>
-                                                <SelectTrigger id="expense_payment_method" className="h-9 text-xs"><SelectValue placeholder="Select method" /></SelectTrigger>
+                                            <Label
+                                                htmlFor="expense_payment_method"
+                                                className="text-xs"
+                                            >
+                                                Payment method *
+                                            </Label>
+                                            <Select
+                                                value={data.payment_method}
+                                                onValueChange={(value) =>
+                                                    setData(
+                                                        'payment_method',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    id="expense_payment_method"
+                                                    className="h-9 text-xs"
+                                                >
+                                                    <SelectValue placeholder="Select method" />
+                                                </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="cash">Cash</SelectItem>
-                                                    <SelectItem value="bank_transfer">Bank transfer</SelectItem>
-                                                    <SelectItem value="mobile_money">Mobile money</SelectItem>
-                                                    <SelectItem value="card">Card</SelectItem>
-                                                    <SelectItem value="cheque">Cheque</SelectItem>
+                                                    <SelectItem value="cash">
+                                                        Cash
+                                                    </SelectItem>
+                                                    <SelectItem value="bank_transfer">
+                                                        Bank transfer
+                                                    </SelectItem>
+                                                    <SelectItem value="mobile_money">
+                                                        Mobile money
+                                                    </SelectItem>
+                                                    <SelectItem value="card">
+                                                        Card
+                                                    </SelectItem>
+                                                    <SelectItem value="cheque">
+                                                        Cheque
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                            {errors.payment_method && <p className="text-[11px] text-destructive">{errors.payment_method}</p>}
+                                            {errors.payment_method && (
+                                                <p className="text-[11px] text-destructive">
+                                                    {errors.payment_method}
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="expense_payment_account" className="text-xs">Paid from account *</Label>
-                                            <Select value={data.payment_account_id} onValueChange={(value) => setData('payment_account_id', value)}>
-                                                <SelectTrigger id="expense_payment_account" className="h-9 text-xs"><SelectValue placeholder="Select cash/bank account" /></SelectTrigger>
+                                            <Label
+                                                htmlFor="expense_payment_account"
+                                                className="text-xs"
+                                            >
+                                                Paid from account *
+                                            </Label>
+                                            <Select
+                                                value={data.payment_account_id}
+                                                onValueChange={(value) =>
+                                                    setData(
+                                                        'payment_account_id',
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    id="expense_payment_account"
+                                                    className="h-9 text-xs"
+                                                >
+                                                    <SelectValue placeholder="Select cash/bank account" />
+                                                </SelectTrigger>
                                                 <SelectContent>
-                                                    {payment_accounts.map((account) => (
-                                                        <SelectItem key={account.id} value={String(account.id)}>{account.code} · {account.name}</SelectItem>
-                                                    ))}
+                                                    {payment_accounts.map(
+                                                        (account) => (
+                                                            <SelectItem
+                                                                key={account.id}
+                                                                value={String(
+                                                                    account.id,
+                                                                )}
+                                                            >
+                                                                {account.code} ·{' '}
+                                                                {account.name}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
-                                            {errors.payment_account_id && <p className="text-[11px] text-destructive">{errors.payment_account_id}</p>}
+                                            {errors.payment_account_id && (
+                                                <p className="text-[11px] text-destructive">
+                                                    {errors.payment_account_id}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="expense_paid_at" className="text-xs">Paid date *</Label>
-                                            <Input id="expense_paid_at" type="date" value={data.paid_at} onChange={(event) => setData('paid_at', event.target.value)} required />
-                                            {errors.paid_at && <p className="text-[11px] text-destructive">{errors.paid_at}</p>}
+                                            <Label
+                                                htmlFor="expense_paid_at"
+                                                className="text-xs"
+                                            >
+                                                Paid date *
+                                            </Label>
+                                            <Input
+                                                id="expense_paid_at"
+                                                type="date"
+                                                value={data.paid_at}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'paid_at',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                            {errors.paid_at && (
+                                                <p className="text-[11px] text-destructive">
+                                                    {errors.paid_at}
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="space-y-1.5">
-                                            <Label htmlFor="expense_reference" className="text-xs">Reference number</Label>
-                                            <Input id="expense_reference" value={data.reference_no} onChange={(event) => setData('reference_no', event.target.value)} />
-                                            {errors.reference_no && <p className="text-[11px] text-destructive">{errors.reference_no}</p>}
+                                            <Label
+                                                htmlFor="expense_reference"
+                                                className="text-xs"
+                                            >
+                                                Reference number
+                                            </Label>
+                                            <Input
+                                                id="expense_reference"
+                                                value={data.reference_no}
+                                                onChange={(event) =>
+                                                    setData(
+                                                        'reference_no',
+                                                        event.target.value,
+                                                    )
+                                                }
+                                            />
+                                            {errors.reference_no && (
+                                                <p className="text-[11px] text-destructive">
+                                                    {errors.reference_no}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1030,16 +1246,23 @@ export default function AdminFinanceExpenses({
 
                         <div className="space-y-3 py-2">
                             <div className="space-y-1.5">
-                                <Label htmlFor="approval_comment" className="text-xs font-semibold">
+                                <Label
+                                    htmlFor="approval_comment"
+                                    className="text-xs font-semibold"
+                                >
                                     {t('approval_comment_label')}
                                 </Label>
                                 <Textarea
                                     id="approval_comment"
                                     className="min-h-[90px] text-xs"
-                                    placeholder={t('approval_comment_placeholder')}
+                                    placeholder={t(
+                                        'approval_comment_placeholder',
+                                    )}
                                     value={approveComment}
                                     maxLength={1000}
-                                    onChange={(event) => setApproveComment(event.target.value)}
+                                    onChange={(event) =>
+                                        setApproveComment(event.target.value)
+                                    }
                                 />
                             </div>
 
@@ -1063,7 +1286,9 @@ export default function AdminFinanceExpenses({
                                     onClick={confirmApprove}
                                 >
                                     <Check className="mr-1.5 h-4 w-4" />
-                                    {approveProcessing ? t('saving') : t('approve_expense')}
+                                    {approveProcessing
+                                        ? t('saving')
+                                        : t('approve_expense')}
                                 </Button>
                             </DialogFooter>
                         </div>
@@ -1081,7 +1306,9 @@ export default function AdminFinanceExpenses({
                                 {t('reject_expense_title')}
                             </DialogTitle>
                             <DialogDescription className="text-xs">
-                                {t('reject_expense_description', { expense_no: rejectTarget?.expense_no })}
+                                {t('reject_expense_description', {
+                                    expense_no: rejectTarget?.expense_no,
+                                })}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -1097,7 +1324,9 @@ export default function AdminFinanceExpenses({
                                 <Textarea
                                     id="reject_comment"
                                     className="min-h-[90px] text-xs"
-                                    placeholder={t('rejection_reason_placeholder')}
+                                    placeholder={t(
+                                        'rejection_reason_placeholder',
+                                    )}
                                     value={rejectComment}
                                     onChange={(e) =>
                                         setRejectComment(e.target.value)
@@ -1135,41 +1364,135 @@ export default function AdminFinanceExpenses({
                 </Dialog>
 
                 {/* Delete Confirmation Modal */}
-                <Dialog open={Boolean(markPaidTarget)} onOpenChange={(open) => !open && setMarkPaidTarget(null)}>
+                <Dialog
+                    open={Boolean(markPaidTarget)}
+                    onOpenChange={(open) => !open && setMarkPaidTarget(null)}
+                >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Record expense payment</DialogTitle>
-                            <DialogDescription>{markPaidTarget?.expense_no} · {markPaidTarget?.title}</DialogDescription>
+                            <DialogDescription>
+                                {markPaidTarget?.expense_no} ·{' '}
+                                {markPaidTarget?.title}
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={confirmMarkPaid} className="space-y-4">
                             <div className="space-y-1.5">
-                                <Label htmlFor="paid_method">Payment method</Label>
-                                <Select value={markPaidForm.data.payment_method} onValueChange={(value) => markPaidForm.setData('payment_method', value)}>
-                                    <SelectTrigger id="paid_method"><SelectValue /></SelectTrigger>
+                                <Label htmlFor="paid_method">
+                                    Payment method
+                                </Label>
+                                <Select
+                                    value={markPaidForm.data.payment_method}
+                                    onValueChange={(value) =>
+                                        markPaidForm.setData(
+                                            'payment_method',
+                                            value,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger id="paid_method">
+                                        <SelectValue />
+                                    </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="cash">Cash</SelectItem>
-                                        <SelectItem value="bank_transfer">Bank transfer</SelectItem>
-                                        <SelectItem value="mobile_money">Mobile money</SelectItem>
-                                        <SelectItem value="card">Card</SelectItem>
-                                        <SelectItem value="cheque">Cheque</SelectItem>
+                                        <SelectItem value="cash">
+                                            Cash
+                                        </SelectItem>
+                                        <SelectItem value="bank_transfer">
+                                            Bank transfer
+                                        </SelectItem>
+                                        <SelectItem value="mobile_money">
+                                            Mobile money
+                                        </SelectItem>
+                                        <SelectItem value="card">
+                                            Card
+                                        </SelectItem>
+                                        <SelectItem value="cheque">
+                                            Cheque
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="paid_account">Payment account</Label>
-                                <Select value={markPaidForm.data.payment_account_id} onValueChange={(value) => markPaidForm.setData('payment_account_id', value)}>
-                                    <SelectTrigger id="paid_account"><SelectValue placeholder="Select account" /></SelectTrigger>
-                                    <SelectContent>{payment_accounts.map((account) => <SelectItem key={account.id} value={String(account.id)}>{account.code} · {account.name}</SelectItem>)}</SelectContent>
+                                <Label htmlFor="paid_account">
+                                    Payment account
+                                </Label>
+                                <Select
+                                    value={markPaidForm.data.payment_account_id}
+                                    onValueChange={(value) =>
+                                        markPaidForm.setData(
+                                            'payment_account_id',
+                                            value,
+                                        )
+                                    }
+                                >
+                                    <SelectTrigger id="paid_account">
+                                        <SelectValue placeholder="Select account" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {payment_accounts.map((account) => (
+                                            <SelectItem
+                                                key={account.id}
+                                                value={String(account.id)}
+                                            >
+                                                {account.code} · {account.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
                                 </Select>
-                                {markPaidForm.errors.payment_account_id && <p className="text-xs text-destructive">{markPaidForm.errors.payment_account_id}</p>}
+                                {markPaidForm.errors.payment_account_id && (
+                                    <p className="text-xs text-destructive">
+                                        {markPaidForm.errors.payment_account_id}
+                                    </p>
+                                )}
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5"><Label htmlFor="paid_date">Paid date</Label><Input id="paid_date" type="date" value={markPaidForm.data.paid_at} onChange={(event) => markPaidForm.setData('paid_at', event.target.value)} /></div>
-                                <div className="space-y-1.5"><Label htmlFor="paid_reference">Reference number</Label><Input id="paid_reference" value={markPaidForm.data.reference_no} onChange={(event) => markPaidForm.setData('reference_no', event.target.value)} /></div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="paid_date">Paid date</Label>
+                                    <Input
+                                        id="paid_date"
+                                        type="date"
+                                        value={markPaidForm.data.paid_at}
+                                        onChange={(event) =>
+                                            markPaidForm.setData(
+                                                'paid_at',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="paid_reference">
+                                        Reference number
+                                    </Label>
+                                    <Input
+                                        id="paid_reference"
+                                        value={markPaidForm.data.reference_no}
+                                        onChange={(event) =>
+                                            markPaidForm.setData(
+                                                'reference_no',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                </div>
                             </div>
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setMarkPaidTarget(null)}>Cancel</Button>
-                                <Button type="submit" disabled={markPaidForm.processing || !markPaidForm.data.payment_account_id}>Confirm paid</Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setMarkPaidTarget(null)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        markPaidForm.processing ||
+                                        !markPaidForm.data.payment_account_id
+                                    }
+                                >
+                                    Confirm paid
+                                </Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>
@@ -1193,4 +1516,10 @@ export default function AdminFinanceExpenses({
     );
 }
 
-AdminFinanceExpenses.layout = { breadcrumbs: [{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Finance', href: '/admin/finance' }, { title: 'Expenses', href: '/admin/expenses' }] };
+AdminFinanceExpenses.layout = {
+    breadcrumbs: [
+        { title: 'Dashboard', href: '/admin/dashboard' },
+        { title: 'Finance', href: '/admin/finance' },
+        { title: 'Expenses', href: '/admin/expenses' },
+    ],
+};
