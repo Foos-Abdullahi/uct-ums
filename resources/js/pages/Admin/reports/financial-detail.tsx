@@ -71,14 +71,6 @@ export default function FinancialDetail({ title, rows, accounts = [], period = S
                     <p className="text-sm text-muted-foreground">Cash basis: collections and paid expenses are included.</p>
                 </header>
 
-                <nav className="flex flex-wrap gap-2 text-sm">
-                    {[
-                        ['Fees & Collections', 'fees-collections'], ['Income & Revenue', 'income-revenue'],
-                        ['Expenses', 'expenses'], ['Cash Flow', 'cash-flow'],
-                        ['Budget vs Actual', 'budget-vs-actual'], ['Income Statement', 'income-statement'],
-                    ].map(([label, path]) => <Button key={path} variant={title.toLowerCase().includes(path.split('-')[0]) ? 'default' : 'outline'} size="sm" onClick={() => router.get(`/admin/reports/${path}`)}>{label}</Button>)}
-                </nav>
-
                 <form onSubmit={applyFilters} className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
                     {title === 'Budget vs Actual' ? <div className="space-y-1"><Label>Period</Label><Input placeholder="YYYY or YYYY-MM" value={filterForm.data.period} onChange={(event) => filterForm.setData('period', event.target.value)} /></div> : <>
                         <div className="space-y-1"><Label>From</Label><Input type="date" value={filterForm.data.from} onChange={(event) => filterForm.setData('from', event.target.value)} /></div>
