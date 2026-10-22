@@ -237,7 +237,7 @@ class ExpenseController extends Controller
     }
 
     /**
-     * Process a single approval level.
+     * Approve a pending expense in one decision.
      * Any admin with access to this route may approve — the route is gated by role:super_admin.
      */
     public function approve(Request $request, Expense $expense): RedirectResponse
@@ -284,12 +284,8 @@ class ExpenseController extends Controller
                 'acted_at' => now(),
             ]);
 
-            if ($lockedExpense->pendingApprovals()->exists()) {
-                return [
-                    'success' => true,
-                    'message' => "Approval level {$approval->level} completed. The next approval is now pending.",
-                ];
-            }
+            // Remove legacy pending levels so one confirmation always completes approval.
+            $lockedExpense->pendingApprovals()->delete();
 
             $lockedExpense->update([
                 'status' => ExpenseStatus::Approved->value,
@@ -299,7 +295,7 @@ class ExpenseController extends Controller
 
             return [
                 'success' => true,
-                'message' => "Expense {$lockedExpense->expense_no} is fully approved and ready for payment.",
+                'message' => "Expense {$lockedExpense->expense_no} approved and ready for payment.",
             ];
         }, 3);
 

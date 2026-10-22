@@ -17,7 +17,7 @@ import {
     RotateCcw,
     Send,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog';
@@ -157,6 +157,9 @@ export default function AdminFinanceExpenses({
     const [statusProcessingId, setStatusProcessingId] = useState<number | null>(
         null,
     );
+    const approveRequestInFlight = useRef(false);
+    const rejectRequestInFlight = useRef(false);
+    const markPaidRequestInFlight = useRef(false);
     const markPaidForm = useForm({
         payment_method: 'cash',
         payment_account_id: '',
@@ -243,10 +246,11 @@ export default function AdminFinanceExpenses({
     };
 
     const confirmApprove = () => {
-        if (!approveTarget) {
+        if (!approveTarget || approveRequestInFlight.current) {
             return;
         }
 
+        approveRequestInFlight.current = true;
         setApproveProcessing(true);
         router.post(
             `/admin/expenses/${approveTarget.id}/approve`,
@@ -265,7 +269,10 @@ export default function AdminFinanceExpenses({
                     const msg = Object.values(errs)[0] ?? t('approval_failed');
                     toast.error(String(msg));
                 },
-                onFinish: () => setApproveProcessing(false),
+                onFinish: () => {
+                    approveRequestInFlight.current = false;
+                    setApproveProcessing(false);
+                },
             },
         );
     };
@@ -279,10 +286,15 @@ export default function AdminFinanceExpenses({
     const confirmMarkPaid = (event: React.FormEvent) => {
         event.preventDefault();
 
-        if (!markPaidTarget) {
+        if (
+            !markPaidTarget ||
+            markPaidRequestInFlight.current ||
+            markPaidForm.processing
+        ) {
             return;
         }
 
+        markPaidRequestInFlight.current = true;
         markPaidForm.post(`/admin/expenses/${markPaidTarget.id}/mark-paid`, {
             onSuccess: () => {
                 toast.success(
@@ -297,14 +309,18 @@ export default function AdminFinanceExpenses({
                     Object.values(errors)[0] ?? t('failed_mark_paid');
                 toast.error(String(message));
             },
+            onFinish: () => {
+                markPaidRequestInFlight.current = false;
+            },
         });
     };
 
     const confirmReject = () => {
-        if (!rejectTarget) {
+        if (!rejectTarget || rejectRequestInFlight.current) {
             return;
         }
 
+        rejectRequestInFlight.current = true;
         setRejectProcessing(true);
 
         router.post(
@@ -320,10 +336,14 @@ export default function AdminFinanceExpenses({
                     setRejectModalOpen(false);
                     setRejectTarget(null);
                     setRejectComment('');
-                    setRejectProcessing(false);
                 },
-                onError: () => {
-                    toast.error(t('failed_reject_expense'));
+                onError: (errors) => {
+                    const message =
+                        Object.values(errors)[0] ?? t('failed_reject_expense');
+                    toast.error(String(message));
+                },
+                onFinish: () => {
+                    rejectRequestInFlight.current = false;
                     setRejectProcessing(false);
                 },
             },
@@ -1298,7 +1318,11 @@ export default function AdminFinanceExpenses({
                 {/* Reject Modal */}
                 <Dialog
                     open={rejectModalOpen}
-                    onOpenChange={setRejectModalOpen}
+                    onOpenChange={(open) => {
+                        if (!rejectProcessing) {
+                            setRejectModalOpen(open);
+                        }
+                    }}
                 >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
@@ -1366,7 +1390,11 @@ export default function AdminFinanceExpenses({
                 {/* Delete Confirmation Modal */}
                 <Dialog
                     open={Boolean(markPaidTarget)}
-                    onOpenChange={(open) => !open && setMarkPaidTarget(null)}
+                    onOpenChange={(open) => {
+                        if (!open && !markPaidForm.processing) {
+                            setMarkPaidTarget(null);
+                        }
+                    }}
                 >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>

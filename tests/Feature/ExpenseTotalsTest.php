@@ -71,11 +71,11 @@ test('workflow transitions count active expenses once and remove rejected expens
 
     expect((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
 
-    while ($expense->fresh()->status === ExpenseStatus::PendingApproval->value) {
-        $this->post(route('admin.expenses.approve', $expense), [
-            'comment' => 'Approved for totals test',
-        ])->assertSessionHas('success');
-    }
+    $this->post(route('admin.expenses.approve', $expense), [
+        'comment' => 'Approved for totals test',
+    ])->assertSessionHas('success');
+
+    expect($expense->fresh()->status)->toBe(ExpenseStatus::Approved->value);
 
     expect((float) Expense::includedInTotals()->sum('amount'))->toBe(750.0);
 
