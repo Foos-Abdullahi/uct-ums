@@ -17,7 +17,7 @@ import {
     RotateCcw,
     Send,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ExpenseStatusGuide } from '@/components/finance/expense-status-guide';
@@ -114,6 +114,9 @@ export default function AdminExpenseDetails({
     const [approveProcessing, setApproveProcessing] = useState(false);
     const [statusProcessing, setStatusProcessing] = useState(false);
     const [markPaidModalOpen, setMarkPaidModalOpen] = useState(false);
+    const approveRequestInFlight = useRef(false);
+    const rejectRequestInFlight = useRef(false);
+    const markPaidRequestInFlight = useRef(false);
     const markPaidForm = useForm({
         payment_method: 'cash',
         payment_account_id: '',
@@ -139,6 +142,11 @@ export default function AdminExpenseDetails({
     const pendingApproval = approvals.find((a) => a.action === 'pending');
 
     const handleApprove = () => {
+        if (approveRequestInFlight.current) {
+            return;
+        }
+
+        approveRequestInFlight.current = true;
         setApproveProcessing(true);
         router.post(
             `/admin/expenses/${expense.id}/approve`,
@@ -153,12 +161,20 @@ export default function AdminExpenseDetails({
                     const msg = Object.values(errors)[0] ?? 'Approval failed.';
                     toast.error(String(msg));
                 },
-                onFinish: () => setApproveProcessing(false),
+                onFinish: () => {
+                    approveRequestInFlight.current = false;
+                    setApproveProcessing(false);
+                },
             },
         );
     };
 
     const handleReject = () => {
+        if (rejectRequestInFlight.current) {
+            return;
+        }
+
+        rejectRequestInFlight.current = true;
         setRejectProcessing(true);
         router.post(
             `/admin/expenses/${expense.id}/reject`,
@@ -174,7 +190,10 @@ export default function AdminExpenseDetails({
                         Object.values(errors)[0] ?? 'Failed to reject expense.';
                     toast.error(String(msg));
                 },
-                onFinish: () => setRejectProcessing(false),
+                onFinish: () => {
+                    rejectRequestInFlight.current = false;
+                    setRejectProcessing(false);
+                },
             },
         );
     };
@@ -187,6 +206,12 @@ export default function AdminExpenseDetails({
 
     const confirmMarkPaid = (event: React.FormEvent) => {
         event.preventDefault();
+
+        if (markPaidRequestInFlight.current || markPaidForm.processing) {
+            return;
+        }
+
+        markPaidRequestInFlight.current = true;
         markPaidForm.post(`/admin/expenses/${expense.id}/mark-paid`, {
             onSuccess: () => {
                 toast.success('Expense marked as paid.');
@@ -196,6 +221,9 @@ export default function AdminExpenseDetails({
                 const message =
                     Object.values(errors)[0] ?? 'Failed to mark as paid.';
                 toast.error(String(message));
+            },
+            onFinish: () => {
+                markPaidRequestInFlight.current = false;
             },
         });
     };
@@ -677,7 +705,11 @@ export default function AdminExpenseDetails({
                 {/* Approve Modal */}
                 <Dialog
                     open={approveModalOpen}
-                    onOpenChange={setApproveModalOpen}
+                    onOpenChange={(open) => {
+                        if (!approveProcessing) {
+                            setApproveModalOpen(open);
+                        }
+                    }}
                 >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
@@ -686,7 +718,8 @@ export default function AdminExpenseDetails({
                             </DialogTitle>
                             <DialogDescription className="text-xs">
                                 Confirm approval for {expense.expense_no}. Your
-                                approval moves this expense to the next level.
+                                approval immediately makes this expense ready
+                                for payment.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -737,7 +770,11 @@ export default function AdminExpenseDetails({
                 {/* Reject Modal */}
                 <Dialog
                     open={rejectModalOpen}
-                    onOpenChange={setRejectModalOpen}
+                    onOpenChange={(open) => {
+                        if (!rejectProcessing) {
+                            setRejectModalOpen(open);
+                        }
+                    }}
                 >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
@@ -802,7 +839,11 @@ export default function AdminExpenseDetails({
 
                 <Dialog
                     open={markPaidModalOpen}
-                    onOpenChange={setMarkPaidModalOpen}
+                    onOpenChange={(open) => {
+                        if (!markPaidForm.processing) {
+                            setMarkPaidModalOpen(open);
+                        }
+                    }}
                 >
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>

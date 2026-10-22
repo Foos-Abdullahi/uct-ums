@@ -25,9 +25,7 @@ class Expense extends Model
     public const TOTAL_STATUSES = ['pending_approval', 'approved', 'paid'];
 
     public const APPROVAL_LEVELS = [
-        1 => 'Finance Officer',
-        2 => 'Finance Director',
-        3 => 'Vice Chancellor',
+        1 => 'Authorized Approver',
     ];
 
     /**
@@ -148,7 +146,7 @@ class Expense extends Model
     }
 
     /**
-     * Build the full multi-level approval chain for this expense.
+     * Build the single approval step for this expense.
      */
     public function buildApprovalChain(): void
     {
@@ -193,6 +191,11 @@ class Expense extends Model
             // Fall back to any matching user (small team) so the chain never deadlocks.
             ?? User::query()
                 ->whereIn('role', $roles)
+                ->where('is_active', true)
+                ->orderBy('id')
+                ->first()
+            ?? User::query()
+                ->where('role', 'super_admin')
                 ->where('is_active', true)
                 ->orderBy('id')
                 ->first();

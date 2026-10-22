@@ -138,12 +138,11 @@ test('admin can view expense detail with approval trail', function () {
         );
 });
 
-// ─── Multi-level Approval Workflow ────────────────────────────────────────────
+// ─── Approval Workflow ────────────────────────────────────────────────────────
 
-test('approval chain assigns distinct approvers per level when available', function () {
+test('approval chain creates one approval step', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $finance1 = User::factory()->role(UserRole::Finance)->create();
-    $finance2 = User::factory()->role(UserRole::Finance)->create();
     $this->actingAs($admin);
 
     $expense = Expense::factory()->create(['status' => 'pending_approval']);
@@ -151,44 +150,54 @@ test('approval chain assigns distinct approvers per level when available', funct
 
     $approvals = $expense->approvals()->orderBy('level')->get();
 
-    // Level 1 should be the finance user
     $level1 = $approvals->firstWhere('level', 1);
-    expect($level1->approver_id)->toBe($finance1->id);
-
-    // Level 2 prefers a different user
-    $level2 = $approvals->firstWhere('level', 2);
-    expect($level2->approver_id)->not->toBe($finance1->id);
+    expect($approvals)->toHaveCount(1)
+        ->and($level1->approver_id)->toBeIn([$admin->id, $finance1->id]);
 });
 
-test('full approval chain marks expense approved', function () {
+test('one approval marks expense approved and ready for payment', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
-    User::factory()->role(UserRole::Finance)->count(2)->create();
+    User::factory()->role(UserRole::Finance)->create();
     $this->actingAs($admin);
 
     $expense = Expense::factory()->create(['status' => 'pending_approval']);
     $expense->buildApprovalChain();
 
-    $approvals = $expense->approvals()->orderBy('level')->get();
+    $response = $this->post(route('admin.expenses.approve', $expense), [
+        'comment' => 'Approved',
+    ]);
 
-    foreach ($approvals as $approval) {
-        $approver = User::find($approval->approver_id);
-        $this->actingAs($approver);
-
-        $route = $approver->role === UserRole::SuperAdmin
-            ? route('admin.expenses.approve', $expense)
-            : route('finance.expenses.approve', $expense);
-
-        $response = $this->post($route, [
-            'comment' => "Level {$approval->level} approved",
-        ]);
-
-        $response->assertRedirect();
-    }
+    $response->assertRedirect()->assertSessionHas('success');
 
     $expense->refresh();
 
     expect($expense->status)->toBe('approved')
-        ->and($expense->approvedApprovals()->count())->toBe(count(Expense::APPROVAL_LEVELS));
+        ->and($expense->approvedApprovals()->count())->toBe(1)
+        ->and($expense->pendingApprovals()->exists())->toBeFalse();
+});
+
+test('one approval clears pending levels from legacy approval chains', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $this->actingAs($admin);
+
+    $expense = Expense::factory()->create(['status' => 'pending_approval']);
+
+    foreach ([1, 2, 3] as $level) {
+        ExpenseApproval::factory()->create([
+            'expense_id' => $expense->id,
+            'approver_id' => $admin->id,
+            'level' => $level,
+            'action' => 'pending',
+        ]);
+    }
+
+    $this->post(route('admin.expenses.approve', $expense), [
+        'comment' => 'Single approval',
+    ])->assertSessionHas('success');
+
+    expect($expense->refresh()->status)->toBe('approved')
+        ->and($expense->approvedApprovals()->count())->toBe(1)
+        ->and($expense->pendingApprovals()->exists())->toBeFalse();
 });
 
 test('rejecting an expense at any level marks it rejected', function () {

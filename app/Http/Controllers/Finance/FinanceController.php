@@ -207,7 +207,7 @@ class FinanceController extends Controller
     }
 
     /**
-     * Approve an expense at the current approval level (Finance portal).
+     * Approve an expense in one decision (Finance portal).
      */
     public function approveExpense(Request $request, Expense $expense): RedirectResponse
     {
@@ -230,17 +230,14 @@ class FinanceController extends Controller
             'acted_at' => now(),
         ]);
 
-        if ($expense->approvedApprovals()->count() >= count(Expense::APPROVAL_LEVELS)) {
-            $expense->update([
-                'status' => ExpenseStatus::Approved->value,
-                'approved_by' => $request->user()->id,
-                'approved_at' => now(),
-            ]);
+        $expense->pendingApprovals()->delete();
+        $expense->update([
+            'status' => ExpenseStatus::Approved->value,
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+        ]);
 
-            return back()->with('success', "Expense {$expense->expense_no} fully approved.");
-        }
-
-        return back()->with('success', 'Expense approved. Next approval level required.');
+        return back()->with('success', "Expense {$expense->expense_no} approved and ready for payment.");
     }
 
     /**
@@ -417,7 +414,7 @@ class FinanceController extends Controller
     }
 
     /**
-     * Build the full multi-level approval chain for an expense.
+     * Build the single approval step for an expense.
      */
     private function buildApprovalChain(Expense $expense): void
     {
@@ -438,6 +435,11 @@ class FinanceController extends Controller
                 ->first()
                 ?? User::query()
                     ->whereIn('role', $roles)
+                    ->where('is_active', true)
+                    ->orderBy('id')
+                    ->first()
+                ?? User::query()
+                    ->where('role', 'super_admin')
                     ->where('is_active', true)
                     ->orderBy('id')
                     ->first();
