@@ -47,6 +47,7 @@ export default function AdminStudentsEdit({
             ? String(student.date_of_birth).split('T')[0]
             : '',
         address: student.address ?? '',
+        mother_name: student.mother_name ?? '',
         fee_status: student.fee_status ?? 'unpaid',
         enrollment_status: student.enrollment_status ?? 'enrolled',
         gpa: student.gpa ? String(student.gpa) : '',
@@ -226,6 +227,22 @@ export default function AdminStudentsEdit({
                                 {errors.address && (
                                     <p className="text-xs text-destructive">
                                         {errors.address}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label htmlFor="mother_name">Mother's Name</Label>
+                                <Input
+                                    id="mother_name"
+                                    value={data.mother_name}
+                                    onChange={(e) =>
+                                        setData('mother_name', e.target.value)
+                                    }
+                                />
+                                {errors.mother_name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.mother_name}
                                     </p>
                                 )}
                             </div>
