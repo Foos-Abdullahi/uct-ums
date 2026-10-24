@@ -138,6 +138,7 @@ export interface Student {
     gender?: string | null;
     date_of_birth?: string | null;
     address?: string | null;
+    mother_name?: string | null;
     photo_path?: string | null;
     photo_url?: string | null;
     fee_status: StudentFeeStatus;

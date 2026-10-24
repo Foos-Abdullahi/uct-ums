@@ -719,6 +719,14 @@ export default function AdminStudentsShow({
                                     </div>
                                     <div className="flex justify-between py-2">
                                         <span className="text-muted-foreground">
+                                            Mother's Name
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                            {student.mother_name || '—'}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between py-2">
+                                        <span className="text-muted-foreground">
                                             Enrollment Date
                                         </span>
                                         <span className="font-medium text-foreground">

@@ -31,6 +31,7 @@ class Student extends Model
         'gender',
         'date_of_birth',
         'address',
+        'mother_name',
         'photo_path',
         'fee_status',
         'enrollment_status',

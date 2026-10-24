@@ -73,6 +73,17 @@ export function getStudentColumns({
             },
         },
         {
+            accessorKey: 'mother_name',
+            header: "Mother's Name",
+            cell: ({ row }) => {
+                return (
+                    <span className="text-xs text-foreground">
+                        {row.original.mother_name || '—'}
+                    </span>
+                );
+            },
+        },
+        {
             accessorKey: 'program.name',
             header: 'Program',
             cell: ({ row }) => {

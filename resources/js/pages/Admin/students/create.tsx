@@ -50,6 +50,7 @@ export default function AdminStudentsCreate({
         gender: 'Male',
         date_of_birth: '',
         address: '',
+        mother_name: '',
         fee_status: 'unpaid',
         enrollment_status: 'enrolled',
         enrollment_date: new Date().toISOString().split('T')[0],
@@ -227,6 +228,23 @@ export default function AdminStudentsCreate({
                                 {errors.address && (
                                     <p className="text-xs text-destructive">
                                         {errors.address}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="grid gap-2 md:col-span-2">
+                                <Label htmlFor="mother_name">Mother's Name</Label>
+                                <Input
+                                    id="mother_name"
+                                    placeholder="e.g. Fadumo Ahmed"
+                                    value={data.mother_name}
+                                    onChange={(e) =>
+                                        setData('mother_name', e.target.value)
+                                    }
+                                />
+                                {errors.mother_name && (
+                                    <p className="text-xs text-destructive">
+                                        {errors.mother_name}
                                     </p>
                                 )}
                             </div>
