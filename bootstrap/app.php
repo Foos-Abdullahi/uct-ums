@@ -58,7 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         'line' => $e->getLine(),
                         'trace' => collect($e->getTrace())->map(fn ($trace) => $trace['file'] ?? null.':'.($trace['line'] ?? null))->filter()->toArray(),
                     ] : null,
-                ])->toResponse($request)->setStatusCode($status);
+                ])->rootView('error')->toResponse($request)->setStatusCode($status);
             }
 
             return null;

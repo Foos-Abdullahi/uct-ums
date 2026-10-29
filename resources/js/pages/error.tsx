@@ -2,7 +2,6 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, Home, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import AppLayout from '@/layouts/app-layout';
 import { getErrorConfig } from './error-config';
 import type { ErrorPageProps, ErrorStatusCode } from './types';
 
@@ -13,7 +12,7 @@ interface PageProps extends ErrorPageProps {
 }
 
 export default function ErrorPage() {
-    const { status, message, requestId, debug, auth } = usePage<PageProps>().props;
+    const { status, message, requestId, debug } = usePage<PageProps>().props;
     const safeStatus = (status ?? 500) as ErrorStatusCode;
     const config = getErrorConfig(safeStatus);
     const displayMessage = message ?? config.description;
@@ -99,25 +98,6 @@ export default function ErrorPage() {
             </CardContent>
         </Card>
     );
-
-    if (auth?.user) {
-        return (
-            <>
-                <Head title={`${safeStatus} - ${config.title}`} />
-                <AppLayout breadcrumbs={[{ title: `Error ${safeStatus}`, href: '#' }]}>
-                    <div className="relative flex min-h-[calc(100vh-12rem)] items-center justify-center overflow-hidden px-6 py-10">
-                        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                            <div className="absolute left-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-primary/10 blur-3xl" />
-                            <div className="absolute bottom-[-140px] right-[-140px] h-[360px] w-[360px] rounded-full bg-secondary/10 blur-3xl" />
-                        </div>
-                        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.04)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.04)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
-
-                        {cardContent}
-                    </div>
-                </AppLayout>
-            </>
-        );
-    }
 
     return (
         <>
