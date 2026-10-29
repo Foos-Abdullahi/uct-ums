@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\Lecturer;
 
-use App\Models\Course;
-use App\Models\Student;
 use App\Models\StudentAttendance;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,43 +23,17 @@ class StudentController extends LecturerBaseController
             $perPage = 15;
         }
 
-        $assignedCourses = Course::query()
-            ->whereHas('assignments', function ($q) use ($lecturer) {
-                $q->where('lecturer_id', $lecturer->id);
-            })
-            ->with('program')
-            ->get();
+        $assignments = $this->activeAssignments($lecturer);
+        $assignedCourses = $assignments->pluck('course')->filter()->unique('id')->values();
+        $rosterAssignments = $courseId && $courseId !== 'all'
+            ? $assignments->where('course_id', (int) $courseId)
+            : $assignments;
 
         $courseIds = $assignedCourses->pluck('id')->all();
 
         // Scope students
-        $query = Student::query()
+        $query = $this->studentsForAssignments($rosterAssignments)
             ->with(['user', 'program'])
-            ->where(function ($q) use ($assignedCourses, $courseIds) {
-                foreach ($assignedCourses as $c) {
-                    $q->orWhere(function ($sub) use ($c) {
-                        $sub->where('program_id', $c->program_id)
-                            ->where('current_semester', $c->semester);
-                    });
-                }
-                $q->orWhereHas('grades', function ($gq) use ($courseIds) {
-                    $gq->whereIn('course_id', $courseIds);
-                });
-            })
-            ->when($courseId && $courseId !== 'all', function ($q) use ($courseId) {
-                $targetCourse = Course::find($courseId);
-                if ($targetCourse) {
-                    $q->where(function ($sub) use ($targetCourse) {
-                        $sub->where(function ($inner) use ($targetCourse) {
-                            $inner->where('program_id', $targetCourse->program_id)
-                                ->where('current_semester', $targetCourse->semester);
-                        })->orWhereHas('grades', function ($gq) use ($targetCourse) {
-                            $gq->where('course_id', $targetCourse->id)
-                                ->orWhere('course_code', $targetCourse->code);
-                        });
-                    });
-                }
-            })
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('matric_no', 'like', "%{$search}%")

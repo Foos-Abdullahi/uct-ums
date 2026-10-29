@@ -10,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,4 +37,30 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return null;
+            }
+
+            $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+
+            if ($status === 403 || $status === 404 || $status >= 500) {
+                return Inertia::render('error', [
+                    'status' => $status,
+                    'message' => $e->getMessage(),
+                    'requestId' => bin2hex(random_bytes(4)),
+                    'timestamp' => now()->toIso8601String(),
+                    'route' => $request->fullUrl(),
+                    'debug' => config('app.debug') ? [
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => collect($e->getTrace())->map(fn ($trace) => $trace['file'] ?? null.':'.($trace['line'] ?? null))->filter()->toArray(),
+                    ] : null,
+                ])->toResponse($request)->setStatusCode($status);
+            }
+
+            return null;
+        });
     })->create();

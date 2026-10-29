@@ -41,11 +41,11 @@ test('registrar cannot access finance portal routes', function () {
     $response->assertForbidden();
 });
 
-test('super admin can access registrar portal routes', function () {
+test('super admin cannot access another role portal routes', function () {
     $user = User::factory()->role(UserRole::SuperAdmin)->create();
     $this->actingAs($user);
 
     $response = $this->get(route('registrar.dashboard'));
 
-    $response->assertOk();
+    $response->assertForbidden();
 });

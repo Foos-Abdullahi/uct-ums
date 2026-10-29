@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Models\Course;
-use App\Models\Student;
 use App\Models\StudentAttendance;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,12 +18,8 @@ class AttendanceController extends LecturerBaseController
     {
         $lecturer = $this->getLecturer($request);
 
-        $assignedCourses = Course::query()
-            ->whereHas('assignments', function ($q) use ($lecturer) {
-                $q->where('lecturer_id', $lecturer->id);
-            })
-            ->with('program')
-            ->get();
+        $assignments = $this->activeAssignments($lecturer);
+        $assignedCourses = $assignments->pluck('course')->filter()->unique('id')->values();
 
         $selectedCourseId = (int) $request->query('course_id', $assignedCourses->first()?->id ?? 0);
         $selectedDate = $request->query('date', now()->toDateString());
@@ -33,16 +28,8 @@ class AttendanceController extends LecturerBaseController
 
         $students = collect();
         if ($course) {
-            $students = Student::query()
+            $students = $this->studentsForAssignments($this->activeAssignments($lecturer, $course))
                 ->with('user')
-                ->where(function ($q) use ($course) {
-                    $q->where(function ($sub) use ($course) {
-                        $sub->where('program_id', $course->program_id)
-                            ->where('current_semester', $course->semester);
-                    })->orWhereHas('attendances', function ($aq) use ($course) {
-                        $aq->where('course_id', $course->id);
-                    });
-                })
                 ->orderBy('matric_no')
                 ->get()
                 ->map(function ($student) use ($course, $selectedDate) {
@@ -134,6 +121,15 @@ class AttendanceController extends LecturerBaseController
 
         if (! $isAssigned) {
             abort(403, 'You are not assigned to teach this course.');
+        }
+
+        $studentIds = collect($validated['records'])->pluck('student_id')->unique();
+        $isAssignedStudents = $this->studentsForAssignments($this->activeAssignments($lecturer, $course))
+            ->whereIn('id', $studentIds)
+            ->count() === $studentIds->count();
+
+        if (! $isAssignedStudents) {
+            abort(403, 'Attendance can only be recorded for students in your assigned cohort.');
         }
 
         foreach ($validated['records'] as $record) {
