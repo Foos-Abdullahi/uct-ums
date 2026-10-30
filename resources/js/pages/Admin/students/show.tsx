@@ -62,6 +62,7 @@ interface FinancialSummary {
     total_invoiced: number;
     total_paid: number;
     total_outstanding: number;
+    clearance_status: Student['fee_status'];
     overdue_count: number;
 }
 
@@ -549,7 +550,9 @@ export default function AdminStudentsShow({
                                         status={student.enrollment_status}
                                     />
                                     <StudentFeeBadge
-                                        status={student.fee_status}
+                                        status={
+                                            financialSummary.clearance_status
+                                        }
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -852,7 +855,9 @@ export default function AdminStudentsShow({
                                                 Fee Clearance Status
                                             </span>
                                             <StudentFeeBadge
-                                                status={student.fee_status}
+                                                status={
+                                                    financialSummary.clearance_status
+                                                }
                                             />
                                         </div>
                                     </div>
@@ -1039,7 +1044,9 @@ export default function AdminStudentsShow({
                                 </p>
                                 <div className="mt-1">
                                     <StudentFeeBadge
-                                        status={student.fee_status}
+                                        status={
+                                            financialSummary.clearance_status
+                                        }
                                     />
                                 </div>
                             </Card>

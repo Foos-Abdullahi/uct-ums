@@ -51,6 +51,12 @@ test('student cannot access lecturer portal', function () {
     $response->assertForbidden();
 });
 
+test('super admin cannot access lecturer portal', function () {
+    $this->actingAs(User::factory()->role(UserRole::SuperAdmin)->create());
+
+    $this->get(route('lecturer.students.index'))->assertForbidden();
+});
+
 test('lecturer can access dashboard with assignments and stats', function () {
     $this->actingAs($this->lecturerUser);
 
@@ -107,6 +113,7 @@ test('lecturer can view enrolled students directory', function () {
         'user_id' => $studentUser->id,
         'program_id' => $this->program->id,
         'current_semester' => 1,
+        'section' => 'Section A',
     ]);
 
     $this->actingAs($this->lecturerUser);
@@ -121,12 +128,40 @@ test('lecturer can view enrolled students directory', function () {
         );
 });
 
+test('lecturer only sees students in the assigned course cohort', function () {
+    $assignedStudent = Student::factory()->create([
+        'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
+        'current_semester' => 1,
+        'section' => 'Section A',
+    ]);
+    $otherSectionStudent = Student::factory()->create([
+        'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
+        'current_semester' => 1,
+        'section' => 'Section B',
+    ]);
+    $otherSemesterStudent = Student::factory()->create([
+        'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
+        'current_semester' => 2,
+        'section' => 'Section A',
+    ]);
+
+    $this->actingAs($this->lecturerUser);
+
+    $this->get(route('lecturer.students.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->has('students.data', 1));
+});
+
 test('lecturer can record attendance for enrolled students', function () {
     $studentUser = User::factory()->role(UserRole::Student)->create();
     $student = Student::factory()->create([
         'user_id' => $studentUser->id,
         'program_id' => $this->program->id,
         'current_semester' => 1,
+        'section' => 'Section A',
     ]);
 
     $this->actingAs($this->lecturerUser);
@@ -152,12 +187,38 @@ test('lecturer can record attendance for enrolled students', function () {
     ]);
 });
 
+test('lecturer cannot record attendance for a student outside the assigned cohort', function () {
+    $student = Student::factory()->create([
+        'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
+        'current_semester' => 1,
+        'section' => 'Section B',
+    ]);
+
+    $this->actingAs($this->lecturerUser);
+
+    $this->post(route('lecturer.attendance.store'), [
+        'course_id' => $this->course->id,
+        'date' => '2026-09-15',
+        'records' => [[
+            'student_id' => $student->id,
+            'status' => 'present',
+        ]],
+    ])->assertForbidden();
+
+    $this->assertDatabaseMissing('student_attendances', [
+        'student_id' => $student->id,
+        'course_id' => $this->course->id,
+    ]);
+});
+
 test('lecturer can enter grades and recalculate student GPA', function () {
     $studentUser = User::factory()->role(UserRole::Student)->create();
     $student = Student::factory()->create([
         'user_id' => $studentUser->id,
         'program_id' => $this->program->id,
         'current_semester' => 1,
+        'section' => 'Section A',
         'gpa' => 0.00,
     ]);
 

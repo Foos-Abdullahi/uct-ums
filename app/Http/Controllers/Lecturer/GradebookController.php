@@ -19,29 +19,16 @@ class GradebookController extends LecturerBaseController
     {
         $lecturer = $this->getLecturer($request);
 
-        $assignedCourses = Course::query()
-            ->whereHas('assignments', function ($q) use ($lecturer) {
-                $q->where('lecturer_id', $lecturer->id);
-            })
-            ->with('program')
-            ->get();
+        $assignments = $this->activeAssignments($lecturer);
+        $assignedCourses = $assignments->pluck('course')->filter()->unique('id')->values();
 
         $selectedCourseId = (int) $request->query('course_id', $assignedCourses->first()?->id ?? 0);
         $course = $assignedCourses->firstWhere('id', $selectedCourseId);
 
         $students = collect();
         if ($course) {
-            $students = Student::query()
+            $students = $this->studentsForAssignments($this->activeAssignments($lecturer, $course))
                 ->with('user')
-                ->where(function ($q) use ($course) {
-                    $q->where(function ($sub) use ($course) {
-                        $sub->where('program_id', $course->program_id)
-                            ->where('current_semester', $course->semester);
-                    })->orWhereHas('grades', function ($gq) use ($course) {
-                        $gq->where('course_id', $course->id)
-                            ->orWhere('course_code', $course->code);
-                    });
-                })
                 ->orderBy('matric_no')
                 ->get()
                 ->map(function ($student) use ($course) {
@@ -99,6 +86,15 @@ class GradebookController extends LecturerBaseController
 
         if (! $isAssigned) {
             abort(403, 'You are not assigned to teach this course.');
+        }
+
+        $studentIds = collect($validated['grades'])->pluck('student_id')->unique();
+        $isAssignedStudents = $this->studentsForAssignments($this->activeAssignments($lecturer, $course))
+            ->whereIn('id', $studentIds)
+            ->count() === $studentIds->count();
+
+        if (! $isAssignedStudents) {
+            abort(403, 'Grades can only be entered for students in your assigned cohort.');
         }
 
         $affectedStudents = [];

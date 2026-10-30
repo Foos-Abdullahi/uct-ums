@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Lecturer;
 use App\Models\Course;
 use App\Models\CourseAssignment;
 use App\Models\CourseMaterial;
-use App\Models\Student;
 use App\Models\StudentAttendance;
 use App\Models\StudentGrade;
 use Illuminate\Http\Request;
@@ -45,11 +44,7 @@ class CourseController extends LecturerBaseController
         $assignments = $query->get()->map(function ($assignment) {
             $studentCount = 0;
             if ($assignment->course) {
-                $studentCount = Student::query()
-                    ->where('enrollment_status', 'enrolled')
-                    ->where('program_id', $assignment->course->program_id)
-                    ->where('current_semester', $assignment->course->semester)
-                    ->count();
+                $studentCount = $this->studentsForAssignments(collect([$assignment]))->count();
             }
             $assignment->setAttribute('students_count', $studentCount);
 
@@ -79,28 +74,15 @@ class CourseController extends LecturerBaseController
     {
         $lecturer = $this->getLecturer($request);
 
-        $assignment = CourseAssignment::query()
-            ->with(['course.program'])
-            ->where('lecturer_id', $lecturer->id)
-            ->where('course_id', $course->id)
-            ->first();
+        $assignments = $this->activeAssignments($lecturer, $course);
+        $assignment = $assignments->first();
 
         if (! $assignment) {
             abort(403, 'You are not assigned to teach this course.');
         }
 
-        // Students in this course (by program & semester, or who have grades/attendances in this course)
-        $students = Student::query()
+        $students = $this->studentsForAssignments($assignments)
             ->with('user')
-            ->where(function ($q) use ($course) {
-                $q->where(function ($sub) use ($course) {
-                    $sub->where('program_id', $course->program_id)
-                        ->where('current_semester', $course->semester);
-                })->orWhereHas('grades', function ($gq) use ($course) {
-                    $gq->where('course_id', $course->id)
-                        ->orWhere('course_code', $course->code);
-                });
-            })
             ->orderBy('matric_no')
             ->get()
             ->map(function ($student) use ($course) {

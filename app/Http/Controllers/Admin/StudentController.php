@@ -254,6 +254,11 @@ class StudentController extends Controller
         $totalInvoiced = (float) $student->invoices->sum('amount');
         $totalPaid = (float) $student->invoices->sum('paid_amount');
         $totalOutstanding = max(0, $totalInvoiced - $totalPaid);
+        $clearanceStatus = match (true) {
+            $totalOutstanding <= 0 => FeeStatus::Paid,
+            $totalPaid > 0 => FeeStatus::Partial,
+            default => FeeStatus::Unpaid,
+        };
         $overdueCount = $student->invoices
             ->filter(fn ($invoice) => $invoice->status !== 'paid'
                 && $invoice->due_date
@@ -282,6 +287,7 @@ class StudentController extends Controller
                 'total_invoiced' => $totalInvoiced,
                 'total_paid' => $totalPaid,
                 'total_outstanding' => $totalOutstanding,
+                'clearance_status' => $clearanceStatus->value,
                 'overdue_count' => $overdueCount,
             ],
             'financeStatement' => $statementData,

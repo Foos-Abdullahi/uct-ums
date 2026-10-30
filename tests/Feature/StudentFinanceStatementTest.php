@@ -141,6 +141,31 @@ test('admin student profile includes the finance statement data', function () {
         );
 });
 
+test('admin student profile derives clearance status from the displayed finance totals', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $student = Student::factory()->create([
+        'fee_status' => FeeStatus::Paid,
+    ]);
+
+    StudentInvoice::factory()->create([
+        'student_id' => $student->id,
+        'amount' => 200,
+        'paid_amount' => 0,
+        'status' => 'unpaid',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.students.show', $student))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/students/show')
+            ->where('financialSummary.total_invoiced', 200)
+            ->where('financialSummary.total_paid', 0)
+            ->where('financialSummary.total_outstanding', 200)
+            ->where('financialSummary.clearance_status', FeeStatus::Unpaid->value)
+        );
+});
+
 test('student portal fees page includes statement ledger and totals', function () {
     $user = User::factory()->role(UserRole::Student)->create();
     $student = Student::factory()->create([

@@ -5,11 +5,14 @@ use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\FeeGateMiddleware;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,4 +39,30 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson() || $e instanceof AuthenticationException || $e instanceof ValidationException) {
+                return null;
+            }
+
+            $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+
+            if ($status === 403 || $status === 404 || $status >= 500) {
+                return Inertia::render('errors/error', [
+                    'status' => $status,
+                    'message' => $e->getMessage(),
+                    'requestId' => bin2hex(random_bytes(4)),
+                    'timestamp' => now()->toIso8601String(),
+                    'route' => $request->fullUrl(),
+                    'debug' => config('app.debug') ? [
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => collect($e->getTrace())->map(fn ($trace) => $trace['file'] ?? null.':'.($trace['line'] ?? null))->filter()->toArray(),
+                    ] : null,
+                ])->rootView('error')->toResponse($request)->setStatusCode($status);
+            }
+
+            return null;
+        });
     })->create();
