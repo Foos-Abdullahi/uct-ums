@@ -48,7 +48,7 @@ abstract class LecturerBaseController extends Controller
                 foreach ($assignments as $assignment) {
                     $query->orWhere(function (Builder $studentQuery) use ($assignment) {
                         $studentQuery->where('program_id', $assignment->course->program_id)
-                            ->where('current_semester', $this->assignmentSemesterNumber($assignment));
+                            ->where('current_semester', $assignment->course->semester);
 
                         if ($assignment->section) {
                             $section = trim($assignment->section);
@@ -70,18 +70,6 @@ abstract class LecturerBaseController extends Controller
                     });
                 }
             });
-    }
-
-    /**
-     * Resolve the semester number of an assignment, falling back to the course semester.
-     */
-    protected function assignmentSemesterNumber(CourseAssignment $assignment): int
-    {
-        if (preg_match('/\d+/', (string) $assignment->semester, $matches)) {
-            return (int) $matches[0];
-        }
-
-        return (int) $assignment->course->semester;
     }
 
     /**

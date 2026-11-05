@@ -155,8 +155,9 @@ test('lecturer only sees students in the assigned course cohort', function () {
         ->assertInertia(fn ($page) => $page->has('students.data', 1));
 });
 
-test('lecturer sees students of the semester set on the assignment', function () {
-    $this->assignment->update(['semester' => 'Semester 3', 'section' => 'A']);
+test('lecturer sees course semester students despite assignment term and section label', function () {
+    $this->course->update(['semester' => 3]);
+    $this->assignment->update(['semester' => 'Semester 1', 'section' => 'A']);
 
     $matching = Student::factory()->create([
         'program_id' => $this->program->id,
