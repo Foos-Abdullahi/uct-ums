@@ -155,6 +155,31 @@ test('lecturer only sees students in the assigned course cohort', function () {
         ->assertInertia(fn ($page) => $page->has('students.data', 1));
 });
 
+test('lecturer sees students of the semester set on the assignment', function () {
+    $this->assignment->update(['semester' => 'Semester 3', 'section' => 'A']);
+
+    $matching = Student::factory()->create([
+        'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
+        'current_semester' => 3,
+        'section' => 'Section A',
+    ]);
+    Student::factory()->create([
+        'program_id' => $this->program->id,
+        'academic_year' => '2026/2027',
+        'current_semester' => 1,
+        'section' => 'Section A',
+    ]);
+
+    $this->actingAs($this->lecturerUser);
+
+    $this->get(route('lecturer.students.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('students.data', 1)
+            ->where('students.data.0.id', $matching->id));
+});
+
 test('lecturer can record attendance for enrolled students', function () {
     $studentUser = User::factory()->role(UserRole::Student)->create();
     $student = Student::factory()->create([

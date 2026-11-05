@@ -48,18 +48,40 @@ abstract class LecturerBaseController extends Controller
                 foreach ($assignments as $assignment) {
                     $query->orWhere(function (Builder $studentQuery) use ($assignment) {
                         $studentQuery->where('program_id', $assignment->course->program_id)
-                            ->where('current_semester', $assignment->course->semester);
+                            ->where('current_semester', $this->assignmentSemesterNumber($assignment));
 
                         if ($assignment->section) {
-                            $studentQuery->where('section', $assignment->section);
+                            $section = trim($assignment->section);
+                            $bareSection = trim(preg_replace('/^section\s*/i', '', $section));
+
+                            $studentQuery->whereIn('section', array_unique([
+                                $section,
+                                $bareSection,
+                                'Section '.$bareSection,
+                            ]));
                         }
 
                         if ($assignment->academic_year) {
-                            $studentQuery->where('academic_year', $assignment->academic_year);
+                            $studentQuery->where(function (Builder $yearQuery) use ($assignment) {
+                                $yearQuery->where('academic_year', $assignment->academic_year)
+                                    ->orWhereNull('academic_year');
+                            });
                         }
                     });
                 }
             });
+    }
+
+    /**
+     * Resolve the semester number of an assignment, falling back to the course semester.
+     */
+    protected function assignmentSemesterNumber(CourseAssignment $assignment): int
+    {
+        if (preg_match('/\d+/', (string) $assignment->semester, $matches)) {
+            return (int) $matches[0];
+        }
+
+        return (int) $assignment->course->semester;
     }
 
     /**
