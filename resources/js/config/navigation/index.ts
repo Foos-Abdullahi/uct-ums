@@ -30,6 +30,12 @@ export const adminNav: NavItem[] = [
                 permission: 'students.view',
             },
             {
+                title: 'nav_student_finance',
+                href: '/admin/finance/students',
+                icon: Wallet,
+                permission: 'finance.view',
+            },
+            {
                 title: 'nav_admissions',
                 href: '/admin/admissions',
                 icon: UserPlus,
@@ -101,12 +107,6 @@ export const adminNav: NavItem[] = [
                 title: 'nav_finance_overview',
                 href: '/admin/finance',
                 icon: Wallet,
-                permission: 'finance.view',
-            },
-            {
-                title: 'nav_student_finance',
-                href: '/admin/finance/students',
-                icon: Users,
                 permission: 'finance.view',
             },
             {

@@ -117,7 +117,7 @@ export default function AdminStudentsShow({
         <>
             <Head title={`Student - ${name}`} />
 
-            <div className="mx-auto max-w-6xl space-y-6 p-6">
+            <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 rounded-lg border bg-card p-5 sm:flex-row sm:items-center">
                     <Avatar className="h-16 w-16 shrink-0 border-2 border-primary/20">
