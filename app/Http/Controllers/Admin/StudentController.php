@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Finance\BuildStudentSemesterFinance;
 use App\Actions\Finance\CreateStudentInvoice;
 use App\Actions\Finance\GenerateStudentFinanceStatement;
 use App\Actions\Finance\ManageStudentPayment;
@@ -236,6 +237,7 @@ class StudentController extends Controller
     public function show(
         Student $student,
         GenerateStudentFinanceStatement $generateStatement,
+        BuildStudentSemesterFinance $buildSemesterFinance,
     ): Response {
         $student->load([
             'user',
@@ -273,12 +275,17 @@ class StudentController extends Controller
         $failedCount = $grades->where('status', 'failed')->count();
         $inProgressCount = $grades->where('status', 'in_progress')->count();
 
-        $attendances = $student->attendances;
-        $totalClasses = $attendances->count();
-        $presentCount = $attendances->where('status', 'present')->count();
-        $lateCount = $attendances->where('status', 'late')->count();
-        $absentCount = $attendances->where('status', 'absent')->count();
-        $attendanceRate = $totalClasses > 0 ? round((($presentCount + ($lateCount * 0.5)) / $totalClasses) * 100, 1) : 100.0;
+        $attendanceCounts = $student->attendances()
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+        $totalClasses = (int) $attendanceCounts->sum();
+        $presentCount = (int) ($attendanceCounts['present'] ?? 0);
+        $lateCount = (int) ($attendanceCounts['late'] ?? 0);
+        $absentCount = (int) ($attendanceCounts['absent'] ?? 0);
+        $attendanceRate = $totalClasses > 0
+            ? round((($presentCount + ($lateCount * 0.5)) / $totalClasses) * 100, 1)
+            : null;
 
         return Inertia::render('Admin/students/show', [
             'student' => $student,
@@ -291,6 +298,8 @@ class StudentController extends Controller
                 'overdue_count' => $overdueCount,
             ],
             'financeStatement' => $statementData,
+            'currentSemesterFinance' => collect($buildSemesterFinance->execute($student)['semesters'])
+                ->firstWhere('is_current', true),
             'academicSummary' => [
                 'total_credits' => $totalCredits,
                 'completed_credits' => $completedCredits,
@@ -326,17 +335,20 @@ class StudentController extends Controller
      * Display a printable student finance statement.
      */
     public function financeStatement(
+        Request $request,
         Student $student,
         GenerateStudentFinanceStatement $generateStatement,
     ): Response {
         $student->load(['user', 'program', 'invoices', 'payments.invoice']);
-        $statementData = $generateStatement->execute($student);
+        $semester = $request->integer('semester') ?: null;
+        $statementData = $generateStatement->execute($student, $semester);
 
         return Inertia::render('Admin/students/finance-statement', [
             'student' => $student,
             'statement' => $statementData['statement'],
             'totals' => $statementData['totals'],
             'generatedAt' => $statementData['generatedAt'],
+            'semester' => $semester,
         ]);
     }
 

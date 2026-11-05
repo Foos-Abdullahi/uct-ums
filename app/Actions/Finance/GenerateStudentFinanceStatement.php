@@ -10,7 +10,8 @@ use App\Models\StudentPayment;
 class GenerateStudentFinanceStatement
 {
     /**
-     * Generate an ordered chronological finance ledger statement for a student.
+     * Generate an ordered chronological finance ledger statement for a student,
+     * optionally limited to a single semester.
      *
      * @return array{
      *     statement: list<array{
@@ -30,11 +31,18 @@ class GenerateStudentFinanceStatement
      *     generatedAt: string
      * }
      */
-    public function execute(Student $student): array
+    public function execute(Student $student, ?int $semester = null): array
     {
         $student->loadMissing(['invoices', 'payments.invoice']);
 
-        $invoiceEntries = $student->invoices->map(function (StudentInvoice $invoice): array {
+        $invoices = $semester === null
+            ? $student->invoices
+            : $student->invoices->where('semester', $semester);
+        $payments = $semester === null
+            ? $student->payments
+            : $student->payments->whereIn('invoice_id', $invoices->pluck('id'));
+
+        $invoiceEntries = $invoices->map(function (StudentInvoice $invoice): array {
             $date = $invoice->issue_date?->format('Y-m-d') ?? $invoice->created_at->format('Y-m-d');
 
             return [
@@ -48,7 +56,7 @@ class GenerateStudentFinanceStatement
             ];
         });
 
-        $paymentEntries = $student->payments
+        $paymentEntries = $payments
             ->where('status', PaymentStatus::Paid->value)
             ->map(function (StudentPayment $payment): array {
                 $date = $payment->payment_date?->format('Y-m-d') ?? $payment->created_at->format('Y-m-d');
@@ -93,8 +101,8 @@ class GenerateStudentFinanceStatement
             ];
         })->values()->all();
 
-        $totalCharged = round((float) $student->invoices->sum('amount'), 2);
-        $totalPaid = round((float) $student->payments
+        $totalCharged = round((float) $invoices->sum('amount'), 2);
+        $totalPaid = round((float) $payments
             ->where('status', PaymentStatus::Paid->value)
             ->sum('amount'), 2);
         $totalBalance = round($totalPaid - $totalCharged, 2);
