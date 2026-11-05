@@ -178,6 +178,8 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
             Route::middleware('permission:finance.view')->group(function () {
                 Route::get('/', [FinanceController::class, 'overview'])->name('overview');
                 Route::get('/fees', [FinanceController::class, 'fees'])->name('fees');
+                Route::get('/students', [FinanceController::class, 'students'])->name('students');
+                Route::get('/students/{student}', [FinanceController::class, 'studentFinance'])->name('students.show');
                 Route::get('/invoices', [FinanceController::class, 'invoices'])->name('invoices');
                 Route::get('/invoices/{invoice}', [FinanceController::class, 'invoiceDetails'])->name('invoices.show');
             });

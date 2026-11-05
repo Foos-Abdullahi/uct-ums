@@ -1176,6 +1176,7 @@ const en = {
   nav_transcripts: 'Transcripts',
   nav_finance: 'Finance',
   nav_finance_overview: 'Overview',
+  nav_student_finance: 'Student Finance',
   nav_fees: 'Fees',
   nav_payments: 'Payments',
   nav_invoices: 'Invoices',

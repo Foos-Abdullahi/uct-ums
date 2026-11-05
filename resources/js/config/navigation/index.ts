@@ -104,6 +104,12 @@ export const adminNav: NavItem[] = [
                 permission: 'finance.view',
             },
             {
+                title: 'nav_student_finance',
+                href: '/admin/finance/students',
+                icon: Users,
+                permission: 'finance.view',
+            },
+            {
                 title: 'nav_fees',
                 href: '/admin/finance/fees',
                 icon: Receipt,

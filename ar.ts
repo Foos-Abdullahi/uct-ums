@@ -1178,6 +1178,7 @@ const ar = {
   nav_transcripts: 'السجلات الأكاديمية',
   nav_finance: 'المالية',
   nav_finance_overview: 'نظرة عامة',
+  nav_student_finance: 'مالية الطلاب',
   nav_fees: 'الرسوم',
   nav_payments: 'المدفوعات',
   nav_invoices: 'الفواتير',
