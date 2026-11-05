@@ -335,17 +335,20 @@ class StudentController extends Controller
      * Display a printable student finance statement.
      */
     public function financeStatement(
+        Request $request,
         Student $student,
         GenerateStudentFinanceStatement $generateStatement,
     ): Response {
         $student->load(['user', 'program', 'invoices', 'payments.invoice']);
-        $statementData = $generateStatement->execute($student);
+        $semester = $request->integer('semester') ?: null;
+        $statementData = $generateStatement->execute($student, $semester);
 
         return Inertia::render('Admin/students/finance-statement', [
             'student' => $student,
             'statement' => $statementData['statement'],
             'totals' => $statementData['totals'],
             'generatedAt' => $statementData['generatedAt'],
+            'semester' => $semester,
         ]);
     }
 

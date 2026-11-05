@@ -8,6 +8,7 @@ interface FinanceStatementProps {
     statement: StatementEntry[];
     totals: StatementTotals;
     generatedAt: string;
+    semester?: number | null;
 }
 
 export default function FinanceStatement({
@@ -15,6 +16,7 @@ export default function FinanceStatement({
     statement,
     totals,
     generatedAt,
+    semester = null,
 }: FinanceStatementProps) {
     const studentName = student.user?.name ?? 'Student';
 
@@ -26,9 +28,10 @@ export default function FinanceStatement({
                 statement={statement}
                 totals={totals}
                 generatedAt={generatedAt}
+                semester={semester}
                 isPrintPage={true}
-                backUrl={`/admin/students/${student.id}?tab=finance`}
-                backLabel="Back to Student"
+                backUrl={`/admin/finance/students/${student.id}`}
+                backLabel="Back to Student Finance"
             />
         </>
     );

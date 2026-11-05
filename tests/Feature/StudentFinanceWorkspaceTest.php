@@ -91,7 +91,7 @@ test('student finance workspace groups invoices and payments by semester', funct
             ->has('openInvoices', 1));
 });
 
-test('current semester is shown even when no fees were issued for it', function () {
+test('every semester up to the current one is listed even when it has no records', function () {
     $admin = User::factory()->role(UserRole::SuperAdmin)->create();
     $student = financeWorkspaceStudent();
 
@@ -99,9 +99,11 @@ test('current semester is shown even when no fees were issued for it', function 
         ->get(route('admin.finance.students.show', $student))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('semesters', 1)
+            ->has('semesters', 2)
             ->where('semesters.0.is_current', true)
-            ->where('semesters.0.status', 'none'));
+            ->where('semesters.0.status', 'none')
+            ->where('semesters.1.semester', 1)
+            ->where('semesters.1.status', 'none'));
 });
 
 test('student finance workspace requires finance permission', function () {
@@ -124,4 +126,20 @@ test('student profile reports real attendance and no rate when nothing is record
             ->where('attendanceSummary.total_classes', 0)
             ->where('attendanceSummary.attendance_rate', null)
             ->has('currentSemesterFinance'));
+});
+
+test('finance statement can be limited to one semester', function () {
+    $admin = User::factory()->role(UserRole::SuperAdmin)->create();
+    $student = financeWorkspaceStudent();
+
+    StudentInvoice::factory()->create(['student_id' => $student->id, 'academic_year' => '2026-2027', 'semester' => 1, 'type' => 'tuition', 'amount' => 300]);
+    StudentInvoice::factory()->create(['student_id' => $student->id, 'academic_year' => '2026-2027', 'semester' => 2, 'type' => 'tuition', 'amount' => 700]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.students.finance-statement', ['student' => $student, 'semester' => 2]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('semester', 2)
+            ->has('statement', 1)
+            ->where('totals.charged', 700));
 });

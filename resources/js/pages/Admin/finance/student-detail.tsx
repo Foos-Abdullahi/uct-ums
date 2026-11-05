@@ -5,6 +5,7 @@ import {
     ChevronDown,
     CreditCard,
     Eye,
+    Plus,
     Printer,
     Receipt,
     User,
@@ -128,6 +129,10 @@ export default function AdminFinanceStudentDetail({
 }: Props) {
     const [feeOpen, setFeeOpen] = useState(false);
     const [paymentOpen, setPaymentOpen] = useState(false);
+    const [feeTarget, setFeeTarget] = useState<{
+        semester: number;
+        academicYear: string | null;
+    } | null>(null);
     const [busy, setBusy] = useState<number | null>(null);
 
     const name = student.user?.name ?? 'Unknown Student';
@@ -157,9 +162,40 @@ export default function AdminFinanceStudentDetail({
 
     const renderSemester = (group: SemesterGroup) => (
         <div className="space-y-4">
+            {group.semester !== null && (
+                <div className="flex flex-wrap justify-end gap-2">
+                    <Button asChild size="sm" variant="outline" className="h-8">
+                        <a
+                            href={`/admin/students/${student.id}/finance-statement?semester=${group.semester}`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <Printer className="mr-1.5 h-3.5 w-3.5" />
+                            Print semester {group.semester}
+                        </a>
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="h-8"
+                        onClick={() =>
+                            setFeeTarget({
+                                semester: group.semester as number,
+                                academicYear:
+                                    group.academic_year ??
+                                    student.academic_year ??
+                                    null,
+                            })
+                        }
+                    >
+                        <Plus className="mr-1.5 h-3.5 w-3.5" />
+                        Add fee record
+                    </Button>
+                </div>
+            )}
             {group.invoices.length === 0 ? (
                 <div className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
-                    No fees have been issued for this semester.
+                    No fee records for this semester yet — use “Add fee record”
+                    to create one.
                 </div>
             ) : (
                 <div className="overflow-x-auto rounded-md border">
@@ -423,12 +459,12 @@ export default function AdminFinanceStudentDetail({
                                             {groupTitle(g)}
                                         </span>
                                         <span className="hidden text-xs text-muted-foreground sm:inline">
-                                            {money(g.paid)} / {money(g.charged)}
+                                            {g.status === 'none' ? 'No records' : `${money(g.paid)} / ${money(g.charged)}`}
                                         </span>
                                         <span
                                             className={`text-xs font-bold tabular-nums ${g.balance > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
                                         >
-                                            {g.balance > 0 ? `${money(g.balance)} due` : 'Settled'}
+                                            {g.balance > 0 ? `${money(g.balance)} due` : g.status === 'none' ? '—' : 'Settled'}
                                         </span>
                                         <SemesterStatus status={g.status} />
                                     </CollapsibleTrigger>
@@ -461,11 +497,22 @@ export default function AdminFinanceStudentDetail({
                 </Tabs>
 
                 <ManageFeeModal
-                    open={feeOpen}
-                    onOpenChange={setFeeOpen}
+                    key={feeTarget ? feeTarget.semester : 'current'}
+                    open={feeOpen || feeTarget !== null}
+                    onOpenChange={(open) => {
+                        setFeeOpen(open);
+
+                        if (!open) {
+                            setFeeTarget(null);
+                        }
+                    }}
                     studentId={student.id}
-                    academicYear={student.academic_year ?? null}
-                    semester={student.current_semester ?? 1}
+                    academicYear={
+                        feeTarget?.academicYear ?? student.academic_year ?? null
+                    }
+                    semester={
+                        feeTarget?.semester ?? student.current_semester ?? 1
+                    }
                 />
                 <RecordPaymentModal
                     open={paymentOpen}
