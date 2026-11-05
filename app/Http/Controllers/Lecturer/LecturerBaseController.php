@@ -51,11 +51,21 @@ abstract class LecturerBaseController extends Controller
                             ->where('current_semester', $assignment->course->semester);
 
                         if ($assignment->section) {
-                            $studentQuery->where('section', $assignment->section);
+                            $section = trim($assignment->section);
+                            $bareSection = trim(preg_replace('/^section\s*/i', '', $section));
+
+                            $studentQuery->whereIn('section', array_unique([
+                                $section,
+                                $bareSection,
+                                'Section '.$bareSection,
+                            ]));
                         }
 
                         if ($assignment->academic_year) {
-                            $studentQuery->where('academic_year', $assignment->academic_year);
+                            $studentQuery->where(function (Builder $yearQuery) use ($assignment) {
+                                $yearQuery->where('academic_year', $assignment->academic_year)
+                                    ->orWhereNull('academic_year');
+                            });
                         }
                     });
                 }
