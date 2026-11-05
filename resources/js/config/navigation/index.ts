@@ -54,6 +54,12 @@ export const adminNav: NavItem[] = [
                 permission: 'lecturers.view',
             },
             {
+                title: 'nav_lecturer_payroll',
+                href: '/admin/lecturer-payroll',
+                icon: Wallet,
+                permission: 'lecturers.view',
+            },
+            {
                 title: 'nav_assignments',
                 href: '/admin/assignments',
                 icon: ClipboardList,

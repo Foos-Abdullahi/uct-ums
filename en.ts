@@ -1167,6 +1167,7 @@ const en = {
   nav_students: 'Students',
   nav_admissions: 'Admissions',
   nav_lecturers: 'Lecturers',
+  nav_lecturer_payroll: 'Lecturer Payroll',
   nav_assignments: 'Assignments',
   nav_academic: 'Academic',
   nav_programs: 'Programs',
