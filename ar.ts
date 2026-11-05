@@ -1169,6 +1169,7 @@ const ar = {
   nav_students: 'الطلاب',
   nav_admissions: 'القبول',
   nav_lecturers: 'المحاضرين',
+  nav_lecturer_payroll: 'رواتب المحاضرين',
   nav_assignments: 'المهام',
   nav_academic: 'الأكاديمي',
   nav_programs: 'البرامج',
