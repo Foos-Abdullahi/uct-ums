@@ -43,19 +43,21 @@ class BuildStudentSemesterFinance
 
         /** @var Collection<string, Collection<int, StudentInvoice>> $groups */
         $groups = $student->invoices->groupBy(
-            fn (StudentInvoice $invoice): string => $this->groupKey($invoice->academic_year, $invoice->semester)
+            fn (StudentInvoice $invoice): string => $this->groupKey($invoice->semester)
         );
 
-        $currentKey = $this->groupKey($student->academic_year, $student->current_semester);
+        $currentKey = $this->groupKey((int) $student->current_semester);
 
-        if (! $groups->has($currentKey)) {
-            $groups->put($currentKey, collect());
+        foreach (range(1, max(1, (int) $student->current_semester)) as $number) {
+            if (! $groups->has($this->groupKey($number))) {
+                $groups->put($this->groupKey($number), collect());
+            }
         }
 
         $semesters = $groups->map(function (Collection $invoices, string $key) use ($student, $currentKey, $today): array {
             $first = $invoices->first();
+            $semester = $key === 'other' ? null : (int) substr($key, 1);
             $academicYear = $first?->academic_year ?? ($key === $currentKey ? $student->academic_year : null);
-            $semester = $first?->semester ?? ($key === $currentKey ? $student->current_semester : null);
 
             $charged = round((float) $invoices->sum('amount'), 2);
             $paid = round((float) $invoices->sum('paid_amount'), 2);
@@ -112,7 +114,7 @@ class BuildStudentSemesterFinance
                     return ($a['semester'] === null) <=> ($b['semester'] === null);
                 }
 
-                return [$b['academic_year'], $b['semester']] <=> [$a['academic_year'], $a['semester']];
+                return $b['semester'] <=> $a['semester'];
             })
             ->values()
             ->all();
@@ -135,9 +137,9 @@ class BuildStudentSemesterFinance
         ];
     }
 
-    private function groupKey(?string $academicYear, ?int $semester): string
+    private function groupKey(?int $semester): string
     {
-        return $semester === null ? 'other' : ($academicYear ?? 'unknown').'|'.$semester;
+        return $semester === null ? 'other' : 's'.$semester;
     }
 
     /**

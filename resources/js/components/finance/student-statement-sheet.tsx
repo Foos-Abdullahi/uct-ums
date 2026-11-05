@@ -13,6 +13,7 @@ interface StudentStatementSheetProps {
     backUrl?: string;
     backLabel?: string;
     printUrl?: string;
+    semester?: number | null;
 }
 
 export const formatMoney = (amount: number): string => {
@@ -35,6 +36,7 @@ export default function StudentStatementSheet({
     backUrl,
     backLabel = 'Back',
     printUrl,
+    semester = null,
 }: StudentStatementSheetProps) {
     const studentName = student.user?.name ?? 'Student';
     const initials = studentName
@@ -120,7 +122,7 @@ export default function StudentStatementSheet({
                         </Avatar>
                         <div>
                             <p className="text-xs font-semibold tracking-wider text-slate-500 uppercase">
-                                Student Finance Statement
+                                Student Finance Statement{semester ? ` — Semester ${semester}` : ''}
                             </p>
                             <h1 className="mt-0.5 text-2xl font-bold text-slate-950">
                                 {studentName}
