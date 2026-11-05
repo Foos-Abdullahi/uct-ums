@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\Finance\AssignSemesterFee;
+use App\Actions\Finance\BuildStudentSemesterFinance;
 use App\Actions\Finance\CreateStudentInvoice;
+use App\Actions\Finance\GenerateStudentFinanceStatement;
 use App\Actions\Finance\ManageStudentPayment;
 use App\Enums\AccountType;
 use App\Enums\PaymentMethod;
@@ -95,6 +97,81 @@ class FinanceController extends Controller
                 ->take(6)
                 ->get()
             ),
+        ]);
+    }
+
+    /**
+     * Search students and open their complete finance record.
+     */
+    public function students(Request $request): Response
+    {
+        $search = trim((string) $request->query('search', ''));
+        $feeStatus = $request->query('fee_status', 'all');
+
+        $students = Student::query()
+            ->with(['user:id,name,email', 'program:id,name'])
+            ->withSum('invoices as total_billed', 'amount')
+            ->withSum('invoices as total_paid', 'paid_amount')
+            ->search($search)
+            ->when(
+                in_array($feeStatus, ['paid', 'partial', 'unpaid'], true),
+                fn ($query) => $query->where('fee_status', $feeStatus),
+            )
+            ->orderBy('matric_no')
+            ->paginate(12)
+            ->withQueryString();
+
+        return Inertia::render('Admin/finance/students', [
+            'students' => $students,
+            'filters' => [
+                'search' => $search,
+                'fee_status' => in_array($feeStatus, ['paid', 'partial', 'unpaid'], true) ? $feeStatus : 'all',
+            ],
+        ]);
+    }
+
+    /**
+     * Show a student's overview, current semester and every past semester's finance.
+     */
+    public function studentFinance(
+        Student $student,
+        BuildStudentSemesterFinance $buildSemesterFinance,
+        GenerateStudentFinanceStatement $generateStatement,
+    ): Response {
+        $student->load(['user', 'program', 'invoices', 'payments.invoice']);
+
+        $totalInvoiced = round((float) $student->invoices->sum('amount'), 2);
+        $totalPaid = round((float) $student->invoices->sum('paid_amount'), 2);
+        $semesterFinance = $buildSemesterFinance->execute($student);
+
+        return Inertia::render('Admin/finance/student-detail', [
+            'student' => $student->only([
+                'id', 'matric_no', 'academic_year', 'current_semester', 'section',
+                'enrollment_status', 'fee_status', 'phone', 'photo_url', 'gpa',
+            ]) + [
+                'user' => $student->user?->only(['id', 'name', 'email']),
+                'program' => $student->program?->only(['id', 'name', 'degree_level', 'duration_semesters']),
+            ],
+            'summary' => [
+                'total_invoiced' => $totalInvoiced,
+                'total_paid' => $totalPaid,
+                'total_outstanding' => round(max(0, $totalInvoiced - $totalPaid), 2),
+                'pending_payments' => $student->payments->where('status', 'pending')->count(),
+                'overdue_count' => collect($semesterFinance['semesters'])->sum('overdue_count'),
+            ],
+            'semesters' => $semesterFinance['semesters'],
+            'unallocatedPayments' => $semesterFinance['unallocated_payments'],
+            'financeStatement' => $generateStatement->execute($student),
+            'openInvoices' => $student->invoices
+                ->filter(fn (StudentInvoice $invoice): bool => (float) $invoice->amount > (float) $invoice->paid_amount)
+                ->values()
+                ->map(fn (StudentInvoice $invoice): array => [
+                    'id' => $invoice->id,
+                    'invoice_no' => $invoice->invoice_no,
+                    'title' => $invoice->title,
+                    'amount' => (float) $invoice->amount,
+                    'paid_amount' => (float) $invoice->paid_amount,
+                ]),
         ]);
     }
 
