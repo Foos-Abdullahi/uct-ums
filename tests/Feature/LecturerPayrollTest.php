@@ -13,7 +13,7 @@ beforeEach(function () {
     $this->actingAs(User::factory()->role(UserRole::SuperAdmin)->create());
 });
 
-test('payroll page lists hours per lecturer at the hourly rate', function () {
+test('payroll index lists one row per lecturer with hours and pay for the month', function () {
     $lecturer = Lecturer::factory()->create();
     $math = Course::factory()->create();
     $physics = Course::factory()->create();
@@ -26,12 +26,57 @@ test('payroll page lists hours per lecturer at the hourly rate', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Admin/lecturer-payroll/index')
-            ->where('totals.hours', 5)
-            ->where('totals.total', 40)
-            ->where('totals.outstanding', 40)
-            ->has('rows', 1)
-            ->where('rows.0.courses', fn ($courses) => count($courses) === 2)
-            ->where('rows.0.status', 'unpaid'));
+            ->has('months')
+            ->where('filters.month', '2026-10')
+            ->loadDeferredProps(fn ($reload) => $reload
+                ->where('stats.hours', fn ($v) => (float) $v === 5.0)
+                ->where('stats.total', fn ($v) => (float) $v === 40.0)
+                ->where('stats.outstanding', fn ($v) => (float) $v === 40.0)
+                ->has('payroll.data', 1)
+                ->where('payroll.data.0.hours', fn ($v) => (float) $v === 5.0)
+                ->where('payroll.data.0.total', fn ($v) => (float) $v === 40.0)
+                ->where('payroll.data.0.status', 'unpaid')));
+});
+
+test('payroll index can filter by payment status', function () {
+    TeachingSession::factory()->create(['session_date' => '2026-10-03']);
+    TeachingSession::factory()->paid()->create(['session_date' => '2026-10-04']);
+
+    $this->get(route('admin.lecturer-payroll.index', ['month' => '2026-10', 'status' => 'paid']))
+        ->assertInertia(fn ($page) => $page->loadDeferredProps(fn ($reload) => $reload
+            ->has('payroll.data', 1)
+            ->where('payroll.data.0.status', 'paid')));
+});
+
+test('lecturer detail page shows courses and entries for the month', function () {
+    $lecturer = Lecturer::factory()->create();
+    TeachingSession::factory()->count(2)->create(['lecturer_id' => $lecturer->id, 'session_date' => '2026-10-05', 'hours' => 2]);
+
+    $this->get(route('admin.lecturer-payroll.show', ['lecturer' => $lecturer, 'month' => '2026-10']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Admin/lecturer-payroll/show')
+            ->where('summary.hours', fn ($v) => (float) $v === 4.0)
+            ->where('summary.total', fn ($v) => (float) $v === 32.0)
+            ->has('entries', 2));
+});
+
+test('create and edit pages render', function () {
+    $session = TeachingSession::factory()->create();
+
+    $this->get(route('admin.lecturer-payroll.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Admin/lecturer-payroll/create'));
+
+    $this->get(route('admin.lecturer-payroll.edit', $session))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Admin/lecturer-payroll/edit')->where('entry.id', $session->id));
+});
+
+test('paid entries cannot be opened for editing', function () {
+    $session = TeachingSession::factory()->paid()->create();
+
+    $this->get(route('admin.lecturer-payroll.edit', $session))->assertRedirect();
 });
 
 test('hours can be recorded for a lecturer and course', function () {

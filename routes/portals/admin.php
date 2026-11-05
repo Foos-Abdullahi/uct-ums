@@ -125,8 +125,14 @@ Route::middleware(['auth', 'verified', 'role:'.$backOfficeRoles])
         Route::prefix('lecturer-payroll')->name('lecturer-payroll.')->group(function () {
             Route::get('/', [LecturerPayrollController::class, 'index'])
                 ->middleware('permission:lecturers.view')->name('index');
+            Route::get('/create', [LecturerPayrollController::class, 'create'])
+                ->middleware('permission:lecturers.edit')->name('create');
             Route::post('/', [LecturerPayrollController::class, 'store'])
                 ->middleware('permission:lecturers.edit')->name('store');
+            Route::get('/lecturers/{lecturer}', [LecturerPayrollController::class, 'show'])
+                ->middleware('permission:lecturers.view')->name('show');
+            Route::get('/sessions/{session}/edit', [LecturerPayrollController::class, 'edit'])
+                ->middleware('permission:lecturers.edit')->name('edit');
             Route::put('/sessions/{session}', [LecturerPayrollController::class, 'update'])
                 ->middleware('permission:lecturers.edit')->name('update');
             Route::delete('/sessions/{session}', [LecturerPayrollController::class, 'destroy'])
