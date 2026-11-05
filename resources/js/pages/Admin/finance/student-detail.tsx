@@ -272,7 +272,7 @@ export default function AdminFinanceStudentDetail({
         <>
             <Head title={`Finance - ${name}`} />
 
-            <div className="mx-auto max-w-5xl space-y-6 p-6">
+            <div className="space-y-6 p-6">
                 <Link
                     href="/admin/finance/students"
                     className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
