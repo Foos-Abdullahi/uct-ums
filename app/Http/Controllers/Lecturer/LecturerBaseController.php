@@ -29,7 +29,7 @@ abstract class LecturerBaseController extends Controller
     }
 
     /**
-     * Scope students to the cohorts covered by the given course assignments.
+     * Scope students to the program and semester cohorts covered by the given course assignments.
      *
      * @param  Collection<int, CourseAssignment>  $assignments
      * @return Builder<Student>
@@ -49,17 +49,6 @@ abstract class LecturerBaseController extends Controller
                     $query->orWhere(function (Builder $studentQuery) use ($assignment) {
                         $studentQuery->where('program_id', $assignment->course->program_id)
                             ->where('current_semester', $assignment->course->semester);
-
-                        if ($assignment->section) {
-                            $section = trim($assignment->section);
-                            $bareSection = trim(preg_replace('/^section\s*/i', '', $section));
-
-                            $studentQuery->whereIn('section', array_unique([
-                                $section,
-                                $bareSection,
-                                'Section '.$bareSection,
-                            ]));
-                        }
 
                         if ($assignment->academic_year) {
                             $studentQuery->where(function (Builder $yearQuery) use ($assignment) {
