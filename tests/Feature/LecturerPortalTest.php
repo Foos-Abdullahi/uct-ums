@@ -128,7 +128,7 @@ test('lecturer can view enrolled students directory', function () {
         );
 });
 
-test('lecturer only sees students in the assigned course cohort', function () {
+test('lecturer sees all sections of the assigned course program and semester', function () {
     $assignedStudent = Student::factory()->create([
         'program_id' => $this->program->id,
         'academic_year' => '2026/2027',
@@ -152,7 +152,7 @@ test('lecturer only sees students in the assigned course cohort', function () {
 
     $this->get(route('lecturer.students.index'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->has('students.data', 1));
+        ->assertInertia(fn ($page) => $page->has('students.data', 2));
 });
 
 test('lecturer sees course semester students despite assignment term and section label', function () {
@@ -213,11 +213,11 @@ test('lecturer can record attendance for enrolled students', function () {
     ]);
 });
 
-test('lecturer cannot record attendance for a student outside the assigned cohort', function () {
+test('lecturer cannot record attendance for a student outside the assigned program and semester', function () {
     $student = Student::factory()->create([
         'program_id' => $this->program->id,
         'academic_year' => '2026/2027',
-        'current_semester' => 1,
+        'current_semester' => 2,
         'section' => 'Section B',
     ]);
 
