@@ -213,11 +213,11 @@ test('lecturer can record attendance for enrolled students', function () {
     ]);
 });
 
-test('lecturer cannot record attendance for a student outside the assigned cohort', function () {
+test('lecturer cannot record attendance for a student outside the assigned program and semester', function () {
     $student = Student::factory()->create([
         'program_id' => $this->program->id,
         'academic_year' => '2026/2027',
-        'current_semester' => 1,
+        'current_semester' => 2,
         'section' => 'Section B',
     ]);
 
