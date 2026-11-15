@@ -33,6 +33,7 @@
 
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-primary-hover: var(--primary-hover);
 
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
@@ -85,6 +86,7 @@
     --popover-foreground: #1c2620;
     --primary: #05581a;
     --primary-foreground: #ffffff;
+    --primary-hover: color-mix(in srgb, var(--brand-gold) 60%, var(--primary));
     --secondary: #f2f6f0;
     --secondary-foreground: #1c2620;
     --muted: #f2f6f0;
