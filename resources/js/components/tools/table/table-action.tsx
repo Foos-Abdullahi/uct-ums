@@ -41,7 +41,7 @@ const ActionItems = ({ title, Icon, onClick }: ActionItemsProps) => {
                 <TooltipTrigger>
                     <div
                         onClick={onClick}
-                        className="flex cursor-pointer gap-2 rounded-sm border border-transparent p-1 px-2 duration-200 ease-in-out hover:border-primary hover:bg-primary/5 dark:hover:border-teal-400 dark:hover:bg-transparent dark:hover:text-teal-400"
+                        className="flex cursor-pointer gap-2 rounded-sm border border-transparent p-1 px-2 duration-200 ease-in-out hover:border-brand-gold hover:bg-brand-gold/10 dark:hover:text-brand-gold"
                     >
                         {Icon}
                     </div>
