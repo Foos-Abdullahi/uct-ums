@@ -92,9 +92,9 @@ export default function StudentDashboard({
             <Head title="Student Dashboard" />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 p-4 sm:p-6 lg:p-8">
-                <section className="relative overflow-hidden rounded-3xl bg-[#132a55] px-6 py-7 text-primary-foreground shadow-xl shadow-primary/15 sm:px-8 sm:py-9">
+                <section className="relative overflow-hidden rounded-3xl bg-brand px-6 py-7 text-brand-foreground shadow-xl shadow-brand/15 sm:px-8 sm:py-9">
                     <div className="absolute -top-24 -right-16 size-64 rounded-full bg-white/10" />
-                    <div className="absolute right-32 -bottom-20 size-48 rounded-full border-[24px] border-cyan-300/15" />
+                    <div className="absolute right-32 -bottom-20 size-48 rounded-full border-[24px] border-brand-gold/20" />
                     <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div className="flex max-w-2xl items-center gap-4">
                             <Avatar className="size-20 border-4 border-white/20 shadow-lg">
@@ -107,7 +107,7 @@ export default function StudentDashboard({
                                 </AvatarFallback>
                             </Avatar>
                             <div>
-                                <div className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-cyan-200 uppercase">
+                                <div className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-brand-gold uppercase">
                                     <Sparkles className="size-4" />
                                     Your learning space
                                 </div>
@@ -116,11 +116,11 @@ export default function StudentDashboard({
                                 </h1>
                                 <p className="mt-3 text-sm leading-6 text-slate-200 sm:text-base">
                                     {student.program?.name ?? 'Your programme'}{' '}
-                                    <span className="mx-1.5 text-cyan-300">
+                                    <span className="mx-1.5 text-brand-gold">
                                         •
                                     </span>{' '}
                                     Semester {student.current_semester}{' '}
-                                    <span className="mx-1.5 text-cyan-300">
+                                    <span className="mx-1.5 text-brand-gold">
                                         •
                                     </span>{' '}
                                     {student.matric_no}
@@ -131,7 +131,7 @@ export default function StudentDashboard({
                             <Button
                                 asChild
                                 size="sm"
-                                className="bg-white text-primary shadow-none hover:bg-slate-100"
+                                className="bg-white text-brand shadow-none hover:bg-slate-100"
                             >
                                 <Link href="/student/courses">
                                     <BookOpen className="mr-2 h-4 w-4" />
@@ -153,7 +153,7 @@ export default function StudentDashboard({
                                 <Button
                                     asChild
                                     size="sm"
-                                    className="bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+                                    className="bg-brand-gold text-brand-gold-foreground hover:bg-brand-gold/90"
                                 >
                                     <Link href="/student/fees">
                                         <Wallet className="mr-2 h-4 w-4" />

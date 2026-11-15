@@ -402,7 +402,9 @@ export default function AdminDashboard({
                                         className="w-full justify-between text-xs text-primary"
                                     >
                                         <Link href="/admin/students">
-                                            <span>{t('open_student_directory')}</span>
+                                            <span>
+                                                {t('open_student_directory')}
+                                            </span>
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </Link>
                                     </Button>
@@ -421,7 +423,8 @@ export default function AdminDashboard({
                                             variant="outline"
                                             className="border-emerald-500/20 bg-emerald-500/10 text-[10px] text-emerald-600"
                                         >
-                                            {stats.collection_rate}% {t('collected')}
+                                            {stats.collection_rate}%{' '}
+                                            {t('collected')}
                                         </Badge>
                                     </div>
                                     <CardDescription className="text-xs">
@@ -468,7 +471,9 @@ export default function AdminDashboard({
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between rounded-md bg-destructive/5 p-2 text-destructive">
-                                            <span>{t('outstanding_balance')}</span>
+                                            <span>
+                                                {t('outstanding_balance')}
+                                            </span>
                                             <span className="font-semibold">
                                                 {formatCurrency(
                                                     stats.outstanding_balance,
@@ -484,7 +489,9 @@ export default function AdminDashboard({
                                         className="w-full justify-between text-xs text-primary"
                                     >
                                         <Link href="/admin/reports/finance">
-                                            <span>{t('view_detailed_ledger')}</span>
+                                            <span>
+                                                {t('view_detailed_ledger')}
+                                            </span>
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </Link>
                                     </Button>
@@ -552,7 +559,9 @@ export default function AdminDashboard({
                                         <div className="flex items-center justify-between rounded-md bg-rose-500/5 p-2 text-muted-foreground">
                                             <div className="flex items-center gap-2">
                                                 <XCircle className="h-3.5 w-3.5 text-rose-500" />
-                                                <span>{t('declined_rejected')}</span>
+                                                <span>
+                                                    {t('declined_rejected')}
+                                                </span>
                                             </div>
                                             <span className="font-semibold">
                                                 {stats.rejected_applications}
@@ -567,7 +576,9 @@ export default function AdminDashboard({
                                         className="w-full justify-between text-xs text-primary"
                                     >
                                         <Link href="/admin/admissions">
-                                            <span>{t('review_applications')}</span>
+                                            <span>
+                                                {t('review_applications')}
+                                            </span>
                                             <ArrowRight className="h-3.5 w-3.5" />
                                         </Link>
                                     </Button>
@@ -593,7 +604,9 @@ export default function AdminDashboard({
                                         <div>
                                             <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                                                 <Building2 className="h-4 w-4 text-primary" />
-                                                {t('academic_programs_enrollment')}
+                                                {t(
+                                                    'academic_programs_enrollment',
+                                                )}
                                             </CardTitle>
                                             <CardDescription className="text-xs">
                                                 {t('leading_programs')}
@@ -645,7 +658,9 @@ export default function AdminDashboard({
                                                                     }
                                                                 </span>
                                                                 <p className="text-[10px] text-muted-foreground">
-                                                                    {t('enrolled_students_count')}
+                                                                    {t(
+                                                                        'enrolled_students_count',
+                                                                    )}
                                                                 </p>
                                                             </div>
                                                             <div className="text-right">
@@ -655,7 +670,9 @@ export default function AdminDashboard({
                                                                     }
                                                                 </span>
                                                                 <p className="text-[10px] text-muted-foreground">
-                                                                    {t('offered_courses')}
+                                                                    {t(
+                                                                        'offered_courses',
+                                                                    )}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -703,7 +720,8 @@ export default function AdminDashboard({
                                                         {sem.semester}
                                                     </span>
                                                     <span className="font-semibold text-muted-foreground">
-                                                        {sem.total} {t('students_count')}
+                                                        {sem.total}{' '}
+                                                        {t('students_count')}
                                                     </span>
                                                 </div>
                                                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -986,7 +1004,7 @@ export default function AdminDashboard({
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                             <Link
                                 href="/admin/students"
-                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-brand-gold hover:bg-brand-gold/10"
                             >
                                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-110">
                                     <Users className="h-4 w-4" />
@@ -1001,7 +1019,7 @@ export default function AdminDashboard({
 
                             <Link
                                 href="/admin/admissions"
-                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-brand-gold hover:bg-brand-gold/10"
                             >
                                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 transition-transform group-hover:scale-110">
                                     <Layers className="h-4 w-4" />
@@ -1016,7 +1034,7 @@ export default function AdminDashboard({
 
                             <Link
                                 href="/admin/lecturers"
-                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-brand-gold hover:bg-brand-gold/10"
                             >
                                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 transition-transform group-hover:scale-110">
                                     <GraduationCap className="h-4 w-4" />
@@ -1031,7 +1049,7 @@ export default function AdminDashboard({
 
                             <Link
                                 href="/admin/assignments"
-                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-brand-gold hover:bg-brand-gold/10"
                             >
                                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-600 transition-transform group-hover:scale-110">
                                     <BookOpen className="h-4 w-4" />
@@ -1046,7 +1064,7 @@ export default function AdminDashboard({
 
                             <Link
                                 href="/admin/reports"
-                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-brand-gold hover:bg-brand-gold/10"
                             >
                                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 transition-transform group-hover:scale-110">
                                     <BarChart3 className="h-4 w-4" />
@@ -1061,7 +1079,7 @@ export default function AdminDashboard({
 
                             <Link
                                 href="/admin/users"
-                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
+                                className="group flex flex-col items-center justify-center rounded-lg border border-border/40 bg-card p-3.5 text-center transition-all hover:border-brand-gold hover:bg-brand-gold/10"
                             >
                                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-purple-500/10 text-purple-600 transition-transform group-hover:scale-110">
                                     <ShieldCheck className="h-4 w-4" />
