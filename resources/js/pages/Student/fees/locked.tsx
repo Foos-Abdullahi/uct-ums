@@ -10,7 +10,7 @@ export default function StudentFeesLocked() {
     return (
         <>
             <Head title="Account Locked" />
-            <div className="flex min-h-svh flex-col items-center justify-center bg-[#0F1A32] p-6">
+            <div className="flex min-h-svh flex-col items-center justify-center bg-sidebar p-6">
                 <div className="mb-8">
                     <AppLogo />
                 </div>

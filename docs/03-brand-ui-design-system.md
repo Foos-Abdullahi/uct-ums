@@ -1,8 +1,8 @@
 # Brand & design system
 
-Primary brand color: **`#1B2F5B`** (UCT navy).
+Primary brand color: **`#05581A`** (FCSIS green), with **`#F5C100`** (FCSIS gold) as the accent. Both come from the faculty logo and are defined as theme tokens in `resources/css/app.css` (`brand`, `brand-gold`, `primary`).
 
-Sidebar surfaces: `#0F1A32` / `#0B1324`.
+Sidebar surfaces: `#043D12` (light) / `#07140B` (dark).
 
 ## Typography
 

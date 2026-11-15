@@ -315,7 +315,7 @@ export function DataTable<TData, TValue>({
                                     className={
                                         isFuturistic
                                             ? rowNavigable
-                                                ? 'cursor-pointer border-b border-b-black/5 transition-colors hover:bg-primary/5 dark:border-b-white/15 dark:hover:bg-white/5'
+                                                ? 'cursor-pointer border-b border-b-black/5 transition-colors hover:bg-brand-gold/10 dark:border-b-white/15'
                                                 : 'border-b border-b-black/5 transition-colors dark:border-b-white/15'
                                             : rowNavigable
                                               ? 'cursor-pointer border-b border-border/80 hover:bg-muted/50 dark:border-border/60 dark:hover:bg-muted/30'

@@ -1,12 +1,12 @@
-import uctLogo from '@/components/images/uct-logo__white-01.svg';
+import fcsisLogo from '@/components/images/fcsis-logo.png';
 
 export default function AppLogo() {
     return (
         <>
             <div className="flex items-center justify-center">
                 <img
-                    src={uctLogo}
-                    alt="UCT Management Logo"
+                    src={fcsisLogo}
+                    alt="Faculty of Computer Science and Information Systems logo"
                     className="h-10 w-auto object-contain"
                 />
             </div>

@@ -6,20 +6,19 @@
 
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: #ffffff;
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: #0c130e;
             }
         </style>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <link rel="manifest" href="/site.webmanifest">
-        <meta name="theme-color" content="#1B2F5B">
+        <meta name="theme-color" content="#05581A">
 
         @fonts
 
