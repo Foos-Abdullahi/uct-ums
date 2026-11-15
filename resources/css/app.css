@@ -108,7 +108,7 @@
     --sidebar-foreground: #f2f6f0;
     --sidebar-primary: #f5c100;
     --sidebar-primary-foreground: #1c2620;
-    --sidebar-accent: rgb(245 193 0 / 0.18);
+    --sidebar-accent: rgb(245 193 0 / 0.6);
     --sidebar-accent-foreground: #ffffff;
     --sidebar-border: #0a521f;
     --sidebar-ring: #f5c100;
@@ -143,7 +143,7 @@
     --sidebar-foreground: #f2f6f0;
     --sidebar-primary: #f5c100;
     --sidebar-primary-foreground: #1c2620;
-    --sidebar-accent: rgb(245 193 0 / 0.18);
+    --sidebar-accent: rgb(245 193 0 / 0.6);
     --sidebar-accent-foreground: #ffffff;
     --sidebar-border: #12291a;
     --sidebar-ring: #f5c100;
