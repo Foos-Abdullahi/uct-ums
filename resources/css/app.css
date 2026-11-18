@@ -69,7 +69,9 @@
 
 /*
  * FCSIS brand palette, taken from the faculty logo:
- * green #05581a, gold #f5c100, with green-tinted neutrals.
+ * green #05581a, gold #f5c100. Page surfaces are soft neutrals (never pure
+ * white or pure black); the sidebar stays green in both themes so it always
+ * reads as a separate panel from the main body.
  * --brand / --brand-gold keep the same value in both themes; use them for
  * surfaces that must stay "logo coloured" regardless of light/dark mode.
  */
@@ -78,7 +80,7 @@
     --brand-foreground: #ffffff;
     --brand-gold: #f5c100;
     --brand-gold-foreground: #1c2620;
-    --background: #ffffff;
+    --background: #f9f9f7;
     --foreground: #1c2620;
     --card: #ffffff;
     --card-foreground: #1c2620;
@@ -87,16 +89,16 @@
     --primary: #05581a;
     --primary-foreground: #ffffff;
     --primary-hover: color-mix(in srgb, var(--brand-gold) 60%, var(--primary));
-    --secondary: #f2f6f0;
+    --secondary: #f1f2ee;
     --secondary-foreground: #1c2620;
-    --muted: #f2f6f0;
+    --muted: #f1f2ee;
     --muted-foreground: #5d6a60;
     --accent: #fdf0c0;
     --accent-foreground: #1c2620;
     --destructive: oklch(0.577 0.245 27.325);
     --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: #e0e6e0;
-    --input: #d9e2da;
+    --border: #e4e5e0;
+    --input: #dcddd7;
     --ring: #d9a900;
     --chart-1: #05581a;
     --chart-2: #f5c100;
@@ -115,37 +117,37 @@
 }
 
 .dark {
-    --background: #0c130e;
-    --foreground: #f2f6f0;
-    --card: #121b15;
-    --card-foreground: #f2f6f0;
-    --popover: #121b15;
-    --popover-foreground: #f2f6f0;
+    --background: #1f1f1d;
+    --foreground: #f3f2ee;
+    --card: #272725;
+    --card-foreground: #f3f2ee;
+    --popover: #272725;
+    --popover-foreground: #f3f2ee;
     --primary: #3fae5f;
     --primary-foreground: #04210c;
-    --secondary: #1b271f;
-    --secondary-foreground: #f2f6f0;
-    --muted: #1b271f;
-    --muted-foreground: #9aa69d;
+    --secondary: #30302d;
+    --secondary-foreground: #f3f2ee;
+    --muted: #30302d;
+    --muted-foreground: #a8a7a1;
     --accent: #3a3108;
     --accent-foreground: #ffe27a;
     --destructive: oklch(0.396 0.141 25.723);
     --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: #243329;
-    --input: #2a3b30;
+    --border: #383835;
+    --input: #43433f;
     --ring: #f5c100;
     --chart-1: #3fae5f;
     --chart-2: #f5c100;
     --chart-3: #8fd3a3;
     --chart-4: #b38c00;
     --chart-5: #8a948b;
-    --sidebar: #07140b;
+    --sidebar: #0d3a1a;
     --sidebar-foreground: #f2f6f0;
     --sidebar-primary: #f5c100;
     --sidebar-primary-foreground: #1c2620;
     --sidebar-accent: rgb(245 193 0 / 0.6);
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #12291a;
+    --sidebar-border: #165127;
     --sidebar-ring: #f5c100;
 }
 
