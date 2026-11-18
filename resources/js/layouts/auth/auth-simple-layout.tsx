@@ -7,7 +7,7 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center bg-sidebar p-6 text-foreground md:p-10">
+        <div className="flex min-h-svh flex-col items-center justify-center bg-background p-6 text-foreground md:p-10">
             <div className="w-full max-w-md animate-in duration-700 ease-out fade-in slide-in-from-bottom-8">
                 <div className="relative rounded-xl border border-primary/20 bg-card p-6 text-card-foreground shadow-lg transition-all duration-300 hover:border-primary/40 hover:shadow-xl md:p-10">
                     {/* Gold brand accent line */}

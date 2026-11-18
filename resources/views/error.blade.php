@@ -6,11 +6,11 @@
 
         <style>
             html {
-                background-color: #ffffff;
+                background-color: #f9f9f7;
             }
 
             html.dark {
-                background-color: #0c130e;
+                background-color: #1f1f1d;
             }
         </style>
 

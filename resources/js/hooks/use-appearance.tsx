@@ -10,7 +10,14 @@ export type UseAppearanceReturn = {
 };
 
 const listeners = new Set<() => void>();
-let currentAppearance: Appearance = 'system';
+let currentAppearance: Appearance = 'light';
+
+/**
+ * Bumped when the default appearance changes. Older builds silently stored
+ * "system" for every visitor, so stored values from before this version are
+ * reset to the light default once; choices made after it are kept.
+ */
+const APPEARANCE_VERSION = '2';
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -31,10 +38,10 @@ const setCookie = (name: string, value: string, days = 365): void => {
 
 const getStoredAppearance = (): Appearance => {
     if (typeof window === 'undefined') {
-        return 'system';
+        return 'light';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'system';
+    return (localStorage.getItem('appearance') as Appearance) || 'light';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
@@ -75,9 +82,13 @@ export function initializeTheme(): void {
         return;
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
+    if (
+        !localStorage.getItem('appearance') ||
+        localStorage.getItem('appearance_version') !== APPEARANCE_VERSION
+    ) {
+        localStorage.setItem('appearance', 'light');
+        localStorage.setItem('appearance_version', APPEARANCE_VERSION);
+        setCookie('appearance', 'light');
     }
 
     currentAppearance = getStoredAppearance();
@@ -91,7 +102,7 @@ export function useAppearance(): UseAppearanceReturn {
     const appearance: Appearance = useSyncExternalStore(
         subscribe,
         () => currentAppearance,
-        () => 'system',
+        () => 'light',
     );
 
     const resolvedAppearance: ResolvedAppearance = isDarkMode(appearance)
@@ -103,6 +114,7 @@ export function useAppearance(): UseAppearanceReturn {
 
         // Store in localStorage for client-side persistence...
         localStorage.setItem('appearance', mode);
+        localStorage.setItem('appearance_version', APPEARANCE_VERSION);
 
         // Store in cookie for SSR...
         setCookie('appearance', mode);
